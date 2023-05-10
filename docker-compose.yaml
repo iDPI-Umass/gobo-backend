@@ -1,0 +1,27 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15.2-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=GOBO
+      - POSTGRES_DB=GOBO
+
+  api:
+    image: gobo/api
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    depends_on:
+      - db
+    ports:
+      - 4242:5000
+    volumes:
+      - ./api:/usr/src/app
+      - ./db:/usr/src/app/db
+      - ./joy:/usr/src/app/joy
+      - ./joy:/usr/src/app/db/joy
