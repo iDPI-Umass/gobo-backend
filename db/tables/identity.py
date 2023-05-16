@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy import Integer, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
-from base import Base
+from ..base import Base
 
 
 class Identity(Base):
