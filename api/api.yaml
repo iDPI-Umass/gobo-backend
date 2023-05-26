@@ -1,0 +1,41 @@
+shards:
+  person: &person
+    type: object
+    additionalProperties: false
+    required:
+      - id
+    properties:
+      id:
+        description: Unique ID for this person 
+        type: number
+      name:
+        description: Chosen display name for this person.
+        type: string
+      
+
+resources:
+  discovery:
+    template: /
+    methods:
+      get:
+        request: null
+        response:
+          type: [ application/json ]
+          status: 200
+
+  people:
+    template: "/people"
+    methods:
+      post:
+        request:
+          type: [ application/json ]
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                description: Chosen display name for this person.
+                type: string
+        response:
+          type: 
+          status: 201
