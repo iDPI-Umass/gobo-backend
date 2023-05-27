@@ -16,19 +16,21 @@ shards:
 resources:
   discovery:
     template: /
+    route: /
     methods:
       get:
-        request: null
+        request: {}
         response:
-          type: [ application/json ]
+          type: application/json
           status: 200
 
   people:
-    template: "/people"
+    template: /people
+    route: /people
     methods:
       post:
         request:
-          type: [ application/json ]
+          type: application/json
           schema:
             type: object
             additionalProperties: false
@@ -37,5 +39,16 @@ resources:
                 description: Chosen display name for this person.
                 type: string
         response:
-          type: 
+          type: application/json
           status: 201
+
+  person:
+    template: /people/{id}
+    route: /people/<int:id>
+    methods:
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema: *person
