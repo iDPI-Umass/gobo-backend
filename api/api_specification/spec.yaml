@@ -1,4 +1,13 @@
 shards:
+  timestamp: &timestamp
+    created:
+      description: The ISO 8601 timestamp this resource was created.
+      type: string
+    updated:
+      description: The ISO 8601 timestamp this resource was updated.
+      type: string
+
+
   person: &person
     type: object
     additionalProperties: false
@@ -11,6 +20,7 @@ shards:
       name:
         description: Chosen display name for this person.
         type: string
+      <<: *timestamp
       
 
 resources:
@@ -23,6 +33,7 @@ resources:
         response:
           type: application/json
           status: 200
+
 
   people:
     template: /people
@@ -40,7 +51,25 @@ resources:
                 type: string
         response:
           type: application/json
+          schema: *person
           status: 201
+
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: object
+            properties:
+              list:
+                type: array
+                items: *person
+              next:
+                type: number
+              previous:
+                type: number
+
 
   person:
     template: /people/{id}
@@ -52,3 +81,17 @@ resources:
           type: application/json
           status: 200
           schema: *person
+
+      put:
+        request:
+          type: application/json
+          schema: *person
+        response:
+          type: application/json
+          status: 200
+          schema: *person
+
+      delete:
+        request: {}
+        response:
+          status: 204

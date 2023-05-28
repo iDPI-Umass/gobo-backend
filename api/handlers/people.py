@@ -3,8 +3,12 @@ from flask import request
 import models
 
 def people_post():
-    models.person.add(request.json)
-    return { "foo": "foo" }
+    json = request.json
+    return models.person.add(json)
 
 def people_get():
-    return { "foo": "foo" }
+    list = models.person.list()
+
+    return {
+      "list": list
+    }

@@ -1,1 +1,1 @@
-from .person import add
+from .person import *
