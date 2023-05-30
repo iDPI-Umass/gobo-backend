@@ -19,13 +19,13 @@ def get(id):
         else:
             return person.to_dict()
 
-def update(id, json):
+def update(id, data):
     with Session() as session:
         person = session.get(tables.Person, id)
         if person == None:
             return None
         else:
-            person.update(json)
+            person.update(data)
             session.commit()
             return person.to_dict()
 
@@ -39,16 +39,26 @@ def delete(id):
             session.commit()
             return person.to_dict()
 
-def list():
-    with Session() as session:
+def list(data):
+    with Session() as session:  
+        if data["direction"] == "descending":
+            attribute = getattr(tables.Person, data["view"]).desc()
+        else:
+            attribute = getattr(tables.Person, data["view"])
+
+        if data["page"] == 1:
+            offset = None
+        else:
+            offset = (data["page"] - 1) * data["per_page"]
+
         statement = select(tables.Person) \
-                    .order_by(tables.Person.created) \
-                    .limit(10)
-        
-        results = session.scalars(statement).all()
+                    .order_by(attribute) \
+                    .offset(offset) \
+                    .limit(data["per_page"])
 
-        output = []
-        for result in results:
-            output.append(result.to_dict())
+        rows = session.scalars(statement).all()
 
-        return output
+        results = []
+        for row in rows:
+            results.append(row.to_dict())
+        return results

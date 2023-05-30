@@ -17,8 +17,8 @@ class Identity(Base):
     name: Mapped[Optional[str]]
     oauth_token: Mapped[Optional[str]]
     oauth_token_secret: Mapped[Optional[str]]
-    created: Mapped[str] = mapped_column(insert_default=joy.time.now())
-    updated: Mapped[str] = mapped_column(insert_default=joy.time.now())
+    created: Mapped[str] = mapped_column(insert_default=joy.time.now)
+    updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
     
     def to_dict(self):

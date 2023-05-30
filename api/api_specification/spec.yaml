@@ -11,8 +11,7 @@ shards:
   person: &person
     type: object
     additionalProperties: false
-    required:
-      - id
+    required: [ id ]
     properties:
       id:
         description: Unique ID for this person 
@@ -36,7 +35,7 @@ resources:
 
 
   people:
-    template: /people
+    template: /people{?view,direction,per_page,page}
     route: /people
     methods:
       post:
@@ -60,15 +59,8 @@ resources:
           type: application/json
           status: 200
           schema:
-            type: object
-            properties:
-              list:
-                type: array
-                items: *person
-              next:
-                type: number
-              previous:
-                type: number
+            type: array
+            items: *person
 
 
   person:

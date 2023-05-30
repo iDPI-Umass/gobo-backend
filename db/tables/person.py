@@ -11,8 +11,8 @@ class Person(Base):
 
     id: Mapped[str] = mapped_column(Integer, primary_key=True)
     name: Mapped[Optional[str]]
-    created: Mapped[str] = mapped_column(insert_default=joy.time.now())
-    updated: Mapped[str] = mapped_column(insert_default=joy.time.now())
+    created: Mapped[str] = mapped_column(insert_default=joy.time.now)
+    updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
 
     def to_dict(self):

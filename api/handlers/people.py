@@ -1,14 +1,13 @@
 import logging
 from flask import request
 import models
+from .helpers import parse_query
 
 def people_post():
-    json = request.json
-    return models.person.add(json)
+    return models.person.add(request.json)
+
 
 def people_get():
-    list = models.person.list()
-
-    return {
-      "list": list
-    }
+    views = ["created"]
+    parameters = parse_query(views, request.args)
+    return models.person.list(parameters)
