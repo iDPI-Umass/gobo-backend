@@ -25,7 +25,7 @@ def person_put(id):
         return person
 
 def person_delete(id):
-    person = models.person.delete(id)
+    person = models.person.remove(id)
     if person == None:
         raise http_errors.not_found(f"person {id} is not found")
 

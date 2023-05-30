@@ -10,4 +10,4 @@ def people_post():
 def people_get():
     views = ["created"]
     parameters = parse_query(views, request.args)
-    return models.person.list(parameters)
+    return models.person.query(parameters)

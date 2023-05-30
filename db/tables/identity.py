@@ -35,3 +35,13 @@ class Identity(Base):
             "created": self.created,
             "updated": self.updated
         }
+
+    def update(self, json):
+        self.base_url = json["base_url"]
+        self.profile_url = json["profile_url"]
+        self.profile_image = json["profile_image"]
+        self.username = json["username"]
+        self.name = json["name"]
+        self.oauth_token = json["oauth_token"]
+        self.oauth_token_secret = json["oauth_token_secret"]
+        self.updated = joy.time.now()

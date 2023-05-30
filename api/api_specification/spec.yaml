@@ -7,6 +7,30 @@ shards:
       description: The ISO 8601 timestamp this resource was updated.
       type: string
 
+  link: &link
+    type: object
+    additionalProperties: false
+    required: [ id, origin_type, origin_id, target_type, target_id, name ]
+    properties:
+      id:
+        description: Unique ID for this link.
+        type: integer
+      origin_type:
+        description: The type of resource that represents the origin of this edge.
+        type: string
+      origin_id:
+        description: The unique identifier for the resource.
+        type: integer
+      target_type:
+        description: The type of resource that represents the target of this edge.
+        type: string
+      target_id:
+        description: The uniuqe identifier for the resource.
+        type: integer
+      name:
+        description: The name that describes the type of edge between these resources.
+        type: string
+      <<: *timestamp
 
   person: &person
     type: object
@@ -15,7 +39,7 @@ shards:
     properties:
       id:
         description: Unique ID for this person 
-        type: number
+        type: integer
       name:
         description: Chosen display name for this person.
         type: string
@@ -32,6 +56,73 @@ resources:
         response:
           type: application/json
           status: 200
+
+  links:
+    template: /links{?view,direction,per_page,page,origin_type,origin_id,target_type,target_id,name}
+    route: /links
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ origin_type, origin_id, target_type, target_id, name ]
+            properties:
+              origin_type:
+                description: The type of resource that represents the origin of this edge.
+                type: string
+              origin_id:
+                description: The unique identifier for the resource.
+                type: integer
+              target_type:
+                description: The type of resource that represents the target of this edge.
+                type: string
+              target_id:
+                description: The uniuqe identifier for the resource.
+                type: integer
+              name:
+                description: The name that describes the type of edge between these resources.
+                type: string
+        response:
+          type: application/json
+          schema: *link
+          status: 201
+
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: *link
+
+
+  link:
+    template: /links/{id}
+    route: /links/<int:id>
+    methods:
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema: *link
+
+      put:
+        request:
+          type: application/json
+          schema: *link
+        response:
+          type: application/json
+          status: 200
+          schema: *link
+
+      delete:
+        request: {}
+        response:
+          status: 204
 
 
   people:

@@ -29,5 +29,6 @@ def parse_query(views, data):
       "view": view,
       "direction": direction,
       "per_page": per_page,
-      "page": page
+      "page": page,
+      "where": []
     }

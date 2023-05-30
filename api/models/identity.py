@@ -6,4 +6,4 @@ from .helpers import define_crud
 
 add, get, update, remove, query = itemgetter(
     "add", "get", "update", "remove", "query"
-)(define_crud(tables.Person))
+)(define_crud(tables.Identity))
