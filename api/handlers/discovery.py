@@ -3,4 +3,4 @@ from flask import request
 from api_specification import spec
 
 def discovery_get():
-    return spec
+    return {"resources": spec["resources"]}

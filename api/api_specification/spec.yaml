@@ -1,4 +1,14 @@
 shards:
+  id: &id
+    id:
+      description: The unique identifier for this resource.
+      type: integer
+
+  person_id: &person_id
+    person_id:
+      description: The unique ID for the person that owns this resource.
+      type: integer
+
   timestamp: &timestamp
     created:
       description: The ISO 8601 timestamp this resource was created.
@@ -29,9 +39,7 @@ shards:
     additionalProperties: false
     required: [ id, origin_type, origin_id, target_type, target_id, name ]
     properties:
-      id:
-        description: Unique ID for this link.
-        type: integer
+      <<: *id
       <<: *linkCore
       <<: *timestamp
 
@@ -45,16 +53,12 @@ shards:
     additionalProperties: false
     required: [ id ]
     properties:
-      id:
-        description: Unique ID for this person 
-        type: integer
+      <<: *id
       <<: *personCore
       <<: *timestamp
 
   identityCore: &identityCore
-    person_id:
-      description: The unique ID of the person to which this identity belongs
-      type: integer
+    <<: *person_id
     base_url:
       description: The base URL of the service provider of this identity.
       type: string
@@ -80,13 +84,40 @@ shards:
   identity: &identity
     type: object
     additionalProperties: false
-    required: [person_id, base_url, username]
+    required: [id, person_id, base_url, username]
     properties:
-      id:
-        description: Unique ID for this identity 
-        type: integer
+      <<: *id
       <<: *identityCore
       <<: *timestamp
+
+  registrationCore: &registrationCore
+    <<: *person_id
+    base_url:
+      description: The base URL of the service provider of this identity.
+      type: string
+    oauth_token:
+      description: The OAuth token associated with this identity.
+      type: string
+    oauth_token_secret:
+      description: The OAuth secret token associated with this identity access.
+      type: string
+    saved_state:
+      description: The current state of the registration.
+      type: string
+    request_time:
+      description: The ISO 8601 timestamp of the last request to the provider.
+      type: string
+   
+  
+  registration: &registration
+    type: object
+    additionalProperties: false
+    required: [id, person_id, base_url]
+    properties:
+      <<: *id
+      <<: *registrationCore
+      <<: *timestamp
+
 
 resources:
   discovery:
@@ -250,6 +281,58 @@ resources:
           type: application/json
           status: 200
           schema: *identity
+
+      delete:
+        request: {}
+        response:
+          status: 204
+
+  registrations:
+    template: /registrations{?view,direction,per_page,page}
+    route: /registrations
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            required: [person_id, base_url]
+            properties: *registrationCore
+        response:
+          type: application/json
+          schema: *registration
+          status: 201
+
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: *registration
+
+
+  registration:
+    template: /registrations/{id}
+    route: /registrations/<int:id>
+    methods:
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema: *registration
+
+      put:
+        request:
+          type: application/json
+          schema: *registration
+        response:
+          type: application/json
+          status: 200
+          schema: *registration
 
       delete:
         request: {}
