@@ -2,6 +2,16 @@ import logging
 from flask import request
 import http_errors
 import models
+from .helpers import parse_query
+
+def people_post():
+    return models.person.add(request.json)
+
+
+def people_get():
+    views = ["created"]
+    parameters = parse_query(views, request.args)
+    return models.person.query(parameters)
 
 def person_get(id):
     person = models.person.get(id)

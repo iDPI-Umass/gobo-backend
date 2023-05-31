@@ -9,7 +9,7 @@ class Identity(Base):
     __tablename__ = "identity"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    person_id: Mapped[int] = mapped_column(ForeignKey("person.id"))
+    person_id: Mapped[int]
     base_url: Mapped[Optional[str]]
     profile_url: Mapped[Optional[str]]
     profile_image: Mapped[Optional[str]]
@@ -37,6 +37,7 @@ class Identity(Base):
         }
 
     def update(self, json):
+        self.person_id = json["person_id"]
         self.base_url = json["base_url"]
         self.profile_url = json["profile_url"]
         self.profile_image = json["profile_image"]

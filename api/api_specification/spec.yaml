@@ -7,6 +7,23 @@ shards:
       description: The ISO 8601 timestamp this resource was updated.
       type: string
 
+  linkCore: &linkCore
+    origin_type:
+      description: The type of resource that represents the origin of this edge.
+      type: string
+    origin_id:
+      description: The unique identifier for the resource.
+      type: integer
+    target_type:
+      description: The type of resource that represents the target of this edge.
+      type: string
+    target_id:
+      description: The uniuqe identifier for the resource.
+      type: integer
+    name:
+      description: The name that describes the type of edge between these resources.
+      type: string
+
   link: &link
     type: object
     additionalProperties: false
@@ -15,22 +32,13 @@ shards:
       id:
         description: Unique ID for this link.
         type: integer
-      origin_type:
-        description: The type of resource that represents the origin of this edge.
-        type: string
-      origin_id:
-        description: The unique identifier for the resource.
-        type: integer
-      target_type:
-        description: The type of resource that represents the target of this edge.
-        type: string
-      target_id:
-        description: The uniuqe identifier for the resource.
-        type: integer
-      name:
-        description: The name that describes the type of edge between these resources.
-        type: string
+      <<: *linkCore
       <<: *timestamp
+
+  personCore: &personCore
+    name:
+      description: Chosen display name for this person.
+      type: string
 
   person: &person
     type: object
@@ -40,11 +48,45 @@ shards:
       id:
         description: Unique ID for this person 
         type: integer
-      name:
-        description: Chosen display name for this person.
-        type: string
+      <<: *personCore
       <<: *timestamp
-      
+
+  identityCore: &identityCore
+    person_id:
+      description: The unique ID of the person to which this identity belongs
+      type: integer
+    base_url:
+      description: The base URL of the service provider of this identity.
+      type: string
+    profile_url:
+      description: The URL pointing to this identity on the host provider.
+      type: string
+    profile_image:
+      description: The URL pointing to this idenity profile picture on the host provider.
+      type: string
+    username:
+      description: The username associated with this identity.
+      type: string
+    name:
+      description: The display name associated with this identity.
+      type: string
+    oauth_token:
+      description: The OAuth token associated with this identity.
+      type: string
+    oauth_token_secret:
+      description: The OAuth secret token associated with this identity access.
+      type: string
+
+  identity: &identity
+    type: object
+    additionalProperties: false
+    required: [person_id, base_url, username]
+    properties:
+      id:
+        description: Unique ID for this identity 
+        type: integer
+      <<: *identityCore
+      <<: *timestamp
 
 resources:
   discovery:
@@ -68,22 +110,7 @@ resources:
             type: object
             additionalProperties: false
             required: [ origin_type, origin_id, target_type, target_id, name ]
-            properties:
-              origin_type:
-                description: The type of resource that represents the origin of this edge.
-                type: string
-              origin_id:
-                description: The unique identifier for the resource.
-                type: integer
-              target_type:
-                description: The type of resource that represents the target of this edge.
-                type: string
-              target_id:
-                description: The uniuqe identifier for the resource.
-                type: integer
-              name:
-                description: The name that describes the type of edge between these resources.
-                type: string
+            properties: *linkCore
         response:
           type: application/json
           schema: *link
@@ -135,10 +162,7 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            properties:
-              name:
-                description: Chosen display name for this person.
-                type: string
+            properties: *personCore
         response:
           type: application/json
           schema: *person
@@ -173,6 +197,59 @@ resources:
           type: application/json
           status: 200
           schema: *person
+
+      delete:
+        request: {}
+        response:
+          status: 204
+
+
+  identities:
+    template: /identities{?view,direction,per_page,page}
+    route: /identities
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            required: [person_id, base_url, username]
+            properties: *identityCore
+        response:
+          type: application/json
+          schema: *identity
+          status: 201
+
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: *identity
+
+
+  identity:
+    template: /identities/{id}
+    route: /identities/<int:id>
+    methods:
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema: *identity
+
+      put:
+        request:
+          type: application/json
+          schema: *identity
+        response:
+          type: application/json
+          status: 200
+          schema: *identity
 
       delete:
         request: {}

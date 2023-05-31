@@ -43,7 +43,7 @@ def wrap_handler(alias, configuration, handler):
         try:
             validateSchema(args, kwargs)
         except ValidationError as e:
-            response = {"message": e.message}
+            response = {"validation_error": e.message}
             logging.warning(response)
             return response, 400
 

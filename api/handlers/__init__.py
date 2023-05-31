@@ -1,5 +1,4 @@
 from .discovery import *
-from .links import *
 from .link import *
-from .people import *
+from .identity import *
 from .person import *
