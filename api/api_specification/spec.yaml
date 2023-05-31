@@ -93,19 +93,16 @@ shards:
   registrationCore: &registrationCore
     <<: *person_id
     base_url:
-      description: The base URL of the service provider of this identity.
+      description: The base URL of the service provider of this registration.
       type: string
     oauth_token:
-      description: The OAuth token associated with this identity.
+      description: The OAuth token associated with this registration.
       type: string
     oauth_token_secret:
-      description: The OAuth secret token associated with this identity access.
+      description: The OAuth secret token associated with this registration access.
       type: string
-    saved_state:
+    state:
       description: The current state of the registration.
-      type: string
-    request_time:
-      description: The ISO 8601 timestamp of the last request to the provider.
       type: string
    
   
@@ -116,6 +113,26 @@ shards:
     properties:
       <<: *id
       <<: *registrationCore
+      <<: *timestamp
+
+  mastodonClientCore: &mastodonClientCore
+    base_url:
+      description: The base URL of the service provider of this Mastodon client.
+      type: string
+    client_id:
+      description: The OAuth client ID associated with this client.
+      type: string
+    client_secret:
+      description: The OAuth client secret associated with this client.
+      type: string   
+  
+  mastodonClient: &mastodonClient
+    type: object
+    additionalProperties: false
+    required: [id]
+    properties:
+      <<: *id
+      <<: *mastodonClientCore
       <<: *timestamp
 
 
@@ -333,6 +350,58 @@ resources:
           type: application/json
           status: 200
           schema: *registration
+
+      delete:
+        request: {}
+        response:
+          status: 204
+
+
+  mastodon_clients:
+    template: /mastodon_clients{?view,direction,per_page,page}
+    route: /mastodon_clients
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            properties: *mastodonClientCore
+        response:
+          type: application/json
+          schema: *mastodonClient
+          status: 201
+
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: *mastodonClient
+
+
+  mastodon_client:
+    template: /mastodon_clients/{id}
+    route: /mastodon_clients/<int:id>
+    methods:
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema: *mastodonClient
+
+      put:
+        request:
+          type: application/json
+          schema: *mastodonClient
+        response:
+          type: application/json
+          status: 200
+          schema: *mastodonClient
 
       delete:
         request: {}
