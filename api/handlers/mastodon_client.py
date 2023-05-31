@@ -6,6 +6,11 @@ from .helpers import parse_query
 
 
 def mastodon_clients_post():
+    base_url = request.json["base_url"]
+    client = models.mastodon_client.find({"base_url": base_url})
+    if client != None:
+        raise http_errors.conflict(f"mastodon_client {base_url} is already registered")
+
     return models.mastodon_client.add(request.json)
 
 def mastodon_clients_get():

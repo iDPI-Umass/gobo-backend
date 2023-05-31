@@ -129,12 +129,91 @@ shards:
   mastodonClient: &mastodonClient
     type: object
     additionalProperties: false
-    required: [id]
+    required: [id, base_url]
     properties:
       <<: *id
       <<: *mastodonClientCore
       <<: *timestamp
 
+  filterCore: &filterCore
+    <<: *person_id
+    category:
+      description: Describes the type of filter and controls how it acts on the feed
+      type: string
+    word:
+      description: Lists the keyword used in the filter.
+      type: string
+
+  filter: &filter
+    type: object
+    additionalProperties: false
+    required: [id, person_id ]
+    properties:
+      <<: *id
+      <<: *filterCore
+      <<: *timestamp
+
+  sourceCore: &sourceCore
+    base_url:
+      description: The base URL of the source, pointing to its platform
+      type: string
+    url:
+      description: The full, unique URL for this source
+      type: string
+    username:
+      description: The platform unique name for a source
+      type: string
+    name:
+      description: The platform display name for a source
+      type: string
+    icon_url:
+      type: string
+    active:
+      description: Flag to control whether this source is actively used to build feeds.
+      type: boolean
+
+  source: &source
+    type: object
+    additionalProperties: false
+    required: [id]
+    properties:
+      <<: *id
+      <<: *sourceCore
+      <<: *timestamp
+
+
+  postCore: &postCore
+    source_id:
+      description: The unique ID of the source for this post.
+      type: integer
+    base_url:
+      description: The base URL for the platform that hosts this post.
+      type: string
+    platform_id:
+      description: The ID of this post, unique to the platform that hosts it.
+      type: string
+    title:
+      type: string
+    content:
+      type: string
+    author:
+      description: The URL of the author profile, hosted by the platform
+      type: string
+    url:
+      description: The URL of the original post, hosted by the platform
+      type: string
+    visibility:
+      description: Describes how publicly visible this post is
+      type: string
+
+  post: &post
+    type: object
+    additionalProperties: false
+    required: [id]
+    properties:
+      <<: *id
+      <<: *postCore
+      <<: *timestamp
 
 resources:
   discovery:
@@ -262,7 +341,7 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            required: [person_id, base_url, username]
+            required: [person_id, base_url, username, profile_url]
             properties: *identityCore
         response:
           type: application/json
@@ -402,6 +481,159 @@ resources:
           type: application/json
           status: 200
           schema: *mastodonClient
+
+      delete:
+        request: {}
+        response:
+          status: 204
+
+  filters:
+    template: /filters{?view,direction,per_page,page}
+    route: /filters
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            properties: *filterCore
+        response:
+          type: application/json
+          schema: *filter
+          status: 201
+
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: *filter
+
+
+  filter:
+    template: /filter/{id}
+    route: /filter/<int:id>
+    methods:
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema: *filter
+
+      put:
+        request:
+          type: application/json
+          schema: *filter
+        response:
+          type: application/json
+          status: 200
+          schema: *filter
+
+      delete:
+        request: {}
+        response:
+          status: 204
+
+  sources:
+    template: /sources{?view,direction,per_page,page}
+    route: /sources
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            properties: *sourceCore
+        response:
+          type: application/json
+          schema: *source
+          status: 201
+
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: *source
+
+
+  source:
+    template: /source/{id}
+    route: /source/<int:id>
+    methods:
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema: *source
+
+      put:
+        request:
+          type: application/json
+          schema: *source
+        response:
+          type: application/json
+          status: 200
+          schema: *source
+
+      delete:
+        request: {}
+        response:
+          status: 204
+
+  posts:
+    template: /posts{?view,direction,per_page,page}
+    route: /posts
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            properties: *postCore
+        response:
+          type: application/json
+          schema: *post
+          status: 201
+
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: *post
+
+
+  post:
+    template: /post/{id}
+    route: /post/<int:id>
+    methods:
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema: *post
+
+      put:
+        request:
+          type: application/json
+          schema: *post
+        response:
+          type: application/json
+          status: 200
+          schema: *post
 
       delete:
         request: {}

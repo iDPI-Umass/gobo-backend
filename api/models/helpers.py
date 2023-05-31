@@ -77,10 +77,26 @@ def define_crud(Table):
                 results.append(row.to_dict())
             return results
 
+    def find(data):
+        with Session() as session:
+            statement = select(Table)
+            for key, value in data.items():
+                statement = statement.where(getattr(Table, key) == value)
+            statement = statement.limit(1)
+
+            row = session.scalars(statement).first()
+
+            if row == None:
+                return None
+            else:
+                return row.to_dict()
+
+
     return {
       "add": add,
       "get": get,
       "update": update,
       "remove": remove,
-      "query": query
+      "query": query,
+      "find": find
     }

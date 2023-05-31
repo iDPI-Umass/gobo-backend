@@ -5,6 +5,16 @@ import models
 from .helpers import parse_query
 
 def links_post():
+    link = models.link.find({
+      "origin_type": request.json["origin_type"],
+      "origin_id": request.json["origin_id"],
+      "target_type": request.json["target_type"],
+      "target_id": request.json["target_id"],
+      "name": request.json["name"]
+    })
+    if link != None:
+        raise http_errors.conflict("this link already exists")
+
     return models.link.add(request.json)
 
 def _parse_link_query(parameters, args):

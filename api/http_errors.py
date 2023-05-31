@@ -13,5 +13,7 @@ def forbidden(message):
     return HTTPError(403, message)
 def not_found(message):
     return HTTPError(404, message)
+def conflict(message):
+    return HTTPError(409, message)
 def unprocessable_content(message):
     return HTTPError(422, message)

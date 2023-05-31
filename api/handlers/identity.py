@@ -6,6 +6,11 @@ from .helpers import parse_query
 
 
 def identities_post():
+    profile_url = request.json["profile_url"]
+    identity = models.identity.find({"profile_url": profile_url})
+    if identity != None:
+        raise http_errors.conflict(f"profile {profile_url} is already registered")
+
     return models.identity.add(request.json)
 
 def identities_get():
