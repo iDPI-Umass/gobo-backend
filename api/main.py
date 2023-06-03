@@ -24,33 +24,20 @@ app = Flask(__name__)
 
 
 # Establish handlers based on API specification
-from jsonschema import validate, ValidationError
 from api_specification import spec
 from http_errors import HTTPError
+from validate import validate_request
+from authorize import authorize_request
 import handlers
 
 def wrap_handler(alias, configuration, handler):
 
-    def validateSchema(*args, **kwargs):
-        schema = configuration.get("request").get("schema")
-        if schema is None:
-            return
-
-        validate(schema=schema, instance=request.json)
-        
-
     def f(*args, **kwargs):
         try:
-            validateSchema(args, kwargs)
-        except ValidationError as e:
-            response = {"validation_error": e.message}
-            logging.warning(response)
-            return response, 400
-
-
-        try:
-            status = configuration["response"]["status"]
+            authorize_request(configuration)
+            validate_request(configuration)
             result = handler(*args, **kwargs)
+            status = configuration["response"]["status"]
             return result, status
         except (Exception, HTTPError) as e:
             status = getattr(e, "status", 500)

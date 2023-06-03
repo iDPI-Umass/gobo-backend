@@ -221,7 +221,8 @@ resources:
     route: /
     methods:
       get:
-        request: {}
+        request:
+          authorization: [ public ]
         response:
           type: application/json
           status: 200
