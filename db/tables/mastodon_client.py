@@ -3,6 +3,7 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
+from .helpers import handle_optional
 
 
 class MastodonClient(Base):
@@ -17,14 +18,19 @@ class MastodonClient(Base):
 
     
     def to_dict(self):
-        return {
+        json = {
             "id": self.id,
-            "base_url": self.base_url,
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
             "created": self.created,
             "updated": self.updated
         }
+
+        handle_optional(self, json, [
+          "base_url",
+          "client_id",
+          "client_secret"
+        ])
+
+        return json
 
     def update(self, json):
         self.base_url = json["base_url"]

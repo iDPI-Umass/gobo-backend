@@ -4,7 +4,7 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
-
+from .helpers import handle_optional
 
 class Link(Base):
     __tablename__ = "link"
@@ -20,16 +20,22 @@ class Link(Base):
 
 
     def to_dict(self):
-        return {
+        json = {
             "id": self.id,
-            "origin_type": self.origin_type,
-            "origin_id": self.origin_id,
-            "target_type": self.target_type,
-            "target_id": self.target_id,
-            "name": self.name,
             "created": self.created,
             "updated": self.updated
         }
+
+        handle_optional(self, json, [
+          "origin_type",
+          "origin_id",
+          "target_type",
+          "target_id",
+          "name"
+        ])
+
+        return json
+
 
     def update(self, json):
         self.origin_type = json["origin_type"]

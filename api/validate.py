@@ -10,7 +10,13 @@ def validate_request(configuration):
         return
 
     try:
-        validate(schema=schema, instance=request.json)
+        try:
+            json = getattr(request, "json", {})
+        except Exception as e:
+            logging.warning(e)
+            raise http_errors.bad_request("unable to parse body")
+
+        validate(schema=schema, instance=json)
     except ValidationError as e:
         raise http_errors.bad_request(e.message)
   

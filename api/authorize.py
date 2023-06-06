@@ -1,6 +1,6 @@
 import logging
 import time
-from flask import Flask, request
+from flask import Flask, request, g
 import httpx
 from jose import jwt
 import http_errors
@@ -88,6 +88,7 @@ def validate_token(token):
 def get_roles():
     token = get_token()
     claims = validate_token(token)
+    g.claims = claims
     roles = claims.get("scope")
     if roles == None:
         return []

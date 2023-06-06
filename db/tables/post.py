@@ -3,6 +3,7 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
+from .helpers import handle_optional
 
 
 class Post(Base):
@@ -22,19 +23,24 @@ class Post(Base):
 
     
     def to_dict(self):
-        return {
+        json = {
             "id": self.id,
             "source_id": self.source_id,
-            "base_url": self.base_url,
-            "platform_id": self.platform_id,
-            "title": self.title,
-            "content": self.content,
-            "author": self.author,
-            "url": self.url,
-            "visibility": self.visibility,
             "created": self.created,
             "updated": self.updated
         }
+
+        handle_optional(self, json, [
+          "base_url",
+          "platform_id",
+          "title",
+          "content",
+          "author",
+          "url",
+          "visibility"
+        ])
+
+        return json
 
     def update(self, json):
         self.source_id = json["source_id"]

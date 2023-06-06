@@ -47,6 +47,9 @@ shards:
     name:
       description: Chosen display name for this person.
       type: string
+    authority_id:
+      description: The unique identifier for this person within the authentication authority
+      type: string
 
   person: &person
     type: object
@@ -640,3 +643,25 @@ resources:
         request: {}
         response:
           status: 204
+
+  me:
+    template: /auth/me
+    route: /auth/me
+    methods:
+      get:
+        request:
+          authorization:
+            - general
+        response:
+          type: application/json
+          status: 200
+          schema: *person
+
+      put:
+        request:
+          type: application/json
+          schema: *person
+        response:
+          type: application/json
+          status: 200
+          schema: *person

@@ -3,6 +3,7 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
+from .helpers import handle_optional
 
 
 class Source(Base):
@@ -20,17 +21,22 @@ class Source(Base):
 
     
     def to_dict(self):
-        return {
+        json = {
             "id": self.id,
             "base_url": self.base_url,
-            "url": self.url,
-            "username": self.username,
-            "name": self.name,
-            "icon_url": self.icon_url,
-            "active": self.active,
             "created": self.created,
             "updated": self.updated
         }
+
+        handle_optional(self, json, [
+          "url",
+          "username",
+          "name",
+          "icon_url",
+          "active"
+        ])
+
+        return json
 
     def update(self, json):
         self.base_url = json["base_url"]

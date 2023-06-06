@@ -3,6 +3,7 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
+from .helpers import handle_optional
 
 
 class Identity(Base):
@@ -22,19 +23,25 @@ class Identity(Base):
 
     
     def to_dict(self):
-        return {
+        json = {
             "id": self.id,
             "person_id": self.person_id,
-            "base_url": self.base_url,
-            "profile_url": self.profile_url,
-            "profile_image": self.profile_image,
-            "username": self.username,
-            "name": self.name,
-            "oauth_token": self.oauth_token,
-            "oauth_token_secret": self.oauth_token_secret,
             "created": self.created,
             "updated": self.updated
         }
+
+        handle_optional(self, json, [
+          "base_url",
+          "profile_url",
+          "profile_image",
+          "username",
+          "name",
+          "oauth_token",
+          "oauth_token_secret"
+        ])
+
+        return json
+
 
     def update(self, json):
         self.person_id = json["person_id"]

@@ -3,6 +3,7 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
+from .helpers import handle_optional
 
 
 class Filter(Base):
@@ -17,14 +18,15 @@ class Filter(Base):
 
     
     def to_dict(self):
-        return {
+        json = {
             "id": self.id,
             "person_id": self.person_id,
-            "word": self.word,
-            "category": self.category,
             "created": self.created,
             "updated": self.updated
         }
+
+        handle_optional(self, json, ["word", "category"])
+        return json
 
     def update(self, json):
         self.person_id = json["person_id"]
