@@ -8,3 +8,5 @@ from .registration import *
 from .person import *
 from .post import *
 from .source import *
+from .resource import *
+from .action import *

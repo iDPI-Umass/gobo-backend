@@ -111,5 +111,12 @@ def authorize_request(configuration):
     for role in roles:
         if role in schema:
             return
+
+    if "person" in schema:
+        person = models.person.lookup(g.claims["sub"])
+        g.person = person
+        if person["id"] == request.args["id"]:
+            return
+
     
     raise http_errors.unauthorized("requester lacks proper permissions")

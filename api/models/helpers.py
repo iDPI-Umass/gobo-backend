@@ -92,11 +92,26 @@ def define_crud(Table):
                 return row.to_dict()
 
 
+    def conditional_remove(condition, id):
+        with Session() as session:
+            row = session.get(Table, id)
+            if row == None:
+                return None
+            else:
+                if condition(row) == True:
+                    session.delete(row)
+                    session.commit()
+                    return row.to_dict()
+                else:
+                    return None
+
+
     return {
       "add": add,
       "get": get,
       "update": update,
       "remove": remove,
       "query": query,
-      "find": find
+      "find": find,
+      "conditional_remove": conditional_remove
     }

@@ -665,3 +665,85 @@ resources:
           type: application/json
           status: 200
           schema: *person
+
+  resources:
+    template: /people/{id}/{resource_type}{?per_page,page}
+    route: /people/<int:id>/<resource_type>
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: 
+              anyOf:
+                - *identity
+                - *filter
+                - *source
+
+  resource:
+    template: /people/{id}/{resource_type}/{resource_id}
+    route: /people/<int:id>/<resource_type>/<int:resource_id>
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+        response:
+          type: application/json
+          status: 200
+
+      put:
+        request:
+          authorization:
+            - person
+          type: application/json
+        response:
+          type: application/json
+          status: 200
+
+      delete:
+        request:
+          authorization:
+            - person
+        response:
+          status: 204
+
+      
+
+  
+
+  action_onboard_identity_start:
+    template: /actions/onboard-identity
+    route: /actions/onboard-identity
+    methods:
+      post:
+        request:
+          authorization:
+            - general
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ redirectURL ]
+            properties:
+              redirectURL:
+                description: The URL the GOBO client should redirect the browser so the person may login
+                type: string
+
+  action_onboard_identity_callback:
+    template: /actions/onboard-identity-callback
+    route: /actions/onboard-identity-callback
+    methods:
+      post:
+        request:
+          authorization:
+            - general
+        response:
+          status: 204
