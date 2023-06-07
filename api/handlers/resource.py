@@ -1,5 +1,5 @@
 import logging
-from flask import request
+from flask import request, g
 import http_errors
 import models
 from db import tables
@@ -7,8 +7,11 @@ from .helpers import parse_page_query
 
 
 def resources_get(id, resource_type):
-    person = g.person
     query = parse_page_query(request.args)
+    if g.person == None:
+        person = models.person.get(id)
+    else:
+        person = g.person
 
     if resource_type == "identities":
         Table = tables.Identity
@@ -23,15 +26,24 @@ def resources_get(id, resource_type):
     return resources
 
 def resource_get(id, resource_type, resource_id):
-    person = g.person
+    if g.person == None:
+        person = models.person.get(id)
+    else:
+        person = g.person
     raise http_errors.bad_request("GET on an individual person resource is not currently supported.")
 
 def resource_put(id, resource_type, resource_id):
-    person = g.person
+    if g.person == None:
+        person = models.person.get(id)
+    else:
+        person = g.person
     raise http_errors.bad_request("PUT on an individual person resource is not currently supported.")
 
 def resource_delete(id, resource_type, resource_id):
-    person = g.person
+    if g.person == None:
+        person = models.person.get(id)
+    else:
+        person = g.person
 
     if resource_type == "identities":
         target_type = "identity"
