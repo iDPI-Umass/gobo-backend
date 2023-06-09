@@ -3,8 +3,16 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
-from .helpers import handle_optional
+from .helpers import read_optional, write_optional
 
+optional = [
+    "base_url",
+    "url",
+    "username",
+    "name",
+    "icon_url",
+    "active"
+]
 
 class Source(Base):
     __tablename__ = "source"
@@ -27,23 +35,11 @@ class Source(Base):
             "updated": self.updated
         }
 
-        handle_optional(self, json, [
-          "base_url",
-          "url",
-          "username",
-          "name",
-          "icon_url",
-          "active"
-        ])
-
+        read_optional(self, json, optional)
         return json
 
 
     def update(self, json):
         self.base_url = json["base_url"]
-        self.url = json["url"]
-        self.username = json["username"]
-        self.name = json["name"]
-        self.icon_url = json["icon_url"]
-        self.active = json["active"]
+        write_optional(self, json, optional)
         self.updated = joy.time.now()

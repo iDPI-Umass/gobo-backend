@@ -4,8 +4,11 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
-from .helpers import handle_optional
+from .helpers import read_optional, write_optional
 
+optional = [
+   "name"
+]
 
 class Person(Base):
     __tablename__ = "person"
@@ -25,11 +28,11 @@ class Person(Base):
             "updated": self.updated
         }
 
-        handle_optional(self, json, ["name"])
+        read_optional(self, json, optional)
         return json
           
 
     def update(self, json):
         self.authority_id = json["authority_id"]
-        self.name = json["name"]
+        write_optional(self, json, optional)
         self.updated = joy.time.now()

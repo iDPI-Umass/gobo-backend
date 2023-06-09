@@ -4,7 +4,15 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
-from .helpers import handle_optional
+from .helpers import read_optional, write_optional
+
+optional = [
+    "origin_type",
+    "origin_id",
+    "target_type",
+    "target_id",
+    "name"
+]
 
 class Link(Base):
     __tablename__ = "link"
@@ -26,21 +34,10 @@ class Link(Base):
             "updated": self.updated
         }
 
-        handle_optional(self, json, [
-          "origin_type",
-          "origin_id",
-          "target_type",
-          "target_id",
-          "name"
-        ])
-
+        read_optional(self, json, optional)
         return json
 
 
     def update(self, json):
-        self.origin_type = json["origin_type"]
-        self.origin_id = json["origin_id"]
-        self.target_type = json["target_type"]
-        self.target_id = json["target_id"]
-        self.name = json["name"]
+        write_optional(self, json, optional)
         self.updated = joy.time.now()

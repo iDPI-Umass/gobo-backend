@@ -11,6 +11,25 @@ add, get, update, remove, query, find, conditional_remove = itemgetter(
 )(define_crud(tables.Link))
 
 
+def safe_add(data):
+    with Session() as session:
+        statement = select(tables.Link)
+        for key, value in data.items():
+            statement = statement.where(getattr(tables.Link, key) == value)
+        statement = statement.limit(1)
+
+        row = session.scalars(statement).first()
+
+        if row == None:
+            row = tables.Link(**data)
+            session.add(row)
+            session.commit()
+            return row.to_dict()
+        else:
+            row.update(data)
+            session.commit()
+            return row.to_dict()
+
 def find_and_remove(data):
     with Session() as session:
         statement = select(tables.Link)

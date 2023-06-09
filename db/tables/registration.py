@@ -3,7 +3,14 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
-from .helpers import handle_optional
+from .helpers import read_optional, write_optional
+
+optional = [
+    "base_url",
+    "oauth_token",
+    "oauth_token_secret",
+    "state"
+]
 
 
 class Registration(Base):
@@ -27,19 +34,10 @@ class Registration(Base):
             "updated": self.updated
         }
 
-        handle_optional(self, json, [
-          "base_url",
-          "oauth_token",
-          "oauth_token_secret",
-          "state"
-        ])
-
+        read_optional(self, json, optional)
         return json
 
     def update(self, json):
         self.person_id = json["person_id"]
-        self.base_url = json["base_url"]
-        self.oauth_token = json["oauth_token"]
-        self.oauth_token_secret = json["oauth_token_secret"]
-        self.state = json["state"]
+        write_optional(self, json, optional)
         self.updated = joy.time.now()

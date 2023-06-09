@@ -725,15 +725,25 @@ resources:
         request:
           authorization:
             - general
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ base_url ]
+            properties:
+              base_url:
+                description: The base URL that identifies the target social media provider.
+                type: string
+
         response:
           type: application/json
           status: 200
           schema:
             type: object
             additionalProperties: false
-            required: [ redirectURL ]
+            required: [ redirect_url ]
             properties:
-              redirectURL:
+              redirect_url:
                 description: The URL the GOBO client should redirect the browser so the person may login
                 type: string
 
@@ -745,5 +755,28 @@ resources:
         request:
           authorization:
             - general
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ base_url ]
+            properties:
+              base_url:
+                description: The base URL that identifies the target social media provider.
+                type: string
+              oauth_token:
+                description: Required for Twitter. Querystring parameter provided in the authentication callback.
+                type: string
+              oauth_verifier:
+                description: Required for Twitter. Querystring parameter provided in the authentication callback.
+                type: string
+              code:
+                description: Required for Reddit and Mastodon. Querystring parameter provided in the authentication callback.
+                type: string 
+              state:
+                description: Required for Reddit. Querystring parameter provided in the authentication callback.
+                type: string
         response:
-          status: 204
+          status: 200
+          type: application/json
+          schema: *identity

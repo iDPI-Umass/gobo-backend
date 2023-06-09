@@ -3,8 +3,13 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
-from .helpers import handle_optional
+from .helpers import read_optional, write_optional
 
+optional = [
+    "base_url",
+    "client_id",
+    "client_secret"
+]
 
 class MastodonClient(Base):
     __tablename__ = "mastodon_client"
@@ -24,16 +29,10 @@ class MastodonClient(Base):
             "updated": self.updated
         }
 
-        handle_optional(self, json, [
-          "base_url",
-          "client_id",
-          "client_secret"
-        ])
+        read_optional(self, json, optional)
 
         return json
 
     def update(self, json):
-        self.base_url = json["base_url"]
-        self.client_id = json["client_id"]
-        self.client_secret = json["client_secret"]
+        write_optional(self, json, optional)
         self.updated = joy.time.now()

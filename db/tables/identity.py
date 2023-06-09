@@ -3,8 +3,17 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
-from .helpers import handle_optional
+from .helpers import read_optional, write_optional
 
+optional = [
+    "base_url",
+    "profile_url",
+    "profile_image",
+    "username",
+    "name",
+    "oauth_token",
+    "oauth_token_secret"
+]
 
 class Identity(Base):
     __tablename__ = "identity"
@@ -30,26 +39,11 @@ class Identity(Base):
             "updated": self.updated
         }
 
-        handle_optional(self, json, [
-          "base_url",
-          "profile_url",
-          "profile_image",
-          "username",
-          "name",
-          "oauth_token",
-          "oauth_token_secret"
-        ])
-
+        read_optional(self, json, optional)
         return json
 
 
     def update(self, json):
         self.person_id = json["person_id"]
-        self.base_url = json["base_url"]
-        self.profile_url = json["profile_url"]
-        self.profile_image = json["profile_image"]
-        self.username = json["username"]
-        self.name = json["name"]
-        self.oauth_token = json["oauth_token"]
-        self.oauth_token_secret = json["oauth_token_secret"]
+        write_optional(self, json, optional)
         self.updated = joy.time.now()

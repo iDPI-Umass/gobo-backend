@@ -3,7 +3,12 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
 import joy
 from ..base import Base
-from .helpers import handle_optional
+from .helpers import read_optional, write_optional
+
+optional = [
+    "word",
+    "category"
+]
 
 
 class Filter(Base):
@@ -25,11 +30,10 @@ class Filter(Base):
             "updated": self.updated
         }
 
-        handle_optional(self, json, ["word", "category"])
+        read_optional(self, json, optional)
         return json
 
     def update(self, json):
         self.person_id = json["person_id"]
-        self.word = json["word"]
-        self.category = json["category"]
+        write_optional(self, json, optional)
         self.updated = joy.time.now()

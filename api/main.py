@@ -1,3 +1,8 @@
+# Load configuration
+from dotenv import load_dotenv
+load_dotenv()
+
+
 # Configure GOBO logging
 from logging import config
 import logging

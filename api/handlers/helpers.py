@@ -1,4 +1,5 @@
 import logging
+import re
 import http_errors
 
 def parse_page_query(data):
@@ -41,3 +42,13 @@ def parse_query(views, data):
       "page": pages["page"],
       "where": []
     }
+
+def parse_base_url(data):
+    url = data["base_url"].lower()
+    is_domain = re.match("^https:\/\/([a-z0-9]+[.])+([a-z0-9])+$", url)
+    is_ipv4 = re.match("^https:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1-3}$", url)
+
+    if not is_domain and not is_ipv4:
+        raise http_errors.bad_request("base_url must either be an ipv4 address or a domain name (e.g. gobo.social or www.reddit.com)")
+    
+    return url
