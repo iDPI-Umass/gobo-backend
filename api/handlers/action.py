@@ -40,9 +40,9 @@ def action_onboard_identity_callback_post():
         identity = twitter.confirm_identity(registration, data)
     elif base_url == reddit.BASE_URL:
         data = reddit.validate_callback(request.json)
-        reddit.get_redirect_url(registration, data)
+        identity = reddit.confirm_identity(registration, data)
     else:
         data = mastodon.validate_callback(request.json)
-        mastodon.get_redirect_url(registration, data)
+        identity = mastodon.confirm_identity(registration, data)
 
     return identity

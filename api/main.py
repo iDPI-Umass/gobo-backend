@@ -48,11 +48,11 @@ def wrap_handler(alias, configuration, handler):
             status = getattr(e, "status", 500)
             if status == 500:
                 # Log this as an unhandled error and provide limited data to client.
-                logging.error(e)
+                logging.error(e, exc_info=True)
                 result = {}
             else:
                 # Log this as a handled error and provide relevant data to client.
-                logging.warning(e)
+                logging.warning(e, exc_info=True)
                 result = {"message": e.message}
           
             return result, status
