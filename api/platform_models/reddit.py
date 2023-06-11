@@ -45,7 +45,6 @@ def validate_callback(data):
 
 
 def confirm_identity(registration, data):
-    # Get person-specific credentials
     if registration.get("state") == None:
         raise http_errors.unprocessable_content("invalid registration, retry step 1 of identity onboarding")
 
@@ -74,7 +73,7 @@ def confirm_identity(registration, data):
     profile_url = f"{BASE_URL}/user/{profile.name}"
     _identity = {
         "person_id": registration["person_id"],
-        "base_url": registration["base_url"],
+        "base_url": BASE_URL,
         "profile_url": profile_url,
         "profile_image": profile.icon_img,
         "username": profile.name,

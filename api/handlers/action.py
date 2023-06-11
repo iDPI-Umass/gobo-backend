@@ -42,7 +42,7 @@ def action_onboard_identity_callback_post():
         data = reddit.validate_callback(request.json)
         identity = reddit.confirm_identity(registration, data)
     else:
-        data = mastodon.validate_callback(request.json)
+        data = mastodon.validate_callback(request.json, base_url)
         identity = mastodon.confirm_identity(registration, data)
 
     return identity

@@ -2,10 +2,11 @@ import logging
 from flask import request
 import http_errors
 import models
-from .helpers import parse_query
+from .helpers import parse_query, parse_base_url
 
 
 def identities_post():
+    parse_base_url(request.json)
     profile_url = request.json["profile_url"]
     identity = models.identity.find({"profile_url": profile_url})
     if identity != None:
@@ -26,6 +27,7 @@ def identity_get(id):
     return identity
 
 def identity_put(id):
+    parse_base_url(request.json)
     if request.json["id"] != None and id != request.json["id"]:
         raise http_errors.unprocessable_content(
             f"identity {id} does not match resource in body, rejecting"

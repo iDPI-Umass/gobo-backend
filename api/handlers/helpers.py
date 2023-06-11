@@ -49,6 +49,10 @@ def parse_base_url(data):
     is_ipv4 = re.match("^https:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1-3}$", url)
 
     if not is_domain and not is_ipv4:
-        raise http_errors.bad_request("base_url must either be an ipv4 address or a domain name (e.g. gobo.social or www.reddit.com)")
+        raise http_errors.bad_request(
+            "base_url must either be an ipv4 address or a domain name that " +
+            "does not end with a forward slash (e.g. https://gobo.social" +
+            "or https://www.reddit.com)"
+        )
     
     return url

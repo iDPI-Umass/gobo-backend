@@ -36,6 +36,8 @@ def lookup(authority_id):
 
 def get_links(Table, data):
     with Session() as session:
+        resource = data["resource"]
+
         if data["page"] == 1:
             offset = None
         else:
@@ -44,7 +46,8 @@ def get_links(Table, data):
         statement = select(Link) \
                     .where(Link.origin_type == "person") \
                     .where(Link.origin_id == data["id"]) \
-                    .where(Link.target_type == data["resource"]) \
+                    .where(Link.target_type == resource) \
+                    .where(Link.name == f"has-{resource}") \
                     .order_by(Link.created.desc()) \
                     .offset(offset) \
                     .limit(data["per_page"])
@@ -55,12 +58,19 @@ def get_links(Table, data):
             return []
         else:
             ids = []
+            id_index = {}
+            i = 0
             for row in rows:
-                ids.append(row.id)
+                ids.append(row.target_id)
+                id_index[row.target_id] = i
+                i += 1
 
-            statement = select(Table).where(Table.id in ids)
+
+            statement = select(Table).where(Table.id.in_(ids))
             rows = session.scalars(statement).all()
-            results = []
+            results = [None] * len(rows)
             for row in rows:
-                results.append(row.to_dict())
+                i = id_index[row.id]
+                results[i] = row.to_dict()
+            
             return results

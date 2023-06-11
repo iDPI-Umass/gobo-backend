@@ -70,7 +70,7 @@ def confirm_identity(registration, data):
     profile_url = f"{BASE_URL}/{profile.username}"
     _identity = {
         "person_id": registration["person_id"],
-        "base_url": registration["base_url"],
+        "base_url": BASE_URL,
         "profile_url": profile_url,
         "profile_image": profile.profile_image_url,
         "username": profile.username,
