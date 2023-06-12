@@ -2,7 +2,7 @@ FROM python:3.11.3
 
 WORKDIR /usr/src/app
 
-COPY ./api .
+COPY ./worker .
 RUN python -m venv env
 RUN pip install --no-cache-dir -r requirements.txt
 

@@ -24,3 +24,19 @@ services:
       - ./api:/usr/src/app
       - ./db:/usr/src/app/db
       - ./joy:/usr/src/app/joy
+      - ./models:/usr/src/app/models
+      - ./clients:/usr/src/app/clients
+
+  # worker:
+  #   image: gobo/worker
+  #   build:
+  #     context: .
+  #     dockerfile: worker/Dockerfile
+  #   depends_on:
+  #     - db
+  #   volumes:
+  #     - ./worker:/usr/src/app
+  #     - ./db:/usr/src/app/db
+  #     - ./joy:/usr/src/app/joy
+  #     - ./models:/usr/src/app/models
+  #     - ./clients:/usr/src/app/clients
