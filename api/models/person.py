@@ -12,8 +12,8 @@ tableDict = {
 }
 
 
-add, get, update, remove, query, find, conditional_remove = itemgetter(
-    "add", "get", "update", "remove", "query", "find", "conditional_remove"
+add, get, update, remove, query, find = itemgetter(
+    "add", "get", "update", "remove", "query", "find"
 )(define_crud(Person))
 
 # Because the person table records are implicity created via our connection
@@ -36,6 +36,7 @@ def lookup(authority_id):
 
 def get_links(Table, data):
     with Session() as session:
+        person_id = data["person_id"]
         resource = data["resource"]
 
         if data["page"] == 1:
@@ -45,7 +46,7 @@ def get_links(Table, data):
 
         statement = select(Link) \
                     .where(Link.origin_type == "person") \
-                    .where(Link.origin_id == data["id"]) \
+                    .where(Link.origin_id == person_id) \
                     .where(Link.target_type == resource) \
                     .where(Link.name == f"has-{resource}") \
                     .order_by(Link.created.desc()) \

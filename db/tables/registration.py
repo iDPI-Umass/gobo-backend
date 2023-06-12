@@ -25,19 +25,22 @@ class Registration(Base):
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
+    @staticmethod
+    def write(data):
+        return Registration(**data)
     
     def to_dict(self):
-        json = {
+        data = {
             "id": self.id,
             "person_id": self.person_id,
             "created": self.created,
             "updated": self.updated
         }
 
-        read_optional(self, json, optional)
-        return json
+        read_optional(self, data, optional)
+        return data
 
-    def update(self, json):
-        self.person_id = json["person_id"]
-        write_optional(self, json, optional)
+    def update(self, data):
+        self.person_id = data["person_id"]
+        write_optional(self, data, optional)
         self.updated = joy.time.now()

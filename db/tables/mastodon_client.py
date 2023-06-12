@@ -21,18 +21,21 @@ class MastodonClient(Base):
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
+    @staticmethod
+    def write(data):
+        return MastodonClient(**data)
     
     def to_dict(self):
-        json = {
+        data = {
             "id": self.id,
             "created": self.created,
             "updated": self.updated
         }
 
-        read_optional(self, json, optional)
+        read_optional(self, data, optional)
 
-        return json
+        return data
 
-    def update(self, json):
-        write_optional(self, json, optional)
+    def update(self, data):
+        write_optional(self, data, optional)
         self.updated = joy.time.now()

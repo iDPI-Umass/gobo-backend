@@ -19,20 +19,22 @@ class Person(Base):
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
+    @staticmethod
+    def write(data):
+        return Person(**data)
 
     def to_dict(self):
-        json = {
+        data = {
             "id": self.id,
             "authority_id": self.authority_id,
             "created": self.created,
             "updated": self.updated
         }
 
-        read_optional(self, json, optional)
-        return json
-          
+        read_optional(self, data, optional)
+        return data
 
-    def update(self, json):
-        self.authority_id = json["authority_id"]
-        write_optional(self, json, optional)
+    def update(self, data):
+        self.authority_id = data["authority_id"]
+        write_optional(self, data, optional)
         self.updated = joy.time.now()

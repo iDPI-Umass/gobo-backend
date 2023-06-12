@@ -13,7 +13,7 @@ optional = [
     "active"
 ]
 
-class Source(Base):
+class List(Base):
     __tablename__ = "source"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -26,20 +26,23 @@ class Source(Base):
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
+    @staticmethod
+    def write(data):
+        return List(**data)
     
     def to_dict(self):
-        json = {
+        data = {
             "id": self.id,
             "base_url": self.base_url,
             "created": self.created,
             "updated": self.updated
         }
 
-        read_optional(self, json, optional)
+        read_optional(self, data, optional)
 
-        return json
+        return data
 
-    def update(self, json):
-        self.base_url = json["base_url"]
-        write_optional(self, json, optional)
+    def update(self, data):
+        self.base_url = data["base_url"]
+        write_optional(self, data, optional)
         self.updated = joy.time.now()

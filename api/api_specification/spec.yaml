@@ -138,22 +138,22 @@ shards:
       <<: *mastodonClientCore
       <<: *timestamp
 
-  filterCore: &filterCore
+  lensCore: &lensCore
     <<: *person_id
     category:
-      description: Describes the type of filter and controls how it acts on the feed
+      description: Describes the type of lens and controls how it acts on the feed
       type: string
-    word:
-      description: Lists the keyword used in the filter.
-      type: string
+    configuration:
+      description: Description of a given lens configuration. Varies based on lens category.
+      type: object
 
-  filter: &filter
+  lens: &lens
     type: object
     additionalProperties: false
     required: [id, person_id ]
     properties:
       <<: *id
-      <<: *filterCore
+      <<: *lensCore
       <<: *timestamp
 
   sourceCore: &sourceCore
@@ -491,9 +491,9 @@ resources:
         response:
           status: 204
 
-  filters:
-    template: /filters{?view,direction,per_page,page}
-    route: /filters
+  lenses:
+    template: /lenses{?view,direction,per_page,page}
+    route: /lenses
     methods:
       post:
         request:
@@ -501,10 +501,10 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            properties: *filterCore
+            properties: *lensCore
         response:
           type: application/json
-          schema: *filter
+          schema: *lens
           status: 201
 
       get:
@@ -514,28 +514,28 @@ resources:
           status: 200
           schema:
             type: array
-            items: *filter
+            items: *lens
 
 
-  filter:
-    template: /filter/{id}
-    route: /filter/<int:id>
+  lens:
+    template: /lenses/{id}
+    route: /lenses/<int:id>
     methods:
       get:
         request: {}
         response:
           type: application/json
           status: 200
-          schema: *filter
+          schema: *lens
 
       put:
         request:
           type: application/json
-          schema: *filter
+          schema: *lens
         response:
           type: application/json
           status: 200
-          schema: *filter
+          schema: *lens
 
       delete:
         request: {}
@@ -666,9 +666,9 @@ resources:
           status: 200
           schema: *person
 
-  resources:
-    template: /people/{id}/{resource_type}{?per_page,page}
-    route: /people/<int:id>/<resource_type>
+  person_identities:
+    template: /people/{person_id}/identities{?per_page,page}
+    route: /people/<int:person_id>/identities
     methods:
       get:
         request:
@@ -679,15 +679,22 @@ resources:
           status: 200
           schema:
             type: array
-            items: 
-              anyOf:
-                - *identity
-                - *filter
-                - *source
+            items: *identity
 
-  resource:
-    template: /people/{id}/{resource_type}/{resource_id}
-    route: /people/<int:id>/<resource_type>/<int:resource_id>
+  person_identity:
+    template: /people/{person_id}/identities/{id}
+    route: /people/<int:person_id>/identities/<int:id>
+    methods:
+      delete:
+        request:
+          authorization:
+            - person
+        response:
+          status: 204
+
+  person_lenses:
+    template: /people/{person_id}/lenses{?per_page,page}
+    route: /people/<int:person_id>/lenses
     methods:
       get:
         request:
@@ -696,15 +703,35 @@ resources:
         response:
           type: application/json
           status: 200
+          schema:
+            type: array
+            items: *lens
 
+      post:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema: *lensCore
+        response:
+          type: application/json
+          status: 201
+          schema: *lens
+
+  person_lens:
+    template: /people/{person_id}/lenses/{id}
+    route: /people/<int:person_id>/lenses/<int:id>
+    methods:
       put:
         request:
           authorization:
             - person
           type: application/json
+          schema: *lens
         response:
-          type: application/json
           status: 200
+          type: application/json
+          schema: *lens
 
       delete:
         request:

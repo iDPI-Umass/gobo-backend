@@ -1,6 +1,8 @@
 import logging
 import re
+from flask import g
 import http_errors
+import models
 
 def parse_page_query(data):
     try:
@@ -56,3 +58,11 @@ def parse_base_url(data):
         )
     
     return url
+
+def get_viewer(id):
+    try:
+        person = g.person
+    except Exception as e:
+        person = models.person.get(id)
+    
+    return person

@@ -115,7 +115,7 @@ def authorize_request(configuration):
     if "person" in schema:
         person = models.person.lookup(g.claims["sub"])
         g.person = person
-        if person["id"] == request.args["id"]:
+        if person["id"] == request.args["person_id"]:
             return
 
     
