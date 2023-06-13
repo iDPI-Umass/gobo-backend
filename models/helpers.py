@@ -56,6 +56,8 @@ def define_crud(Table):
                 value = expression["value"]
                 if expression["operator"] == "eq":
                     statement.where(getattr(Table, key) == value)
+                if expression["operator"] == "neq":
+                    statement.where(getattr(Table, key) != value)
                 elif expression["operator"] == "gte":
                     statement.where(getattr(Table, key) >= value)
                 elif expression["operator"] == "gt":

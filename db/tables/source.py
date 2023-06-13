@@ -11,21 +11,25 @@ optional = [
     "username",
     "name",
     "icon_url",
-    "active"
+    "active",
+    "last_retrieved"
 ]
 
 class Source(Base):
     __tablename__ = "source"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    platform_id: Mapped[str]
     base_url: Mapped[Optional[str]]
     url: Mapped[Optional[str]]
     username: Mapped[Optional[str]]
     name: Mapped[Optional[str]]
     icon_url: Mapped[Optional[str]]
     active: Mapped[bool] = mapped_column(insert_default=False)
+    last_retrieved: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
+
 
     @staticmethod
     def write(data):
@@ -34,6 +38,7 @@ class Source(Base):
     def to_dict(self):
         data = {
             "id": self.id,
+            "platform_id": self.platform_id,
             "created": self.created,
             "updated": self.updated
         }
@@ -44,5 +49,6 @@ class Source(Base):
 
     def update(self, data):
         self.base_url = data["base_url"]
+        self.platform_id = data["platform_id"]
         write_optional(self, data, optional)
         self.updated = joy.time.now()

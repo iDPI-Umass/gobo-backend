@@ -4,20 +4,25 @@ load_dotenv()
 
 
 # Configure GOBO logging
-from logging import config
 import logging
-config.dictConfig({
-    "version": 1,
-    "formatters": {"default": {
-      "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
-    }},
-    "handlers": {"wsgi": {
-        "class": "logging.StreamHandler",
-        "stream": "ext://flask.logging.wsgi_errors_stream",
-        "formatter": "default"
-    }},
-    "root": {
-        "level": "INFO",
-        "handlers": ["wsgi"]
-    }
-})
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+    level=logging.INFO
+)
+
+
+# Establish worker threads that drive its work.
+import time
+from cron_sources import schedule, start_sources
+import threads
+
+start_sources()
+threads.start_twitter(1)
+threads.start_reddit(1)
+threads.start_mastodon(1)
+
+# Main loop that keeps the worker online and checking the queue for task.
+while 1:
+    schedule.run_pending()
+    time.sleep(1)
