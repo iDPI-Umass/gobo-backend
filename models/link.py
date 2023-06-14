@@ -21,7 +21,7 @@ def safe_add(data):
         row = session.scalars(statement).first()
 
         if row == None:
-            row = tables.Link(**data)
+            row = tables.Link.write(data)
             session.add(row)
             session.commit()
             return row.to_dict()

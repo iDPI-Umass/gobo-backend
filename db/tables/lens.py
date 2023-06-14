@@ -25,7 +25,7 @@ class Lens(Base):
     def write(data):
         _data = data.copy()
         configuration = _data.get("configuration")
-        if  configuration != None:
+        if configuration != None:
             _data["configuration"] = json.dumps(configuration)
         return Lens(**_data)
 

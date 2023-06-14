@@ -4,6 +4,8 @@ import praw
 
 
 class Reddit():
+    BASE_URL = "https://www.reddit.com"
+
     def __init__(self, identity = None):
         self.identity = identity or {}
         self.client = praw.Reddit(

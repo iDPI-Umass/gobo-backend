@@ -2,30 +2,29 @@ import logging
 from queues import twitter as queue
 from clients import Twitter
 import models
-import platform_models
 
-twitter = Twitter()
 
 def dispatch(task):
     task.handler = "twitter"
-    logging.info(task)
+    logging.info("dispatching: %s", task)
 
     if task.name == "start pull sources":
         start_pull_sources(task)
-    elif task.name == "pull sources"
+    elif task.name == "pull sources":
         pull_sources(task)
-    else
-        raise Exception("unknown task")
+    else:
+        logging.warning("No matching job for task: %s", task)
     
-    return
+    task.remove()
 
 def start_pull_sources(task):
+    page = task.details.get("page") or 1
     query = {
         "per_page": 500,
-        "page": task.details.get("page"),
+        "page": page,
         "where": [{
             "key": "base_url",
-            "value": platform_models.twitter.BASE_URL,
+            "value": Twitter.BASE_URL,
             "operator": "eq"
         }]
     }
@@ -49,9 +48,19 @@ def pull_sources(task):
     sources = models.source.store_twitter_sources(_sources)
 
     for source in sources:
+        models.link.safe_add({
+            "origin_type": "person",
+            "origin_id": identity["person_id"],
+            "target_type": "source",
+            "target_id": source["id"],
+            "name": "follows",
+            "secondary": None
+        })
+
+
         queue.put("pull posts", {
-            "twitter": twitter
-            "identity": identity
+            "twitter": twitter,
+            "identity": identity,
             "source": source,
         })
 
@@ -66,11 +75,12 @@ def pull_posts(task):
 
     _posts = twitter.get_posts(source)
     posts = models.post.store_twitter_posts(source, _posts)
-    for post in posts
+    for post in posts:
         models.link.safe_add({
             "origin_type": "person",
             "origin_id": identity["person_id"],
             "target_type": "post",
             "target_id": post["id"],
-            "name": "full-feed"
+            "name": "full-feed",
+            "secondary": None
         })

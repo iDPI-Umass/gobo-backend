@@ -1,3 +1,4 @@
+import logging
 import threading
 import queues
 import jobs
@@ -17,6 +18,20 @@ class Thread():
         self.thread.start()
 
 
+
+def start_api():  
+    thread = Thread(queues.api, jobs.api.dispatch)
+    thread.start()
+
+def start_test(count):
+    for i in range(count):
+        thread = Thread(queues.test, jobs.test.dispatch)
+        thread.start()
+
+def start_database(count):
+    for i in range(count):
+        thread = Thread(queues.database, jobs.database.dispatch)
+        thread.start()
 
 def start_twitter(count):
     for i in range(count):

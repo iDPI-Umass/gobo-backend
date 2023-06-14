@@ -1,4 +1,5 @@
 import logging
+import json
 from typing import Optional
 from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
@@ -7,30 +8,27 @@ from ..base import Base
 from .helpers import read_optional, write_optional
 
 optional = [
-    "origin_type",
-    "origin_id",
-    "target_type",
-    "target_id",
-    "name",
-    "secondary"
+    "queue",
+    "name"
 ]
 
-class Link(Base):
-    __tablename__ = "link"
+class Task(Base):
+    __tablename__ = "task"
 
-    id: Mapped[str] = mapped_column(Integer, primary_key=True)
-    origin_type: Mapped[Optional[str]]
-    origin_id: Mapped[Optional[int]]
-    target_type: Mapped[Optional[str]]
-    target_id: Mapped[Optional[int]]
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    queue: Mapped[Optional[str]]
     name: Mapped[Optional[str]]
-    secondary: Mapped[Optional[str]]
+    details: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
+
     @staticmethod
     def write(data):
-        return Link(**data)
+        _data = data.copy()
+        details = _data.get("details") or {}
+        _data["details"] = json.dumps(details)
+        return Task(**_data)
 
     def to_dict(self):
         data = {
@@ -40,8 +38,13 @@ class Link(Base):
         }
 
         read_optional(self, data, optional)
+        details = getattr(self, "details")
+        data["details"] = json.loads(details)
+        
         return data
 
     def update(self, data):
         write_optional(self, data, optional)
+        details = data.get("details") or {}
+        self.details = json.dumps(details)
         self.updated = joy.time.now()

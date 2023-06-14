@@ -2,6 +2,6 @@ import logging
 
 
 def dispatch(task):
-    task.handler = "reddit"
+    task.handler = "test"
     logging.info("dispatching: %s", task)
     task.remove()

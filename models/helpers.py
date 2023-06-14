@@ -51,26 +51,30 @@ def define_crud(Table):
             else:
                 offset = (data["page"] - 1) * data["per_page"]
 
+
+
+            statement = select(Table)
+
             for expression in data["where"]:
                 key = expression["key"]
                 value = expression["value"]
                 if expression["operator"] == "eq":
-                    statement.where(getattr(Table, key) == value)
+                    statement = statement.where(getattr(Table, key) == value)
                 if expression["operator"] == "neq":
-                    statement.where(getattr(Table, key) != value)
+                    statement = statement.where(getattr(Table, key) != value)
                 elif expression["operator"] == "gte":
-                    statement.where(getattr(Table, key) >= value)
+                    statement = statement.where(getattr(Table, key) >= value)
                 elif expression["operator"] == "gt":
-                    statement.where(getattr(Table, key) > value)
+                    statement = statement.where(getattr(Table, key) > value)
                 elif expression["operator"] == "lte":
-                    statement.where(getattr(Table, key) <= value)
+                    statement = statement.where(getattr(Table, key) <= value)
                 elif expression["operator"] == "lt":
-                    statement.where(getattr(Table, key) < value)
+                    statement = statement.where(getattr(Table, key) < value)
 
-            statement = select(Table) \
-                        .order_by(attribute) \
-                        .offset(offset) \
-                        .limit(data["per_page"])
+            statement = statement.order_by(attribute) \
+                .offset(offset) \
+                .limit(data["per_page"])
+
 
             rows = session.scalars(statement).all()
 

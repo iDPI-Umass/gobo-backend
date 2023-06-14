@@ -33,6 +33,9 @@ shards:
     name:
       description: The name that describes the type of edge between these resources.
       type: string
+    secondary:
+      description: A secondary dimension projected into this edge, suitable for sorting a given family of edges.
+      type: string
 
   link: &link
     type: object
@@ -42,6 +45,27 @@ shards:
       <<: *id
       <<: *linkCore
       <<: *timestamp
+
+  taskCore: &taskCore
+    queue:
+      description: The name of the queue family that should handle this task.
+      type: string
+    name:
+      description: The name describing this task operation.
+      type: string
+    details:
+      description: The payload of information relevant to completing this task.
+      type: object
+
+  task: &task
+    type: object
+    additionalProperties: false
+    required: [id]
+    properties:
+      <<: *id
+      <<: *taskCore
+      <<: *timestamp
+
 
   personCore: &personCore
     name:
@@ -157,6 +181,9 @@ shards:
       <<: *timestamp
 
   sourceCore: &sourceCore
+    platform_id:
+      description: The ID of this entity within the given platform.
+      type: string
     base_url:
       description: The base URL of the source, pointing to its platform
       type: string
@@ -174,6 +201,9 @@ shards:
     active:
       description: Flag to control whether this source is actively used to build feeds.
       type: boolean
+    last_retrieved:
+      description: The timestamp this resource was last fetched.
+      type: string
 
   source: &source
     type: object
@@ -276,6 +306,58 @@ resources:
           type: application/json
           status: 200
           schema: *link
+
+      delete:
+        request: {}
+        response:
+          status: 204
+
+
+  tasks:
+    template: /tasks{?view,direction,per_page,page}
+    route: /tasks
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            properties: *taskCore
+        response:
+          type: application/json
+          schema: *task
+          status: 201
+
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: *task
+
+
+  task:
+    template: /tasks/{id}
+    route: /tasks/<int:id>
+    methods:
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema: *task
+
+      put:
+        request:
+          type: application/json
+          schema: *task
+        response:
+          type: application/json
+          status: 200
+          schema: *task
 
       delete:
         request: {}
@@ -740,9 +822,6 @@ resources:
         response:
           status: 204
 
-      
-
-  
 
   action_onboard_identity_start:
     template: /actions/onboard-identity

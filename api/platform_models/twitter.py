@@ -3,7 +3,7 @@ import models
 from clients import Twitter
 import http_errors
 
-BASE_URL = "https://twitter.com"
+BASE_URL = Twitter.BASE_URL
 
 def get_redirect_url(person):
     user_handler = Twitter.get_user_handler(None)
@@ -91,7 +91,8 @@ def confirm_identity(registration, data):
       "origin_id": identity["person_id"],
       "target_type": "identity",
       "target_id": identity["id"],
-      "name": "has-identity"
+      "name": "has-identity",
+      "secondary": None
     })
     
     models.registration.remove(registration["id"])

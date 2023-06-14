@@ -26,7 +26,6 @@ services:
       - ./joy:/usr/src/app/joy
       - ./models:/usr/src/app/models
       - ./clients:/usr/src/app/clients
-      - ./platform_models:/usr/src/app/platform_models
 
   worker:
     image: gobo/worker
@@ -41,4 +40,3 @@ services:
       - ./joy:/usr/src/app/joy
       - ./models:/usr/src/app/models
       - ./clients:/usr/src/app/clients
-      - ./platform_models:/usr/src/app/platform_models

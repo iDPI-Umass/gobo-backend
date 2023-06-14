@@ -2,5 +2,6 @@ import logging
 
 
 def dispatch(task):
-    logging.info(task)
-    return
+    task.handler = "mastodon"
+    logging.info("dispatching: %s", task)
+    task.remove()

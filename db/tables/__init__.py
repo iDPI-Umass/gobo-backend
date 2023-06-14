@@ -6,3 +6,4 @@ from .person import *
 from .post import *
 from .registration import *
 from .source import *
+from .task import *

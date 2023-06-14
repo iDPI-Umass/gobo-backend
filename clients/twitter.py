@@ -4,6 +4,8 @@ from os import environ
 
 
 class Twitter():
+    BASE_URL = "https://twitter.com"
+
     def __init__(self, identity):
         self.identity = identity
         self.client = tweepy.Client(
@@ -36,7 +38,7 @@ class Twitter():
         return self.client.get_me(user_fields=user_fields).data
 
     def list_posts(self, source):
-    current_timestamp = datetime.datetime.now().timestamp()
+        current_timestamp = datetime.datetime.now().timestamp()
         pages = tweepy.Paginator(
             self.client.get_user_tweets,
             id = followed_source.identifier,
@@ -47,9 +49,9 @@ class Twitter():
             media_fields=['url'])
     
 
-    posts = []
-    for response in pages:
-      if response.data:
-        posts = posts + [gobo_types.post_from_tweepy_tweet(tweet, response.includes, current_timestamp, followed_source) for tweet in response.data]
-  
-    return posts
+        posts = []
+        for response in pages:
+          if response.data:
+            posts = posts + [gobo_types.post_from_tweepy_tweet(tweet, response.includes, current_timestamp, followed_source) for tweet in response.data]
+      
+        return posts

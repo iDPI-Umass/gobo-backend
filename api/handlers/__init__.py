@@ -1,3 +1,4 @@
+from .action import *
 from .discovery import *
 from .identity import *
 from .lens import *
@@ -8,7 +9,7 @@ from .registration import *
 from .person import *
 from .post import *
 from .source import *
-from .action import *
+from .task import *
 
 from .person_identity import *
 from .person_lens import *
