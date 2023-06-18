@@ -32,7 +32,9 @@ def action_onboard_identity_callback_post():
     })
 
     if registration == None:
-        http_errors.unprocessable_content("this person has no pending registration with this provider")
+        http_errors.unprocessable_content(
+            "this person has no pending registration with this provider"
+        )
 
 
     if base_url == twitter.BASE_URL:
@@ -46,3 +48,37 @@ def action_onboard_identity_callback_post():
         identity = mastodon.confirm_identity(registration, data)
 
     return identity
+
+
+def action_onboard_identity_sources_post():
+    authority_id = g.claims["sub"]
+    person = models.person.lookup(authority_id)
+    base_url = parse_base_url(request.json)
+    
+    registration = models.identity.find({
+        "person_id": person["id"],
+        "base_url": base_url
+    })
+
+    if registration == None:
+        http_errors.unprocessable_content(
+            "this person has no identity with this provider"
+        )
+
+    if base_url == twitter.BASE_URL:
+        queue = "twitter"
+    elif base_url == reddit.BASE_URL:
+        queue = "reddit"
+    else:
+        queue = "mastodon"
+
+    task = models.task.add({
+      "queue": queue,
+      "name": "pull sources",
+      "details": {
+        "identity": identity
+      }
+    })
+
+
+    return task

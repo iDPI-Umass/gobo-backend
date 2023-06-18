@@ -8,9 +8,18 @@ class Thread():
     def __init__(self, queue, dispatch):
         def main():
             while True:
-                task = queue.get()
-                dispatch(task)
-                queue.task_done()
+                try:
+                    task = queue.get()
+                    dispatch(task)
+                    queue.task_done()
+                except Exception as e:
+                    logging.error(e, exc_info=True)
+                    if task != None:
+                        queue.task_done()
+                        task.tries = task.tries + 1
+                        if task.tries < 3:
+                            queue.put_task(task)
+                
         
         self.thread = threading.Thread(target=main)
 

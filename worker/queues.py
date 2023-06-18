@@ -4,11 +4,12 @@ import queue
 
 
 class Task():
-    def __init__(self, queue, name, details = None, id = None):
+    def __init__(self, queue, name, details = None, id = None, tries = 0):
         self.id = id or joy.crypto.random({"encoding": "safe-base64"})
         self.queue = queue
         self.handler = None
         self.name = name
+        self.tries = tries
         self.details = details or {}
         
         now = joy.time.now()
@@ -24,6 +25,7 @@ class Task():
           "id": self.id,
           "queue": self.queue,
           "name": self.name,
+          "tries": self.tries,
           "handler": self.handler,
           "created": self.created,
           "updated": self.updated,

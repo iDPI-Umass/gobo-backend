@@ -97,6 +97,24 @@ def define_crud(Table):
             else:
                 return row.to_dict()
 
+    def pull(data):
+        page = data.get("page") or 1
+        data["page"] = page
+        per_page = data.get("per_page") or 500
+        data["per_page"] = per_page
+
+        results = []
+        while True:
+            _results = query(data)
+            results.extend(_results)
+            if len(_results) != per_page:
+                break
+            else:
+                page = page + 1
+                data["page"] = page
+
+        return results
+
 
     return {
       "add": add,
@@ -104,5 +122,6 @@ def define_crud(Table):
       "update": update,
       "remove": remove,
       "query": query,
-      "find": find
+      "find": find,
+      "pull": pull
     }

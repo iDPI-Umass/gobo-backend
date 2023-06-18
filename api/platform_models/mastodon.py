@@ -104,11 +104,7 @@ def confirm_identity(registration, data):
     }
 
     # Store and finalize
-    identity = models.identity.find({"profile_url": profile_url})
-    if identity == None:
-        identity = models.identity.add(_identity)
-    else:
-        identity = models.identity.update(identity["id"], _identity)
+    identity = models.identity.upsert(_identity)
 
     models.link.safe_add({
       "origin_type": "person",

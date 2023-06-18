@@ -86,6 +86,9 @@ shards:
 
   identityCore: &identityCore
     <<: *person_id
+    platform_id:
+      description: The unique ID for this identity on the host provider.
+      type: string
     base_url:
       description: The base URL of the service provider of this identity.
       type: string
@@ -886,3 +889,23 @@ resources:
           status: 200
           type: application/json
           schema: *identity
+
+  action_onboard_identity_sources:
+    template: /actions/onboard-identity-sources
+    route: /actions/onboard-identity-sources
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ base_url ]
+            properties:
+              base_url:
+                description: The base URL that identifies the target social media provider.
+                type: string
+        response:
+          status: 200
+          type: application/json
+          schema: *task

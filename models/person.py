@@ -75,3 +75,26 @@ def get_links(Table, data):
                 results[i] = row.to_dict()
             
             return results
+
+def pull_links(Table, data):
+    page = data.get("page") or 1
+    data["page"] = page
+    per_page = data.get("per_page") or 500
+    data["per_page"] = per_page
+
+    results = []
+    while True:
+        _results = get_links(Table, data)
+        results.extend(_results)
+        if len(_results) != per_page:
+            break
+        else:
+            page = page + 1
+            data["page"] = page
+
+    return results
+
+def pull_sources(id):
+    data = {
+      resource: "sources"
+    }

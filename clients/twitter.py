@@ -1,6 +1,7 @@
 import logging
-import tweepy
 from os import environ
+import tweepy
+import joy
 
 
 class Twitter():
@@ -32,26 +33,86 @@ class Twitter():
 
         return handler
 
+    @staticmethod
+    def map_sources(data):
+        sources = []
+        for user in data["users"]:
+            sources.append({
+                "platform_id": str(user.id),
+                "base_url": self.BASE_URL,
+                "url": f"{self.BASE_URL}/{user.username}",
+                "username": user.username,
+                "name": user.name,
+                "icon_url": user.profile_image_url,
+                "active": True
+            })
+  
+        return sources
+
+
+    @staticmethod
+    def map_posts(source, data):
+        users = data["users"]
+        posts = []
+        for tweet in data["tweets"]:
+            author = users[tweet.author_id]
+            platform_id = str(tweet.id)
+            post = {
+                "source_id": source["id"],
+                "base_url": self.BASE_URL,
+                "platform_id": platform_id,
+                "title": None,
+                "content": tweet.text,
+                "author": f"{self.BASE_URL}/{author.username}",
+                "url": f"{self.BASE_URL}/{author.username}/status/{platform_id}",
+            }
+            posts.append(post)
+
+        return posts
+
 
     def get_profile(self):
         user_fields = ["name", "username", "profile_image_url"]
         return self.client.get_me(user_fields=user_fields).data
 
-    def list_posts(self, source):
-        current_timestamp = datetime.datetime.now().timestamp()
+
+    def list_sources(self):
         pages = tweepy.Paginator(
-            self.client.get_user_tweets,
-            id = followed_source.identifier,
-            max_results=100, start_time = start_time, user_auth=True,
+            client.get_users_following,
+            self.identity.platform_id,
+            user_auth= True,
+            user_fields = ["name", "username", "profile_image_url"]
+        )
+    
+        users = []
+        for response in pages:
+            users.extend(response.data)
+
+        return {"users": users}
+
+
+    def list_posts(self, source):
+        pages = tweepy.Paginator(
+            self.client.get_users_tweets,
+            id = source["platform_id"],
+            max_results=100, 
+            start_time = joy.time.now(), 
+            user_auth=True,
             expansions=['author_id', 'attachments.media_keys'],
             tweet_fields=['created_at', 'entities'],
             user_fields=['profile_image_url'],
-            media_fields=['url'])
+            media_fields=['url']
+        )
     
 
-        posts = []
+        tweets = []
+        users = {}
         for response in pages:
-          if response.data:
-            posts = posts + [gobo_types.post_from_tweepy_tweet(tweet, response.includes, current_timestamp, followed_source) for tweet in response.data]
+            tweets.extend(response.data)
+            for user in response.includes["users"]:
+                users[user.id] = user
       
-        return posts
+        return {
+            "tweets": tweets,
+            "users": users
+        }

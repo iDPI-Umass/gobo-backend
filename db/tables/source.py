@@ -48,7 +48,6 @@ class Source(Base):
 
 
     def update(self, data):
-        self.base_url = data["base_url"]
         self.platform_id = data["platform_id"]
         write_optional(self, data, optional)
         self.updated = joy.time.now()
