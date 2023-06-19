@@ -3,6 +3,15 @@ from sqlalchemy import select
 from db import tables
 from db.base import Session
 
+
+def where(key, value, operator = "eq"):
+    return {
+        "key": key,
+        "value": value,
+        "operator": operator
+    }
+
+
 def define_crud(Table):
     def add(data):
         with Session() as session:
@@ -40,11 +49,14 @@ def define_crud(Table):
                 return row.to_dict()
 
     def query(data):
-        with Session() as session:  
-            if data["direction"] == "descending":
-                attribute = getattr(Table, data["view"]).desc()
+        with Session() as session:
+            direction = data.get("direction") or "descending"
+            view = data.get("view") or "created"
+
+            if direction == "descending":
+                attribute = getattr(Table, view).desc()
             else:
-                attribute = getattr(Table, data["view"])
+                attribute = getattr(Table, view)
 
             if data["page"] == 1:
                 offset = None

@@ -50,20 +50,21 @@ def action_onboard_identity_callback_post():
     return identity
 
 
-def action_onboard_identity_sources_post():
+def action_pull_identity_sources_post():
     authority_id = g.claims["sub"]
     person = models.person.lookup(authority_id)
-    base_url = parse_base_url(request.json)
     
-    registration = models.identity.find({
+    identity = models.identity.find({
         "person_id": person["id"],
-        "base_url": base_url
+        "profile_url": request.json["profile_url"]
     })
 
-    if registration == None:
+    if identity == None:
         http_errors.unprocessable_content(
             "this person has no identity with this provider"
         )
+
+    base_url = identity["base_url"]
 
     if base_url == twitter.BASE_URL:
         queue = "twitter"

@@ -12,7 +12,8 @@ optional = [
     "content",
     "author",
     "url",
-    "visibility"
+    "visibility",
+    "published"
 ]
 
 class Post(Base):
@@ -27,6 +28,8 @@ class Post(Base):
     author: Mapped[Optional[str]]
     url: Mapped[Optional[str]]
     visibility: Mapped[Optional[str]]
+    published: Mapped[Optional[str]]
+    attachments: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
@@ -42,10 +45,19 @@ class Post(Base):
             "updated": self.updated
         }
 
+        attachments = getattr(self, "attachments")
+        if attachments != None:
+            data["attachments"] = json.loads(attachments)
+
         read_optional(self, data, optional)
         return data
 
     def update(self, data):
         self.source_id = data["source_id"]
         write_optional(self, data, optional)
+
+        attachments = data.get("attachments")
+        if attachments != None:
+            self.attachments = json.dumps(attachments)
+
         self.updated = joy.time.now()

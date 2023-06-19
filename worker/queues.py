@@ -41,7 +41,8 @@ class Task():
         self.updated = joy.time.now()
 
     def remove(self):
-        models.task.remove(self.id)
+        if type(self.id) == int:
+            models.task.remove(self.id)
 
 
 class Queue():

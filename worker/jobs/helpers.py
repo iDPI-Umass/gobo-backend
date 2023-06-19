@@ -1,12 +1,6 @@
 import models
 
-
-def where(key, value, operator = "eq"):
-    return {
-        "key": key,
-        "value": value,
-        "operator": operator
-    }
+where = models.helpers.where
 
 
 def reconcile_sources(person_id, sources):
@@ -15,7 +9,7 @@ def reconcile_sources(person_id, sources):
         desired_sources.append(source["id"])
     
     results = models.link.pull({
-        where: [
+        "where": [
             where("origin_type", "person"),
             where("origin_id", person_id),
             where("target_type", "source"),

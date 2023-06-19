@@ -204,9 +204,6 @@ shards:
     active:
       description: Flag to control whether this source is actively used to build feeds.
       type: boolean
-    last_retrieved:
-      description: The timestamp this resource was last fetched.
-      type: string
 
   source: &source
     type: object
@@ -241,6 +238,13 @@ shards:
     visibility:
       description: Describes how publicly visible this post is
       type: string
+    published:
+      description: The ISO 8601 timestamp this post was published on the host platform.
+      type: string
+    attachments:
+      description: List of URLs where you can find media attachments for this post.
+      type: array
+      items: string
 
   post: &post
     type: object
@@ -825,6 +829,21 @@ resources:
         response:
           status: 204
 
+  person_feed:
+    template: /people/{person_id}/feed{?view,direction,per_page,page}
+    route: /people/<int:person_id>/feed
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: *post
+
 
   action_onboard_identity_start:
     template: /actions/onboard-identity
@@ -890,9 +909,9 @@ resources:
           type: application/json
           schema: *identity
 
-  action_onboard_identity_sources:
-    template: /actions/onboard-identity-sources
-    route: /actions/onboard-identity-sources
+  action_pull_identity_sources:
+    template: /actions/pull-identity-sources
+    route: /actions/pull-identity-sources
     methods:
       post:
         request:
@@ -900,10 +919,10 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            required: [ base_url ]
+            required: [ profile_url ]
             properties:
-              base_url:
-                description: The base URL that identifies the target social media provider.
+              profile_url:
+                description: The unique URL of this identity with the host provider.
                 type: string
         response:
           status: 200

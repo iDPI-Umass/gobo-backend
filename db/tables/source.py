@@ -11,8 +11,7 @@ optional = [
     "username",
     "name",
     "icon_url",
-    "active",
-    "last_retrieved"
+    "active"
 ]
 
 class Source(Base):
@@ -26,7 +25,6 @@ class Source(Base):
     name: Mapped[Optional[str]]
     icon_url: Mapped[Optional[str]]
     active: Mapped[bool] = mapped_column(insert_default=False)
-    last_retrieved: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 

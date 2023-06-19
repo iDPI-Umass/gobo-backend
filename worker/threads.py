@@ -17,8 +17,11 @@ class Thread():
                     if task != None:
                         queue.task_done()
                         task.tries = task.tries + 1
-                        if task.tries < 3:
+                        if task.tries < 0:
                             queue.put_task(task)
+                        else:
+                            # TODO: Create dead-letter queue.
+                            task.remove()
                 
         
         self.thread = threading.Thread(target=main)

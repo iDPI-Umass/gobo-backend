@@ -1,6 +1,7 @@
 import logging
 from os import environ
 import tweepy
+import markdown
 import joy
 
 
@@ -35,12 +36,13 @@ class Twitter():
 
     @staticmethod
     def map_sources(data):
+        base_url = Twitter.BASE_URL
         sources = []
         for user in data["users"]:
             sources.append({
                 "platform_id": str(user.id),
-                "base_url": self.BASE_URL,
-                "url": f"{self.BASE_URL}/{user.username}",
+                "base_url": base_url,
+                "url": f"{base_url}/{user.username}",
                 "username": user.username,
                 "name": user.name,
                 "icon_url": user.profile_image_url,
@@ -52,19 +54,29 @@ class Twitter():
 
     @staticmethod
     def map_posts(source, data):
+        base_url = Twitter.BASE_URL
         users = data["users"]
         posts = []
         for tweet in data["tweets"]:
             author = users[tweet.author_id]
+            author_url = f"{base_url}/{author.username}"
             platform_id = str(tweet.id)
+
+            attachments = []
+            for attachment in tweet.attachments:
+                for key in attachment["media_keys"]:
+                    attachments.append(media[key].url)
+
             post = {
                 "source_id": source["id"],
-                "base_url": self.BASE_URL,
+                "base_url": base_url,
                 "platform_id": platform_id,
                 "title": None,
-                "content": tweet.text,
-                "author": f"{self.BASE_URL}/{author.username}",
-                "url": f"{self.BASE_URL}/{author.username}/status/{platform_id}",
+                "content": markdown.markdown(tweet.text),
+                "author": author_url,
+                "url": f"{author_url}/status/{platform_id}",
+                "published": tweet.created_at,
+                "attachments": attachments
             }
             posts.append(post)
 
@@ -78,25 +90,34 @@ class Twitter():
 
     def list_sources(self):
         pages = tweepy.Paginator(
-            client.get_users_following,
-            self.identity.platform_id,
+            self.client.get_users_following,
+            self.identity["platform_id"],
             user_auth= True,
             user_fields = ["name", "username", "profile_image_url"]
         )
     
         users = []
         for response in pages:
+            if response.data == None:
+                continue
             users.extend(response.data)
 
         return {"users": users}
 
 
     def list_posts(self, source):
+        last_retrieved = source.get("last_retrieved")
+        if last_retrieved == None:
+            max_pages = 1
+        else:
+            max_pages = 32
+
         pages = tweepy.Paginator(
             self.client.get_users_tweets,
             id = source["platform_id"],
-            max_results=100, 
-            start_time = joy.time.now(), 
+            max_results=100,
+            limit = max_pages,
+            start_time = last_retrieved, 
             user_auth=True,
             expansions=['author_id', 'attachments.media_keys'],
             tweet_fields=['created_at', 'entities'],
@@ -107,12 +128,19 @@ class Twitter():
 
         tweets = []
         users = {}
+        media = {}
         for response in pages:
+            if response.data == None:
+                continue
             tweets.extend(response.data)
             for user in response.includes["users"]:
                 users[user.id] = user
-      
+            for medium in response.includes["media"]:
+                media[medium.media_key] = medium
+
+
         return {
             "tweets": tweets,
-            "users": users
+            "users": users,
+            "media": media
         }

@@ -1,4 +1,5 @@
 from datetime import datetime
 
 def now():
-    return datetime.utcnow().isoformat(timespec="milliseconds")
+    timestamp = datetime.utcnow().isoformat(timespec="milliseconds")
+    return f"{timestamp}Z"
