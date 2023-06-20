@@ -1,4 +1,5 @@
 import models
+import queues
 
 where = models.helpers.where
 
@@ -22,23 +23,16 @@ def reconcile_sources(person_id, sources):
         current_sources.append(result["target_id"])
 
 
-    difference = list(set(desired_sources) - set(current_sources)) 
+    difference = list(set(desired_sources) - set(current_sources))
     for source_id in difference:
-        models.link.safe_add({
-            "origin_type": "person",
-            "origin_id": person_id,
-            "target_type": "source",
-            "target_id": source_id,
-            "name": "follows",
-            "secondary": None
+        queues.database.put_details("follow", {
+            "person_id": person_id,
+            "source_id": source_id
         })
 
-    difference = list(set(current_sources) - set(desired_sources)) 
+    difference = list(set(current_sources) - set(desired_sources))
     for source_id in difference:
-        models.link.find_and_remove({
-            "origin_type": "person",
-            "origin_id": person_id,
-            "target_type": "source",
-            "target_id": source_id,
-            "name": "follows"
+        queues.database.put_details("unfollow", {
+            "person_id": person_id,
+            "source_id": source_id
         })

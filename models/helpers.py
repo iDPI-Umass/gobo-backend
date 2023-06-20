@@ -128,6 +128,17 @@ def define_crud(Table):
         return results
 
 
+    def pluck(ids):
+        with Session() as session:
+            statement = select(Table).where(Table.id.in_(ids))
+            rows = session.scalars(statement).all()
+            results = []
+            for row in rows:
+                results.append(row.to_dict())
+
+            return results
+
+
     return {
       "add": add,
       "get": get,
@@ -135,5 +146,6 @@ def define_crud(Table):
       "remove": remove,
       "query": query,
       "find": find,
-      "pull": pull
+      "pull": pull,
+      "pluck": pluck
     }

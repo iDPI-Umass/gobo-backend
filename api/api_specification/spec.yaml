@@ -219,6 +219,9 @@ shards:
     source_id:
       description: The unique ID of the source for this post.
       type: integer
+    author_id:
+      description: The unique ID of the author source for this post. Will be different for reshares.
+      type: integer
     base_url:
       description: The base URL for the platform that hosts this post.
       type: string
@@ -228,9 +231,6 @@ shards:
     title:
       type: string
     content:
-      type: string
-    author:
-      description: The URL of the author profile, hosted by the platform
       type: string
     url:
       description: The URL of the original post, hosted by the platform
@@ -244,7 +244,8 @@ shards:
     attachments:
       description: List of URLs where you can find media attachments for this post.
       type: array
-      items: string
+      items: 
+        type: object
 
   post: &post
     type: object
@@ -841,9 +842,18 @@ resources:
           type: application/json
           status: 200
           schema:
-            type: array
-            items: *post
-
+            type: object
+            additionalProperties: false
+            required: [ posts, sources ]
+            properties:
+              posts:
+                description: List of posts that make up this feed view. Their order depends on the specific view.
+                type: array
+                items: *post
+              sources:
+                description: List of sources associated with posts in this feed page. Their order is not purposeful, but they represent the most recently available data on those sources.
+                type: array
+                items: *source
 
   action_onboard_identity_start:
     template: /actions/onboard-identity

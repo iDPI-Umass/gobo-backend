@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
@@ -6,11 +7,11 @@ from ..base import Base
 from .helpers import read_optional, write_optional
 
 optional = [
+    "author_id",
     "base_url",
     "platform_id",
     "title",
     "content",
-    "author",
     "url",
     "visibility",
     "published"
@@ -21,11 +22,11 @@ class Post(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     source_id: Mapped[int]
+    author_id: Mapped[Optional[int]]
     base_url: Mapped[Optional[str]]
     platform_id: Mapped[Optional[str]]
     title: Mapped[Optional[str]]
     content: Mapped[Optional[str]]
-    author: Mapped[Optional[str]]
     url: Mapped[Optional[str]]
     visibility: Mapped[Optional[str]]
     published: Mapped[Optional[str]]
@@ -35,7 +36,13 @@ class Post(Base):
 
     @staticmethod
     def write(data):
-        return Post(**data)
+        _data = data.copy()
+        
+        attachments = _data.get("attachments")
+        if attachments != None:
+            _data["attachments"] = json.dumps(attachments)
+        
+        return Post(**_data)
     
     def to_dict(self):
         data = {

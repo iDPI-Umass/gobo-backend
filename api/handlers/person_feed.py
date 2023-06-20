@@ -12,4 +12,18 @@ def person_feed_get(person_id):
     query["person_id"] = person_id
 
     posts = models.post.view_feed(query)
-    return posts
+    
+    source_ids = set()
+    for post in posts:
+        id = post.get("source_id")
+        if id != None:
+            source_ids.add(id)
+    
+    sources = models.source.pluck(list(source_ids))
+
+    return {
+        "posts": posts,
+        "sources": sources
+    }
+
+    

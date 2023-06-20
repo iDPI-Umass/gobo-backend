@@ -77,11 +77,17 @@ def pull_posts(task):
 
     last_retrieved = joy.time.now()
     data = twitter.list_posts(source)
-    _posts = twitter.map_posts(source, data)
-
     link["secondary"] = last_retrieved
     models.link.update(link["id"], link)
 
+    sources = []
+    _sources = twitter.map_sources(data)
+    for _source in _sources:
+        source = models.source.upsert(_source)
+        sources.append(source)
+    data["authors"] = sources
+
+    _posts = twitter.map_posts(source, data)
     posts = []
     for _post in _posts:
         post = models.post.upsert(_post)

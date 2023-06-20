@@ -1,8 +1,8 @@
 import logging
 from os import environ
 import tweepy
-import markdown
 import joy
+from .helpers import guess_mime, md
 
 
 class Twitter():
@@ -55,29 +55,58 @@ class Twitter():
     @staticmethod
     def map_posts(source, data):
         base_url = Twitter.BASE_URL
-        users = data["users"]
+        
+        authors = {}
+        for author in data["authors"]:
+            authors[author["platform_id"]] = author
+
+        media = {}
+        for item in data["media"]:
+            media[item.media_key] = item
+        
         posts = []
         for tweet in data["tweets"]:
-            author = users[tweet.author_id]
-            author_url = f"{base_url}/{author.username}"
+            author = authors[str(tweet.author_id)]
             platform_id = str(tweet.id)
+            tweet_url = f"{author['url']}/status/{platform_id}"
 
             attachments = []
-            for attachment in tweet.attachments:
-                for key in attachment["media_keys"]:
-                    attachments.append(media[key].url)
+            if tweet.attachments != None:
+                for key in (tweet.attachments.get("media_keys") or []):
+                    match = media[key]
+                    url = match.url
+                    content_type = None
+
+                    if url != None:
+                        content_type = guess_mime(url)
+
+                    if url == None and len(match.variants) > 0:
+                        best = None
+                        for variant in match.variants:
+                            if variant.get("bit_rate") == None:
+                                continue
+                            if best == None or variant["bit_rate"] > best["bit_rate"]:
+                                best = variant
+                        url = best["url"]
+                        content_type = best["content_type"]
+                    
+                    attachments.append({
+                        "url": url,
+                        "type": content_type
+                    })
 
             post = {
                 "source_id": source["id"],
+                "author_id": author["id"],
                 "base_url": base_url,
                 "platform_id": platform_id,
                 "title": None,
-                "content": markdown.markdown(tweet.text),
-                "author": author_url,
-                "url": f"{author_url}/status/{platform_id}",
-                "published": tweet.created_at,
+                "content": md.convert(tweet.text),
+                "url": tweet_url,
+                "published": joy.time.to_iso_string(tweet.created_at),
                 "attachments": attachments
             }
+
             posts.append(post)
 
         return posts
@@ -119,24 +148,29 @@ class Twitter():
             limit = max_pages,
             start_time = last_retrieved, 
             user_auth=True,
-            expansions=['author_id', 'attachments.media_keys'],
-            tweet_fields=['created_at', 'entities'],
-            user_fields=['profile_image_url'],
-            media_fields=['url']
+            expansions=["author_id", "attachments.media_keys"],
+            tweet_fields=["created_at", "entities"],
+            user_fields=["profile_image_url"],
+            media_fields=["url", "variants"]
         )
     
 
         tweets = []
-        users = {}
-        media = {}
+        _users = {}
+        users = []
+        media = []
         for response in pages:
             if response.data == None:
                 continue
             tweets.extend(response.data)
-            for user in response.includes["users"]:
-                users[user.id] = user
-            for medium in response.includes["media"]:
-                media[medium.media_key] = medium
+
+            for item in response.includes["users"]:
+                if _users.get(item.id) == None:
+                    _users[item.id] = item
+                    users.append(item)
+
+            if response.includes.get("media") != None:
+                media.extend(response.includes["media"])
 
 
         return {
