@@ -57,7 +57,7 @@ class Twitter():
         base_url = Twitter.BASE_URL
         
         authors = {}
-        for author in data["authors"]:
+        for author in data["sources"]:
             authors[author["platform_id"]] = author
 
         media = {}
