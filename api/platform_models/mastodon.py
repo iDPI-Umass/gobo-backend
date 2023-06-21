@@ -95,6 +95,7 @@ def confirm_identity(registration, data):
     profile_url = profile.url
     _identity = {
         "person_id": registration["person_id"],
+        "platform_id": str(profile.id),
         "base_url": base_url,
         "profile_url": profile_url,
         "profile_image": profile.avatar,

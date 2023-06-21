@@ -66,9 +66,8 @@ class Twitter():
         
         posts = []
         for tweet in data["tweets"]:
-            author = authors[str(tweet.author_id)]
             platform_id = str(tweet.id)
-            tweet_url = f"{author['url']}/status/{platform_id}"
+            tweet_url = f"{source['url']}/status/{platform_id}"
 
             attachments = []
             if tweet.attachments != None:
@@ -97,11 +96,10 @@ class Twitter():
 
             post = {
                 "source_id": source["id"],
-                "author_id": author["id"],
                 "base_url": base_url,
                 "platform_id": platform_id,
                 "title": None,
-                "content": md.convert(tweet.text),
+                "content": tweet.text,
                 "url": tweet_url,
                 "published": joy.time.to_iso_string(tweet.created_at),
                 "attachments": attachments
@@ -171,7 +169,6 @@ class Twitter():
 
             if response.includes.get("media") != None:
                 media.extend(response.includes["media"])
-
 
         return {
             "tweets": tweets,

@@ -73,11 +73,12 @@ def confirm_identity(registration, data):
     profile_url = f"{BASE_URL}/user/{profile.name}"
     _identity = {
         "person_id": registration["person_id"],
+        "platform_id": str(profile.id),
         "base_url": BASE_URL,
         "profile_url": profile_url,
         "profile_image": profile.icon_img,
         "username": profile.name,
-        "name": None,
+        "name": profile.name,
         "oauth_token": oauth_token,
     }
 

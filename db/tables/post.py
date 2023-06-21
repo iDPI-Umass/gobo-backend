@@ -7,7 +7,6 @@ from ..base import Base
 from .helpers import read_optional, write_optional
 
 optional = [
-    "author_id",
     "base_url",
     "platform_id",
     "title",
@@ -22,7 +21,6 @@ class Post(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     source_id: Mapped[int]
-    author_id: Mapped[Optional[int]]
     base_url: Mapped[Optional[str]]
     platform_id: Mapped[Optional[str]]
     title: Mapped[Optional[str]]

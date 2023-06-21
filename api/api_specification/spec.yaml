@@ -114,7 +114,7 @@ shards:
   identity: &identity
     type: object
     additionalProperties: false
-    required: [id, person_id, base_url, username]
+    required: [id, person_id, base_url, profile_url, username]
     properties:
       <<: *id
       <<: *identityCore
@@ -218,9 +218,6 @@ shards:
   postCore: &postCore
     source_id:
       description: The unique ID of the source for this post.
-      type: integer
-    author_id:
-      description: The unique ID of the author source for this post. Will be different for reshares.
       type: integer
     base_url:
       description: The base URL for the platform that hosts this post.

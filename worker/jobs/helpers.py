@@ -83,7 +83,7 @@ def set_pull_posts(queue):
                 "target_type": "post",
                 "target_id": post["id"],
                 "name": "has-post",
-                "secondary": post["published"]
+                "secondary": post["published"] + "::" + post["id"]
             })
 
         for post in posts:

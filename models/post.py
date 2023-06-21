@@ -51,6 +51,8 @@ def upsert(data):
 
 def view_feed(data):
     with Session() as session:
+        logging.info(data)
+
         if data["direction"] == "descending":
             attribute = Link.secondary.desc()
         else:

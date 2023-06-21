@@ -32,7 +32,7 @@ def action_onboard_identity_callback_post():
     })
 
     if registration == None:
-        http_errors.unprocessable_content(
+        raise http_errors.unprocessable_content(
             "this person has no pending registration with this provider"
         )
 
@@ -60,7 +60,7 @@ def action_pull_identity_sources_post():
     })
 
     if identity == None:
-        http_errors.unprocessable_content(
+        raise http_errors.unprocessable_content(
             "this person has no identity with this provider"
         )
 
