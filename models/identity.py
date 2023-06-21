@@ -1,6 +1,8 @@
 import logging
 from operator import itemgetter
+from sqlalchemy import select
 from db import tables
+from db.base import Session
 from .helpers import define_crud
 
 Identity = tables.Identity
@@ -11,9 +13,10 @@ add, get, update, remove, query, find = itemgetter(
 
 def upsert(data):
     with Session() as session:
-        statement = select(Identity)
-        statement = statement.where(Identity.profile_url == data["profile_url"])
-        statement = statement.limit(1)
+        statement = select(Identity) \
+            .where(Identity.profile_url == data["profile_url"]) \
+            .where(Identity.person_id == data[["person_id"]]) \
+            .limit(1)
 
         row = session.scalars(statement).first()
 

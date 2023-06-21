@@ -22,7 +22,7 @@ threads.start_test(1)
 threads.start_database(1)
 threads.start_twitter(1)
 threads.start_reddit(1)
-# threads.start_mastodon(1)
+threads.start_mastodon(1)
 start_sources()
 
 

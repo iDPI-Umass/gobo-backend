@@ -1,3 +1,4 @@
+import logging
 import models
 import joy
 import queues
@@ -30,8 +31,15 @@ def set_pull_sources(Client, queue):
         identity = task.details.get("identity")
         if identity == None:
             raise Exception("pull posts task requires an identity to run")
+        
+        base_url = identity["base_url"]
+        mastodon_client = models.mastodon_client.find({"base_url": base_url})
+    
+        if mastodon_client == None:
+            client = Client(identity)
+        else:
+            client = Client(mastodon_client, identity)
 
-        client = Client(identity)
         data = client.list_sources()
         _sources = client.map_sources(data)
 
@@ -83,7 +91,7 @@ def set_pull_posts(queue):
                 "target_type": "post",
                 "target_id": post["id"],
                 "name": "has-post",
-                "secondary": post["published"] + "::" + post["id"]
+                "secondary": f"{post['published']}::{post['id']}"
             })
 
         for post in posts:
@@ -96,6 +104,7 @@ def set_pull_posts(queue):
     return pull_posts
 
 def reconcile_sources(person_id, sources):
+    base_url = sources[0]["base_url"]
     desired_sources = []
     for source in sources:
         desired_sources.append(source["id"])
@@ -110,12 +119,15 @@ def reconcile_sources(person_id, sources):
     })
    
     current_sources = []
-    for result in results:
-        current_sources.append(result["target_id"])
+    source_ids = [ result["target_id"] for result in results ]
+    for source in models.source.pluck(source_ids):
+        if source["base_url"] == base_url:
+            current_sources.append(source["id"])
 
 
     difference = list(set(desired_sources) - set(current_sources))
     for source_id in difference:
+        logging.info(f"For person {person_id}, adding source {source_id}")
         queues.database.put_details("follow", {
             "person_id": person_id,
             "source_id": source_id
@@ -123,6 +135,7 @@ def reconcile_sources(person_id, sources):
 
     difference = list(set(current_sources) - set(desired_sources))
     for source_id in difference:
+        logging.info(f"For person {person_id}, removing source {source_id}")
         queues.database.put_details("unfollow", {
             "person_id": person_id,
             "source_id": source_id

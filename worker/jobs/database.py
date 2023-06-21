@@ -137,5 +137,5 @@ def add_post_to_followers(task):
             "target_type": "post",
             "target_id": post["id"],
             "name": "full-feed",
-            "secondary": post["published"] + "::" + post["id"]
+            "secondary": f"{post['published']}::{post['id']}"
         })
