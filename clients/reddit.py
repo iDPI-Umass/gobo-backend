@@ -1,4 +1,5 @@
 import logging
+import json
 from os import environ
 import joy
 import praw
@@ -75,15 +76,41 @@ class Reddit():
                 content = submission.selftext
             else:
                 if is_image(submission.url) == True:
-                    content = f"Image Link: {submission.url}"
                     attachments.append({
                         "url": submission.url,
                         "type": guess_mime(submission.url)
                     })
+                
                 elif is_video(submission.url) == True:
-                    content = f"Video Link: {submission.url}"
+                    try:
+                        url = submission.media["reddit_video"]["fallback_url"]
+                        content_type = guess_mime(url) or "video/mp4"
+                        attachments.append({
+                            "url": url,
+                            "type": content_type
+                        })
+                    except Exception as e:
+                        logging.warning(e)                              
+                
                 elif is_gallery(submission.url) == True:
-                    content = f"Gallery Link: {submission.url}"
+                    try:
+                        for key, value in submission.media_metadata.items():
+                            if value["status"] == "valid":
+                                content_type = value["m"]
+                                best = None
+                                best_area = 0
+                                for entry in value["p"]:
+                                    entry_area = entry["x"] * entry["y"]
+                                    if best == None or entry_area > best_area:
+                                        best = entry
+                                        best_area = entry_area
+                                 
+                                attachments.append({
+                                    "url": best["u"],
+                                    "type": content_type
+                                })
+                    except Exception as e:
+                        logging.warning(e) 
             
 
             post = {
@@ -111,7 +138,8 @@ class Reddit():
     def list_posts(self, source):
         submissions = []
         name = source["platform_id"]
-        last_retrieved = source.get("last_retrieved")
+        last_retrieved = None
+        # last_retrieved = source.get("last_retrieved")
         generator = self.client.subreddit(name).new(limit=None)
 
 

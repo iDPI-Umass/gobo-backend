@@ -1,0 +1,13 @@
+{
+  "bitrate_kbps": 4800,
+  "fallback_url": "https://v.redd.it/h2il778a7a7b1/DASH_1080.mp4?source=fallback",
+  "has_audio": true,
+  "height": 1080,
+  "width": 608,
+  "scrubber_media_url": "https://v.redd.it/h2il778a7a7b1/DASH_96.mp4",
+  "dash_url": "https://v.redd.it/h2il778a7a7b1/DASHPlaylist.mpd?a=1689982160%2CM2QxZWM4YmI4NDhlN2U5OGU2Mjc4MGY5ZTIyZDQ0MGVlZTQ4ODYxODRlYmQ3NTc5YzQ1NWUyZDM0YzVjMmIzMg%3D%3D&v=1&f=sd",
+  "duration": 7,
+  "hls_url": "https://v.redd.it/h2il778a7a7b1/HLSPlaylist.m3u8?a=1689982160%2CZWUwYzc0ZGQzNGQ4YjVhODE4NmUyODc2OTg0MjgwMzIwYjhlZWY1N2JhYmIyODY0YThiOGI1YjVjZmNlYmY5Mw%3D%3D&v=1&f=sd",
+  "is_gif": false,
+  "transcoding_status": "completed"
+}
