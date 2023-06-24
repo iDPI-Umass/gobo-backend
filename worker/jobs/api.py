@@ -6,7 +6,8 @@ import queues
 
 def dispatch(task):
     task.handler = "api"
-    logging.info("dispatching: %s", task)
+    if task.name != "poll":
+        logging.info("dispatching: %s", task)
 
     if task.name == "poll":
         poll_database(task)
@@ -56,7 +57,7 @@ def poll_database(task):
 
 
     if len(tasks) == 0:
-        time.sleep(20)
+        time.sleep(1)
     else:
         task.update({"last": tasks[-1]})
     

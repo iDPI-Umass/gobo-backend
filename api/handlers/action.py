@@ -83,3 +83,38 @@ def action_pull_identity_sources_post():
 
 
     return task
+
+
+def action_workbench_post():
+    authority_id = g.claims["sub"]
+    person = models.person.lookup(authority_id)
+    
+    identity = models.identity.find({
+        "person_id": person["id"],
+        "profile_url": request.json["profile_url"]
+    })
+
+    if identity == None:
+        raise http_errors.unprocessable_content(
+            "this person has no identity with this provider"
+        )
+
+    base_url = identity["base_url"]
+
+    if base_url == twitter.BASE_URL:
+        queue = "twitter"
+    elif base_url == reddit.BASE_URL:
+        queue = "reddit"
+    else:
+        queue = "mastodon"
+
+    task = models.task.add({
+      "queue": queue,
+      "name": "workbench",
+      "details": {
+        "identity": identity
+      }
+    })
+
+
+    return task

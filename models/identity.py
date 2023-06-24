@@ -15,7 +15,7 @@ def upsert(data):
     with Session() as session:
         statement = select(Identity) \
             .where(Identity.profile_url == data["profile_url"]) \
-            .where(Identity.person_id == data[["person_id"]]) \
+            .where(Identity.person_id == data["person_id"]) \
             .limit(1)
 
         row = session.scalars(statement).first()

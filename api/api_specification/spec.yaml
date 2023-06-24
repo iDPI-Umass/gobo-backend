@@ -935,3 +935,17 @@ resources:
           status: 200
           type: application/json
           schema: *task
+
+  action_workbench:
+    template: /actions/workbench
+    route: /actions/workbench
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+        response:
+          status: 200
+          type: application/json
+          schema: *task

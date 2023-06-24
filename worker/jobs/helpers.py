@@ -40,6 +40,9 @@ def set_pull_sources(Client, queue):
         else:
             client = Client(mastodon_client, identity)
 
+        logging.info(client)
+        logging.info(client.identity)
+        logging.info(client.client)
         data = client.list_sources()
         _sources = client.map_sources(data)
 
@@ -68,10 +71,12 @@ def set_pull_posts(queue):
         link = models.source.get_last_retrieved(source["id"])
         source["last_retrieved"] = link.get("secondary")
 
+
         last_retrieved = joy.time.now()
         data = client.list_posts(source)
         link["secondary"] = last_retrieved
         models.link.update(link["id"], link)
+
 
         sources = []
         _sources = client.map_sources(data)
@@ -80,20 +85,40 @@ def set_pull_posts(queue):
             sources.append(source)
         data["sources"] = sources
 
-        _posts = client.map_posts(source, data)
+
+        # Get GOBO IDs for the posts and link to their author sources.
+        post_data = client.map_posts(data)
         posts = []
-        for _post in _posts:
+        id_map = {}
+        for _post in post_data["posts"]:
             post = models.post.upsert(_post)
             posts.append(post)
+            id_map[post["profile_id"]] = post["id"]
+
             models.link.upsert({
                 "origin_type": "source",
-                "origin_id": source["id"],
+                "origin_id": post["source_id"],
                 "target_type": "post",
                 "target_id": post["id"],
                 "name": "has-post",
                 "secondary": f"{post['published']}::{post['id']}"
             })
 
+
+        # Establish inter-post edges using the confirmed GOBO IDs.
+        for edge in post_data["edges"]:
+            if edge["origin_type"] == "post" and edge["target_type"] == "post":
+                models.link.upsert({
+                    "origin_type": "post",
+                    "origin_id": id_map[edge["origin_reference"]],
+                    "target_type": "post",
+                    "target_id": id_map[edge["target_reference"]],
+                    "name": edge["name"],
+                    "secondary": edge.get("secondary")
+                })            
+
+
+        # Add each post to the feeds of each author follower.
         for post in posts:
             queues.database.put_details("add post to followers", {
                 "page": 1,

@@ -43,8 +43,7 @@ class Reddit():
     def get_profile(self):
         return self.client.user.me()
 
-    @staticmethod
-    def map_sources(data):
+    def map_sources(self, data):
         base_url = Reddit.BASE_URL
         sources = []
         for subreddit in data["subreddits"]:
@@ -63,8 +62,7 @@ class Reddit():
         return sources
 
 
-    @staticmethod
-    def map_posts(source, data):
+    def map_posts(self, source, data):
         base_url = Reddit.BASE_URL
         
         posts = []

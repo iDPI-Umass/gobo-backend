@@ -20,6 +20,8 @@ def dispatch(task):
         pull_sources(task)
     elif task.name == "pull posts":
         pull_posts(task)
+    elif task.name == "workbench":
+        workbench(task)
     else:
         logging.warning("No matching job for task: %s", task)
     
@@ -39,3 +41,10 @@ pull_sources = set_pull_sources(
 pull_posts = set_pull_posts(
     queue = queues.twitter
 )
+
+def workbench(task):
+    client = Twitter(task.details["identity"])
+    #id = "1672030817634205696" # Text RT of tweet with video
+    id = "1671615034584190977" # Text and video fo tweet with video
+    # id = "1670498291556012035" # Non-Quote RT
+    client.get_post(id)
