@@ -66,7 +66,7 @@ class Mastodon():
         sources = []
         for account in data["accounts"]:
             sources.append({
-                "platform_id": account.id,
+                "platform_id": str(account.id),
                 "base_url": base_url,
                 "url": account.url,
                 "username": account.acct,
@@ -78,36 +78,32 @@ class Mastodon():
         return sources
 
 
-    def map_posts(self, source, data):        
+    def map_posts(self, data):        
+        sources = {}
+        for item in data["sources"]:
+            logging.info(item["platform_id"])
+            sources[item["platform_id"]] = item
+        
+        
         posts = []
+        edges = []
         for status in data["statuses"]:
-            content = status.content
             attachments = []
+            for attachment in status.media_attachments:
+                url = attachment["url"]
+                attachments.append({
+                    "url": url,
+                    "type": guess_mime(url)
+                })
 
-            if status.reblog != None:
-                content = f"</p>Reblog from @{status.reblog['account']['acct']}:</p>"
-                content = content + status.reblog.content
-
-                for attachment in status.reblog.media_attachments:
-                    url = attachment["url"]
-                    attachments.append({
-                        "url": url,
-                        "type": guess_mime(url)
-                    })
-            else:
-                for attachment in status.media_attachments:
-                    url = attachment["url"]
-                    attachments.append({
-                        "url": url,
-                        "type": guess_mime(url)
-                    })
+            source = sources[str(status.account.id)]
 
             post = {
                 "source_id": source["id"],
                 "base_url": self.base_url,
-                "platform_id": status.id,
+                "platform_id": str(status.id),
                 "title": None,
-                "content": content,
+                "content": status.content,
                 "url": status.url,
                 "published": joy.time.to_iso_string(status.created_at),
                 "attachments": attachments
@@ -115,7 +111,19 @@ class Mastodon():
 
             posts.append(post)
 
-        return posts
+            if status.reblog != None:
+                edges.append({
+                    "origin_type": "post",
+                    "origin_reference": str(status.id),
+                    "target_type": "post",
+                    "target_reference": str(status.reblog.id),
+                    "name": "shares",
+                })
+
+        return {
+            "posts": posts,
+            "edges": edges
+        }
 
 
     def list_sources(self):
@@ -139,7 +147,7 @@ class Mastodon():
                 max_id = max_id
             )
 
-            max_id = statuses[-1].id
+            max_id = str(statuses[-1].id)
 
             if last_retrieved == None:
                 toots = statuses
@@ -152,8 +160,27 @@ class Mastodon():
                     else:
                         isDone = True
                         break
+
+
+        statuses = []
+        seen_statuses = set()
+        for toot in toots:
+            if toot.reblog != None and toot.reblog.id not in seen_statuses:
+                seen_statuses.add(toot.reblog.id)
+                statuses.append(toot.reblog)
         
+        toots.extend(statuses)    
+
+
+        accounts = []
+        seen_accounts = set()
+        for toot in toots:
+            id = str(toot.account.id)
+            if id not in seen_accounts:
+                seen_accounts.add(id)
+                accounts.append(toot.account)
+
         return {
             "statuses": toots,
-            "accounts": []
+            "accounts": accounts
         }

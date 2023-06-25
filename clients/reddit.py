@@ -148,10 +148,6 @@ class Reddit():
 
 
     def map_posts(self, data):
-        submissions = {}
-        for item in data["submissions"]:
-            submissions[item.id] = submissions
-
         sources = {}
         for item in data["sources"]:
             sources[item["platform_id"]] = item
