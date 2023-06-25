@@ -121,11 +121,10 @@ def define_crud(Table):
         while True:
             _results = query(data)
             results.extend(_results)
-            if len(_results) != per_page:
+            if len(_results) != data["per_page"]:
                 break
             else:
-                page = page + 1
-                data["page"] = page
+                data["page"] = data["page"] + 1
 
         return results
 

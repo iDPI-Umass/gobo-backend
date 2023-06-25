@@ -2,6 +2,7 @@ import logging
 from os import environ
 import tweepy
 import joy
+import models
 from .helpers import guess_mime, md, partition
 
 
@@ -165,14 +166,12 @@ class Twitter():
             })
 
             for id in tweet.quote_tweet_ids:
-                target = tweets[id]
                 edges.append({
                     "origin_type": "post",
                     "origin_reference": tweet.id,
                     "target_type": "post",
-                    "target_reference": target.id,
+                    "target_reference": id,
                     "name": "shares",
-                    "secondary": f"{target.published}::{target.id}"
                 })
 
 
@@ -198,7 +197,7 @@ class Twitter():
         return {"users": users}
 
 
-    def list_posts(self, models, source):
+    def get_post_graph(self, source):
         last_retrieved = None
         #last_retrieved = source.get("last_retrieved")
         if last_retrieved == None:

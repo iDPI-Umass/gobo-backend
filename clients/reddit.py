@@ -1,8 +1,9 @@
 import logging
 import json
 from os import environ
-import joy
 import praw
+import joy
+import models
 from .helpers import guess_mime, md, partition
 
 def is_image(url):
@@ -17,19 +18,18 @@ def is_gallery(url):
 class Submission():
     def __init__(self, _):
         logging.info({
-            "id": _.id,
-            "name": _.name
+            "id": _.name,
+            "title": _.title
         })
-
-
         self._ = _
-        self.id = _.id
+        self.id = _.name
         self.title = _.title
-        self.content = getattr(_, "selftext")
-        self.published = joy.time.unix_to_iso(submission.created_utc)
+        self.content = None
+        self.published = joy.time.unix_to_iso(_.created_utc)
         self.url = Reddit.BASE_URL + _.permalink
         self.subreddit = Subreddit(_.subreddit)
-        self.crosspost_parent = getattr(_, "crosspost_parent")
+        self.crosspost_parent = getattr(_, "crosspost_parent", None)
+        self.poll = getattr(_, "poll_data", None)
         self.attachments = []
 
         if is_image(_.url) == True:
@@ -67,15 +67,25 @@ class Submission():
                             "type": content_type
                         })
             except Exception as e:
-                logging.warning(e) 
+                logging.warning(e)
 
+        elif self.poll != None:
+            pass
+        elif _.is_self == True:
+            self.content = getattr(_, "selftext", None)
+        else:
+            self.content = _.url
+
+# The id and username swap is awkward. The subreddit "name" is its full name,
+# an absolute reference in the Reddit API. However, we reference subreddits
+# in the praw client method by using their display_name.
 class Subreddit():
     def __init__(self, _):
         self._ = _
         self.id = _.name
-        self.url = f"{Reddit.BASE_URL}/r/{_.id}",
-        self.username = _.name
-        self.name = _.id
+        self.url = f"{Reddit.BASE_URL}/r/{_.display_name}",
+        self.username = _.id
+        self.name = _.display_name
         self.icon_url = _.icon_img
 
 
@@ -110,7 +120,6 @@ class Reddit():
 
     def get_post(self, id):
         submission = self.client.submission(id = id)
-        logging.info(getattr(submission, "crosspost_parent"))
         return submission
 
     def pluck_posts(self, ids):
@@ -128,7 +137,7 @@ class Reddit():
             sources.append({
                 "platform_id": subreddit.id,
                 "base_url": Reddit.BASE_URL,
-                "url": subreddit.url
+                "url": subreddit.url,
                 "username": subreddit.username,
                 "name": subreddit.name,
                 "icon_url":subreddit.icon_url,
@@ -164,14 +173,12 @@ class Reddit():
             })
 
             if submission.crosspost_parent != None:
-                target = submissions[submission.crosspost_parent]
                 edges.append({
                     "origin_type": "post",
                     "origin_reference": submission.id,
                     "target_type": "post",
-                    "target_reference": target.id,
+                    "target_reference": submission.crosspost_parent,
                     "name": "shares",
-                    "secondary": f"{target.published}::{target.id}"
                 })
 
         return {
@@ -188,14 +195,14 @@ class Reddit():
         return {"subreddits": subreddits} 
 
 
-    def list_posts(self, models, source):
+    def get_post_graph(self, source):
         submissions = []
         subreddits = []
 
         name = source["name"]
-        last_retrieved = None
-        # last_retrieved = source.get("last_retrieved")
+        last_retrieved = source.get("last_retrieved")
         generator = self.client.subreddit(name).new(limit=None)
+
 
 
         if last_retrieved == None:
@@ -203,11 +210,11 @@ class Reddit():
             for item in generator:
                 submissions.append(Submission(item))
                 total = total + 1
-                if total > 100:
+                if total > 25:
                     break
         else:
             for item in generator:
-                timestamp = joy.time.unix_to_iso(submission.created_utc)
+                timestamp = joy.time.unix_to_iso(item.created_utc)
                 if timestamp > last_retrieved:
                     submissions.append(Submission(item))
                 else:
@@ -226,7 +233,7 @@ class Reddit():
         ])
 
         for item in registered:
-            secondary.remove(item["profile_id"])
+            secondary.remove(item["platform_id"])
 
         if len(secondary) > 0:
             for sublist in list(partition(list(secondary), 100)):
@@ -245,6 +252,6 @@ class Reddit():
 
 
         return {
-            "submissions": submissions
+            "submissions": submissions,
             "subreddits": subreddits
         }

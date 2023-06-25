@@ -70,7 +70,7 @@ def set_pull_posts(queue):
 
 
         last_retrieved = joy.time.now()
-        data = client.get_post_graph(models, source)
+        data = client.get_post_graph(source)
         link["secondary"] = last_retrieved
         models.link.update(link["id"], link)
 
@@ -90,7 +90,7 @@ def set_pull_posts(queue):
         for _post in post_data["posts"]:
             post = models.post.upsert(_post)
             posts.append(post)
-            id_map[post["profile_id"]] = post["id"]
+            id_map[post["platform_id"]] = post
 
             models.link.upsert({
                 "origin_type": "source",
@@ -102,16 +102,31 @@ def set_pull_posts(queue):
             })
 
 
+        def find(platform_id):
+            item = id_map.get(platform_id)
+            if item == None:
+                item = models.post.find({
+                    "base_url": source["base_url"],
+                    "platform_id": platform_id 
+                })
+                id_map[item["platform_id"]] = item
+
+            return item
+
+
         # Establish inter-post edges using the confirmed GOBO IDs.
         for edge in post_data["edges"]:
             if edge["origin_type"] == "post" and edge["target_type"] == "post":
+                origin = find(edge["origin_reference"])
+                target = find(edge["target_reference"])
+
                 models.link.upsert({
                     "origin_type": "post",
-                    "origin_id": id_map[edge["origin_reference"]],
+                    "origin_id": origin["id"],
                     "target_type": "post",
-                    "target_id": id_map[edge["target_reference"]],
+                    "target_id": target["id"],
                     "name": edge["name"],
-                    "secondary": edge.get("secondary")
+                    "secondary": f"{target['published']}::{target['id']}"
                 })            
 
 

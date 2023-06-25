@@ -2,6 +2,7 @@ import logging
 from os import environ
 import mastodon
 import joy
+import models
 from .helpers import guess_mime
 
 # TODO: Do we want this to be moved into GOBO configuration?
@@ -123,7 +124,7 @@ class Mastodon():
         return {"accounts": accounts}
 
 
-    def list_posts(self, source):
+    def get_post_graph(self, source):
         isDone = False
         last_retrieved = source.get("last_retrieved")
         max_id = None

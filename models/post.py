@@ -9,8 +9,8 @@ Post = tables.Post
 Link = tables.Link
 
 
-add, get, update, remove, query, find = itemgetter(
-    "add", "get", "update", "remove", "query", "find"
+add, get, update, remove, query, find, pull = itemgetter(
+    "add", "get", "update", "remove", "query", "find", "pull"
 )(define_crud(Post))
 
 
