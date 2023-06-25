@@ -40,9 +40,6 @@ def set_pull_sources(Client, queue):
         else:
             client = Client(mastodon_client, identity)
 
-        logging.info(client)
-        logging.info(client.identity)
-        logging.info(client.client)
         data = client.list_sources()
         _sources = client.map_sources(data)
 
@@ -73,7 +70,7 @@ def set_pull_posts(queue):
 
 
         last_retrieved = joy.time.now()
-        data = client.list_posts(source)
+        data = client.get_post_graph(models, source)
         link["secondary"] = last_retrieved
         models.link.update(link["id"], link)
 
@@ -134,14 +131,12 @@ def reconcile_sources(person_id, sources):
     for source in sources:
         desired_sources.append(source["id"])
     
-    results = models.link.pull({
-        "where": [
-            where("origin_type", "person"),
-            where("origin_id", person_id),
-            where("target_type", "source"),
-            where("name", "follows")
-        ]
-    })
+    results = models.link.pull([
+        where("origin_type", "person"),
+        where("origin_id", person_id),
+        where("target_type", "source"),
+        where("name", "follows")
+    ])
    
     current_sources = []
     source_ids = [ result["target_id"] for result in results ]

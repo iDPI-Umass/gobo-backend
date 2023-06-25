@@ -10,3 +10,7 @@ md = markdown.Markdown(
 def guess_mime(url):
     content_type, encoding = mimetypes.guess_type(url, strict=False)
     return content_type
+
+def partition(items, size):
+    for i in range(0, len(items), size):
+        yield items[i : i+size]

@@ -20,6 +20,8 @@ def dispatch(task):
         pull_sources(task)
     elif task.name == "pull posts":
         pull_posts(task)
+    elif task.name == "workbench":
+        workbench(task)
     else:
         logging.warning("No matching job for task: %s", task)
     
@@ -39,3 +41,13 @@ pull_sources = set_pull_sources(
 pull_posts = set_pull_posts(
     queue = queues.reddit
 )
+
+
+def workbench(task):
+    client = Reddit(task.details["identity"])
+    
+    # id = "14f9q07" # Submission that's crossposted
+    # client.get_post(id)
+    
+    ids = ["t3_14f6btr"]
+    client.pluck_posts(ids)

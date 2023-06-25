@@ -82,6 +82,8 @@ def define_crud(Table):
                     statement = statement.where(getattr(Table, key) <= value)
                 elif expression["operator"] == "lt":
                     statement = statement.where(getattr(Table, key) < value)
+                elif expression["operator"] == "in":
+                    statement = statement.where(getattr(Table, key).in_(value))
 
             statement = statement.order_by(attribute) \
                 .offset(offset) \
@@ -109,11 +111,11 @@ def define_crud(Table):
             else:
                 return row.to_dict()
 
-    def pull(data):
-        page = data.get("page") or 1
-        data["page"] = page
-        per_page = data.get("per_page") or 500
-        data["per_page"] = per_page
+    def pull(where, _data = None):
+        data = _data or {}
+        data.setdefault("page", 1)
+        data.setdefault("per_page", 500)
+        data["where"] = where
 
         results = []
         while True:
