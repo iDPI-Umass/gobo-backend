@@ -243,6 +243,9 @@ shards:
       type: array
       items: 
         type: object
+    poll:
+      description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
+      type: object
 
   post: &post
     type: object

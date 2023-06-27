@@ -12,6 +12,56 @@ redirect_uris = [
     "https://gobo.social/add-identity-callback"
 ]
 
+class Status():
+    def __init__(self, _):
+        self._ = _
+        self.id = str(_.id)
+        self.account = Account(_.account)
+        self.content = _.content
+        self.url = _.url
+        self.published = joy.time.to_iso_string(_.created_at)
+        self.attachments = []
+        self.poll = None
+        self.reblog = None
+
+        if _.reblog != None:
+            self.reblog = Status(_.reblog)
+
+        for attachment in _.media_attachments:
+            url = attachment["url"]
+            self.attachments.append({
+                "url": url,
+                "type": guess_mime(url)
+            })
+          
+        poll = getattr(_, "poll", None)
+        if poll != None:
+            self.poll = {
+              "total": poll.votes_count,
+              "ends": joy.time.to_iso_string(poll.expires_at),
+              "options": []
+            }
+
+            for option in poll.options:
+                self.poll["options"].append({
+                    "key": option.title,
+                    "count": option.votes_count or 0
+                })
+               
+
+class Account():
+    def __init__(self, _):
+        self.id = str(_.id)
+        self.url = _.url
+        self.username = _.acct
+        self.name = _.display_name
+        self.icon_url = _.avatar
+
+class Poll():
+    def __init(self, _):
+        self.id = _.id
+        
+
 
 class Mastodon():
     def __init__(self, mastodon_client, identity = None):
@@ -66,12 +116,12 @@ class Mastodon():
         sources = []
         for account in data["accounts"]:
             sources.append({
-                "platform_id": str(account.id),
+                "platform_id": account.id,
                 "base_url": base_url,
                 "url": account.url,
-                "username": account.acct,
-                "name": account.display_name,
-                "icon_url": account.avatar,
+                "username": account.username,
+                "name": account.name,
+                "icon_url": account.icon_url,
                 "active": True
             })
   
@@ -81,32 +131,24 @@ class Mastodon():
     def map_posts(self, data):        
         sources = {}
         for item in data["sources"]:
-            logging.info(item["platform_id"])
             sources[item["platform_id"]] = item
         
         
         posts = []
         edges = []
         for status in data["statuses"]:
-            attachments = []
-            for attachment in status.media_attachments:
-                url = attachment["url"]
-                attachments.append({
-                    "url": url,
-                    "type": guess_mime(url)
-                })
-
-            source = sources[str(status.account.id)]
+            source = sources[status.account.id]
 
             post = {
                 "source_id": source["id"],
                 "base_url": self.base_url,
-                "platform_id": str(status.id),
+                "platform_id": status.id,
                 "title": None,
                 "content": status.content,
                 "url": status.url,
-                "published": joy.time.to_iso_string(status.created_at),
-                "attachments": attachments
+                "published": status.published,
+                "attachments": status.attachments,
+                "poll": status.poll
             }
 
             posts.append(post)
@@ -114,9 +156,9 @@ class Mastodon():
             if status.reblog != None:
                 edges.append({
                     "origin_type": "post",
-                    "origin_reference": str(status.id),
+                    "origin_reference": status.id,
                     "target_type": "post",
-                    "target_reference": str(status.reblog.id),
+                    "target_reference": status.reblog.id,
                     "name": "shares",
                 })
 
@@ -128,7 +170,12 @@ class Mastodon():
 
     def list_sources(self):
         id = self.identity["platform_id"]
-        accounts = self.client.account_following(id, limit=None)
+        items = self.client.account_following(id, limit=None)
+        
+        accounts = []
+        for item in items:
+            accounts.append(Account(item))
+
         return {"accounts": accounts}
 
 
@@ -136,51 +183,52 @@ class Mastodon():
         isDone = False
         last_retrieved = source.get("last_retrieved")
         max_id = None
-        toots = []
+
+        statuses = []
+        accounts = []
+
 
         while True:
             if isDone == True:
                 break
 
-            statuses = self.client.account_statuses(
+            items = self.client.account_statuses(
                 source["platform_id"],
                 max_id = max_id
             )
 
-            max_id = str(statuses[-1].id)
+            max_id = str(items[-1].id)
 
             if last_retrieved == None:
-                toots = statuses
+                for item in items:
+                    statuses.append(Status(item))
                 isDone = True
             else:
-                for status in statuses:
-                    timestamp = joy.time.to_iso_string(status.created_at)
-                    if timestamp > last_retrieved:
-                        toots.append(status)
+                for item in items:
+                    status = Status(item)
+                    if status.published > last_retrieved:
+                        statuses.append(status)
                     else:
                         isDone = True
                         break
 
 
-        statuses = []
         seen_statuses = set()
-        for toot in toots:
-            if toot.reblog != None and toot.reblog.id not in seen_statuses:
-                seen_statuses.add(toot.reblog.id)
-                statuses.append(toot.reblog)
-        
-        toots.extend(statuses)    
+        for status in statuses:
+            reblog = status.reblog
+            if reblog != None and reblog.id not in seen_statuses:
+                seen_statuses.add(reblog.id)
+                statuses.append(reblog)
 
 
-        accounts = []
         seen_accounts = set()
-        for toot in toots:
-            id = str(toot.account.id)
-            if id not in seen_accounts:
-                seen_accounts.add(id)
-                accounts.append(toot.account)
+        for status in statuses:
+            account = status.account
+            if account.id not in seen_accounts:
+                seen_accounts.add(account.id)
+                accounts.append(account)
 
         return {
-            "statuses": toots,
+            "statuses": statuses,
             "accounts": accounts
         }

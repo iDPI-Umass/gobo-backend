@@ -15,12 +15,16 @@ def is_video(url):
 def is_gallery(url):
     return url.startswith("https://www.reddit.com/gallery/")
 
+def is_poll(submission):
+    return getattr(submission, "poll_data", None) != None
+
 class Submission():
     def __init__(self, _):
         logging.info({
             "id": _.name,
             "title": _.title
         })
+        
         self._ = _
         self.id = _.name
         self.title = _.title
@@ -29,8 +33,10 @@ class Submission():
         self.url = Reddit.BASE_URL + _.permalink
         self.subreddit = Subreddit(_.subreddit)
         self.crosspost_parent = getattr(_, "crosspost_parent", None)
-        self.poll = getattr(_, "poll_data", None)
         self.attachments = []
+        self.poll = None
+
+
 
         if is_image(_.url) == True:
             self.attachments.append({
@@ -69,8 +75,24 @@ class Submission():
             except Exception as e:
                 logging.warning(e)
 
-        elif self.poll != None:
-            pass
+        elif is_poll(_):
+            poll = _.poll_data
+            ends = poll.voting_end_timestamp
+            if ends > 1e10:
+                ends = ends / 1000
+
+            self.poll = {
+                "total": poll.total_vote_count,
+                "ends": joy.time.unix_to_iso(ends),
+                "options": []
+            }
+       
+            for option in poll.options:
+                self.poll["options"].append({
+                    "key": getattr(option, "text", ""),
+                    "count": getattr(option, "vote_count", 0)
+                })
+
         elif _.is_self == True:
             self.content = getattr(_, "selftext", None)
         else:
@@ -87,7 +109,6 @@ class Subreddit():
         self.username = _.id
         self.name = _.display_name
         self.icon_url = _.icon_img
-
 
 
 
@@ -119,7 +140,9 @@ class Reddit():
         return self.client.user.me()
 
     def get_post(self, id):
-        submission = self.client.submission(id = id)
+        item = self.client.submission(id = id)
+        submission = Submission(item)
+        logging.info(submission.poll)
         return submission
 
     def pluck_posts(self, ids):
@@ -165,7 +188,8 @@ class Reddit():
                 "content": submission.content,
                 "url": submission.url,
                 "published": submission.published,
-                "attachments": submission.attachments
+                "attachments": submission.attachments,
+                "poll": submission.poll
             })
 
             if submission.crosspost_parent != None:

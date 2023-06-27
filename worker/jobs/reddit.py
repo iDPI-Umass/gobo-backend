@@ -49,5 +49,8 @@ def workbench(task):
     # id = "14f9q07" # Submission that's crossposted
     # client.get_post(id)
     
-    ids = ["t3_14f6btr"]
-    client.pluck_posts(ids)
+    # ids = ["t3_14f6btr"]
+    # client.pluck_posts(ids)
+
+    id = "10yt1ch" # Submission with poll
+    client.get_post(id)

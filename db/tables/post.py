@@ -29,6 +29,7 @@ class Post(Base):
     visibility: Mapped[Optional[str]]
     published: Mapped[Optional[str]]
     attachments: Mapped[Optional[str]]
+    poll: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
@@ -39,6 +40,10 @@ class Post(Base):
         attachments = _data.get("attachments")
         if attachments != None:
             _data["attachments"] = json.dumps(attachments)
+
+        poll = _data.get("poll")
+        if poll != None:
+            _data["poll"] = json.dumps(poll)
         
         return Post(**_data)
     
@@ -54,6 +59,10 @@ class Post(Base):
         if attachments != None:
             data["attachments"] = json.loads(attachments)
 
+        poll = getattr(self, "poll")
+        if poll != None:
+            data["poll"] = json.loads(poll)
+
         read_optional(self, data, optional)
         return data
 
@@ -64,5 +73,9 @@ class Post(Base):
         attachments = data.get("attachments")
         if attachments != None:
             self.attachments = json.dumps(attachments)
+
+        poll = data.get("poll")
+        if poll != None:
+            self.poll = json.dumps(poll)
 
         self.updated = joy.time.now()
