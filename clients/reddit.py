@@ -226,17 +226,17 @@ class Reddit():
 
 
         if last_retrieved == None:
-            total = 1
-            for item in generator:
-                submissions.append(Submission(item))
-                total = total + 1
-                if total > 25:
+            for i, item in enumerate(generator):
+                submission = Submission(item)
+                if i < 25:
+                    submissions.append()
+                else:
                     break
         else:
             for item in generator:
-                timestamp = joy.time.unix_to_iso(item.created_utc)
-                if timestamp > last_retrieved:
-                    submissions.append(Submission(item))
+                submission = Submission(item)
+                if submission.published > last_retrieved:
+                    submissions.append(submission)
                 else:
                     break
         

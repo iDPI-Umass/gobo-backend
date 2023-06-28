@@ -1,6 +1,7 @@
 import logging
 from os import environ
 import tweepy
+import snscrape.modules.twitter as sns
 import joy
 import models
 from .helpers import guess_mime, md, partition
@@ -9,44 +10,89 @@ from .helpers import guess_mime, md, partition
 class Tweet():
     def __init__(self, _):
         self._ = _
-        self.id = _.id
-        self.author_id = _.author_id
-        self.content = _.text
-        self.published = joy.time.to_iso_string(_.created_at)
-        self.media_keys = (_.attachments or {}).get("media_keys") or []
-        self.quote_tweet_ids = []
+        self.id = str(_.id)
+        self.user = User(_.user)
+        self.content = _.rawContent
+        self.url = _.url
+        self.published = joy.time.to_iso_string(_.date)
+        self.attachments = []
+        self.poll = None
+        self.share = None
 
-        for tweet in self._.referenced_tweets or []:
-            if tweet.type in ["quoted"]:
-                self.quote_tweet_ids.append(tweet.id)
+
+        media = _.media or []
+        for item in media:
+            if type(item) == sns.Photo:
+                self.attachments.append({
+                    "url": item.fullUrl,
+                    "type": "image/jpeg"
+                })
+            elif type(item) == sns.Video or type(item) == sns.Gif:
+                best = None
+                for variant in item.variants:
+                    if best == None:
+                        best = variant
+                    else:
+                        best_bitrate = best.bitrate or 0
+                        variant_bitrate = variant.bitrate or 0
+                        if best_bitrate < variant_bitrate:
+                            best = variant
+                self.attachments.append({
+                    "url": best.url,
+                    "type": best.contentType
+                })
+
+        if type(_.card) == sns.PollCard:
+            self.poll = {
+                "total": 0,
+                "ends": joy.time.to_iso_string(_.card.endDate),
+                "options": []
+            }
+
+            for option in _.card.options:
+                self.poll["total"] = self.poll["total"] + (option.count or 0)
+                self.poll["options"].append({
+                    "key": option.label,
+                    "count": option.count or 0
+                })
+
+
+        share = None
+        if getattr(_, "retweetedTweet", None) != None:
+            share = _.retweetedTweet
+        if getattr(_, "quotedTweet", None) != None:
+            share = _.quotedTweet
+        if share != None and type(share) != sns.TweetRef:
+            self.share = Tweet(share)
+
+    def __repr__(self):
+        return str({
+          "id": self.id,
+          "user": self.user,
+          "content": self.content,
+          "url": self.url,
+          "published": self.published,
+          "poll": self.poll,
+          "share": self.share,
+        })
+
 
 class User():
     def __init__(self, _):
         self._ = _
-        self.id = _.id
+        self.id = str(_.id)
         self.username = _.username
-        self.name = _.name
-        self.icon_url = _.profile_image_url
+        self.name = _.displayname
+        self.icon_url = _.profileImageUrl
 
-class Media():
-    def __init__(self, _):
-        self._ = _
-        self.url = _.url
-        self.media_key = _.media_key
+    def __repr__(self):
+        return str({
+          "id": self.id,
+          "username": self.username,
+          "name": self.name,
+          "icon_url": self.icon_url
+        })
 
-        if self.url != None:
-            self.content_type = guess_mime(self.url)
-        else:
-            best = None
-            for variant in _.variants:
-                if variant.get("bit_rate") == None:
-                    continue
-                if best == None or variant["bit_rate"] > best["bit_rate"]:
-                    best = variant
-
-            self.url = _.url or best["url"]
-            self.content_type = best["content_type"]
-                
 
             
 
@@ -108,6 +154,26 @@ class Twitter():
         logging.info(tweet.published)
         return tweet
 
+    def list_posts(self, user):
+        generator = sns.TwitterSearchScraper(
+            query = f"from:{user}",
+            mode = sns.TwitterSearchScraperMode.LIVE
+        ).get_items()
+
+        for i, tweet in enumerate(generator):
+            t = Tweet(tweet)
+            logging.info(t)
+
+            if i > 10:
+                break
+
+    def get_user(self, name):
+        profile = sns.TwitterProfileScraper(name)
+        for name in dir(profile.entity):
+            if not name.startswith("__"):
+                logging.info(f"{name} {getattr(profile.entity, name)}")
+
+
     def map_sources(self, data):
         base_url = Twitter.BASE_URL
         sources = []
@@ -128,31 +194,14 @@ class Twitter():
     def map_posts(self, data):
         base_url = Twitter.BASE_URL
 
-        tweets = {}
-        for item in data["tweets"]:
-            tweets[item.id] = tweet
-
         sources = {}
         for item in data["sources"]:
             sources[item["platform_id"]] = item
-
-        media = {}
-        for item in data["media"]:
-            media[item.media_key] = item
         
         posts = []
         edges = []
         for tweet in data["tweets"]:
-            source = sources[tweet.author_id]
-            tweet_url = f"{source['url']}/status/{tweet.id}"
-
-            attachments = []
-            for key in tweet.media_keys:
-                file = media[key]
-                attachments.append({
-                    "url": file.url,
-                    "type": file.content_type
-                })
+            source = sources[tweet.user.id]
 
             posts.append({
                 "source_id": source["id"],
@@ -160,17 +209,18 @@ class Twitter():
                 "platform_id": tweet.id,
                 "title": None,
                 "content": tweet.content,
-                "url": tweet_url,
+                "url": tweet.url,
                 "published": tweet.published,
-                "attachments": attachments
+                "attachments": tweet.attachments,
+                "poll": tweet.poll
             })
 
-            for id in tweet.quote_tweet_ids:
+            if tweet.share != None:
                 edges.append({
                     "origin_type": "post",
                     "origin_reference": tweet.id,
                     "target_type": "post",
-                    "target_reference": id,
+                    "target_reference": tweet.share.id,
                     "name": "shares",
                 })
 
@@ -182,137 +232,60 @@ class Twitter():
 
 
     def list_sources(self):
-        pages = tweepy.Paginator(
-            self.client.get_users_following,
-            self.identity["platform_id"],
-            user_auth= True,
-            user_fields = ["name", "username", "profile_image_url"]
-        )
-    
-        users = []
-        for page in pages:
-            for user in page.data:
-                users.append(User(user))
+        users = [
+            User(sns.TwitterProfileScraper("meakoopa").entity),
+            User(sns.TwitterProfileScraper("PlayStation").entity),
+            User(sns.TwitterProfileScraper("EthanZ").entity),
+        ]
 
         return {"users": users}
 
 
     def get_post_graph(self, source):
         last_retrieved = None
-        #last_retrieved = source.get("last_retrieved")
+        last_retrieved = source.get("last_retrieved")
+
+        tweets = []
+        users = []
+
+        generator = sns.TwitterSearchScraper(
+            query = f"from:{source['username']}",
+            mode = sns.TwitterSearchScraperMode.LIVE
+        ).get_items()
+
         if last_retrieved == None:
-            max_pages = 1
-        else:
-            max_pages = 32
-
-        pages = tweepy.Paginator(
-            self.client.get_users_tweets,
-            id = source["platform_id"],
-            max_results=10,
-            limit = max_pages,
-            start_time = last_retrieved, 
-            user_auth=True,
-            expansions=[
-                "author_id",
-                "attachments.media_keys",
-                "attachments.poll_ids",
-                "referenced_tweets.id",
-                "referenced_tweets.id.author_id",
-            ],
-            tweet_fields=["created_at", "entities"],
-            user_fields=["profile_image_url"],
-            media_fields=["url", "variants"]
-        )
-    
-        seen_tweets = set()
-        seen_users = set()
-        seen_media = set()
-
-        tweet_list = []
-        user_list = []
-        media_list = []
-        for page in pages:
-            if page.data == None:
-                continue
-            
-            tweets = page.data
-            users = page.includes.get("users") or []
-            files = page.includes.get("media") or []
-            
-            
-            for item in tweets:
+            for i, item in enumerate(generator):
                 tweet = Tweet(item)
-                if tweet.id not in seen_tweets:
-                    seen_tweets.add(tweet.id)
-                    tweet_list.append(tweet)
-            for item in users:
-                user = User(item)
-                if user.id not in seen_users:
-                    seen_users.add(user.id)
-                    user_list.append(user)
-            for item in files:
-                file = Media(item)
-                if file.url not in seen_media:
-                    seen_media.add(file.url)
-                    media_list.append(file)
+                if i < 25:
+                    tweets.append(tweet)
+                else:
+                    break
+        else:
+            for item in generator:
+                tweet = Tweet(item)
+                if tweet.published > last_retrieved:
+                    tweets.append(item)
+                else:
+                    break
 
 
+        seen_tweets = set()
+        for tweet in tweets:
+            share = tweet.share
+            if share != None and share.id not in seen_tweets:
+                seen_tweets.add(share.id)
+                tweets.append(share)
 
 
-        secondary = set()
-        for tweet in tweet_list:
-            for id in tweet.quote_tweet_ids:
-                if id not in seen_tweets:
-                    secondary.add(id)
-
-        registered = models.post.pull([
-            models.helpers.where("base_url", Twitter.BASE_URL),
-            models.helpers.where("platform_id", list(secondary), "in")
-        ])
-
-        for item in registered:
-            secondary.remove(item["profile_id"])
-        
-        if len(secondary) > 0:
-            for sublist in list(partition(list(secondary), 100)):
-                response = self.client.get_tweets(
-                    sublist,
-                    expansions=[
-                        "author_id",
-                        "attachments.media_keys",
-                        "attachments.poll_ids",
-                        "referenced_tweets.id.author_id",
-                    ],
-                    tweet_fields=["created_at"],
-                    user_fields=["profile_image_url"],
-                    media_fields=["url", "variants"]
-                )
-
-                tweets = page.data
-                users = response.includes.get("users") or []
-                files = resposne.includes.get("media") or []
-
-                for item in tweets:
-                    tweet = Tweet(item)
-                    if tweet.id not in seen_tweets:
-                        seen_tweets.add(tweet.id)
-                        tweet_list.append(tweet)
-                for item in users:
-                    user = User(item)
-                    if user.id not in seen_users:
-                        seen_users.add(user.id)
-                        user_list.append(user)
-                for item in files:
-                    file = Media(item)
-                    if file.url not in seen_media:
-                        seen_media.add(file.url)
-                        media_list.append(file)
-
-
+        seen_users = set()
+        for tweet in tweets:
+            user = tweet.user
+            if user.id not in seen_users:
+                seen_users.add(user.id)
+                users.append(user)
 
 
         return {
-            "tweets": tweet_list,
-            "users": user_list,
-            "media": media_list
+            "tweets": tweets,
+            "users": users
         }
