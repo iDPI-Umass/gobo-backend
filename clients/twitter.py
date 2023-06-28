@@ -242,7 +242,6 @@ class Twitter():
 
 
     def get_post_graph(self, source):
-        last_retrieved = None
         last_retrieved = source.get("last_retrieved")
 
         tweets = []

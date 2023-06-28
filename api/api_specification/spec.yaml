@@ -830,9 +830,9 @@ resources:
         response:
           status: 204
 
-  person_feed:
-    template: /people/{person_id}/feed{?view,direction,per_page,page}
-    route: /people/<int:person_id>/feed
+  person_identity_feed:
+    template: /people/{person_id}/identities/{id}/feed{?per_page,start}
+    route: /people/<int:person_id>/identities/<int:id>/feed
     methods:
       get:
         request:
@@ -844,16 +844,24 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            required: [ posts, sources ]
+            required: [ feed, posts, sources ]
             properties:
+              feed:
+                description: Array of ordered post IDs for this feed. The order depends on the feed being requested.
+                type: array
+                items:
+                  type: integer
               posts:
-                description: List of posts that make up this feed view. Their order depends on the specific view.
+                description: List of posts that appear somewhere in this feed segment.
                 type: array
                 items: *post
               sources:
-                description: List of sources associated with posts in this feed page. Their order is not purposeful, but they represent the most recently available data on those sources.
+                description: List of sources that appear somewhere in this feed segment.
                 type: array
                 items: *source
+              next:
+                description: token that allows the client to fetch the next page fo the feed.
+                type: string
 
   action_onboard_identity_start:
     template: /actions/onboard-identity

@@ -45,25 +45,6 @@ def parse_query(views, data):
       "where": []
     }
 
-def parse_feed_query(views, data):
-    pages = parse_page_query(data)
-    if pages["per_page"] > 200:
-        pages["per_page"] = 200
-
-    view = data.get("view") or "full"
-    direction = data.get("direction") or "descending"
-    
-    if view not in views:
-        raise http_errors.bad_request(f"view {view} is invalid")
-    if direction not in ["ascending", "descending"]:
-        raise http_errors.bad_request(f"direction {direction} is invalid")
-
-    return {
-      "view": view,
-      "direction": direction,
-      "per_page": pages["per_page"],
-      "page": pages["page"]
-    }
 
 def parse_base_url(data):
     url = data["base_url"].lower()

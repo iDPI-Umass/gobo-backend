@@ -131,11 +131,17 @@ def add_post_to_followers(task):
         queues.database.put_task(task)
 
     for follower in followers:
-        models.link.upsert({
-            "origin_type": "person",
-            "origin_id": follower["origin_id"],
-            "target_type": "post",
-            "target_id": post["id"],
-            "name": "full-feed",
-            "secondary": f"{post['published']}::{post['id']}"
+        identity = models.identity.find({
+            "base_url": post["base_url"],
+            "person_id": follower["origin_id"]
         })
+
+        if identity != None:
+            models.link.upsert({
+                "origin_type": "identity",
+                "origin_id": identity["id"],
+                "target_type": "post",
+                "target_id": post["id"],
+                "name": "identity-feed",
+                "secondary": f"{post['published']}::{post['id']}"
+            })

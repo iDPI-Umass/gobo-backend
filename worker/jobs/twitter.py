@@ -43,9 +43,24 @@ pull_posts = set_pull_posts(
 )
 
 def workbench(task):
-    client = Twitter(task.details["identity"])
-    #id = "1672030817634205696" # Text RT of tweet with video
-    id = "1671615034584190977" # Text and video fo tweet with video
-    # id = "1670498291556012035" # Non-Quote RT
-    # client.list_posts("meakoopa")
-    client.get_user("meakoopa")
+    # client = Twitter(task.details["identity"])
+    # #id = "1672030817634205696" # Text RT of tweet with video
+    # id = "1671615034584190977" # Text and video fo tweet with video
+    # # id = "1670498291556012035" # Non-Quote RT
+    # # client.list_posts("meakoopa")
+    # client.get_user("meakoopa")
+
+    links = models.link.pull([
+        where("name", "full-feed")
+    ])
+
+    for link in links:
+        models.link.remove(link["id"])
+
+    posts = models.post.pull([])
+    for post in posts:
+        queues.database.put_details("add post to followers", {
+            "page": 1,
+            "per_page": 500,
+            "post": post
+        })

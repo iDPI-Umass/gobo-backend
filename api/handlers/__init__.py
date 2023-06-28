@@ -13,4 +13,4 @@ from .task import *
 
 from .person_identity import *
 from .person_lens import *
-from .person_feed import *
+from .person_identity_feed import *

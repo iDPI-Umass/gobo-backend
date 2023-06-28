@@ -198,8 +198,8 @@ class Twitter():
 
 
     def get_post_graph(self, source):
-        last_retrieved = None
-        #last_retrieved = source.get("last_retrieved")
+        #last_retrieved = None
+        last_retrieved = source.get("last_retrieved")
         if last_retrieved == None:
             max_pages = 1
         else:
