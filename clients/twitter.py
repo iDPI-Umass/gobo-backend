@@ -72,6 +72,7 @@ class Tweet():
           "content": self.content,
           "url": self.url,
           "published": self.published,
+          "attachments": self.attachments,
           "poll": self.poll,
           "share": self.share,
         })

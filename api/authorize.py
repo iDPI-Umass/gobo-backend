@@ -49,7 +49,8 @@ def fetch_keyset():
         return keyset["value"]
 
 
-def validate_token(token):
+
+def validate_token(token):    
     jwks = fetch_keyset()
     unverified_claims = jwt.get_unverified_header(token)
     
@@ -71,7 +72,7 @@ def validate_token(token):
                 rsa_key,
                 algorithms=ALGORITHMS,
                 audience=API_AUDIENCE,
-                issuer=f"https://{AUTH0_DOMAIN}/"
+                issuer="https://auth.gobo.social/"
             )
         except jwt.ExpiredSignatureError:
             raise http_errors.unauthorized("token is expired")
@@ -89,10 +90,7 @@ def get_roles():
     token = get_token()
     claims = validate_token(token)
     g.claims = claims
-    roles = claims.get("scope")
-    if roles == None:
-        return []
-    return roles.split()
+    return claims.get("permissions")
 
 
 

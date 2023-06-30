@@ -1,6 +1,7 @@
 SQLAlchemy==2.0.12
 psycopg2==2.9.6
 Flask==2.3.2
+Flask-Cors==4.0.0
 PyYAML==6.0
 jsonschema==4.17.3
 httpx[http2,brotli]==0.24.1

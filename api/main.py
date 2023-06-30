@@ -24,8 +24,10 @@ config.dictConfig({
 
 
 # Instntiate Flask app
-from flask import Flask, request
+from flask import Flask, request, make_response
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
 
 
 # Establish handlers based on API specification
@@ -35,6 +37,7 @@ from validate import validate_request
 from authorize import authorize_request
 import handlers
 
+
 def wrap_handler(alias, configuration, handler):
 
     def f(*args, **kwargs):
@@ -43,7 +46,9 @@ def wrap_handler(alias, configuration, handler):
             validate_request(configuration)
             result = handler(*args, **kwargs)
             status = configuration["response"]["status"]
-            return result, status
+            response = make_response(result, status)
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            return response
         except (Exception, HTTPError) as e:
             status = getattr(e, "status", 500)
             if status == 500:
@@ -55,7 +60,9 @@ def wrap_handler(alias, configuration, handler):
                 logging.warning(e, exc_info=True)
                 result = {"message": e.message}
           
-            return result, status
+            response = make_response(result, status)
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            return response
     
     # Flask needs unique function names internally.
     # Rename the wrapper function to match the inner function.
