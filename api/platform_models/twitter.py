@@ -83,7 +83,7 @@ def confirm_identity(registration, data):
     # Store and finalize
     identity = models.identity.upsert(_identity)
 
-    models.link.safe_add({
+    models.link.upsert({
       "origin_type": "person",
       "origin_id": identity["person_id"],
       "target_type": "identity",

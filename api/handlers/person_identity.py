@@ -26,9 +26,19 @@ def person_identities_get(person_id):
     identities = models.person.get_links(tables.Identity, query)
     return identities
 
+def person_identity_post(person_id, id):
+    person = get_viewer(person_id)
+    identity = check_claim(person_id, id)
+
+    identity["active"] = request.json["active"]
+    identity = models.identity.update(id, identity)
+    return identity
+
 def person_identity_delete(person_id, id):
     person = get_viewer(person_id)
     check_claim(person_id, id)
+
+    identity = models.identity.get(id)
 
     models.link.find_and_remove({
       "origin_type": "person",
@@ -39,4 +49,14 @@ def person_identity_delete(person_id, id):
     })
     
     models.identity.remove(id)
+
+    if identity is not None:
+        models.task.add({
+            "queue": "database",
+            "name": "remove identity",
+            "details": {
+                "identity": identity
+            }
+        })
+
     return ""

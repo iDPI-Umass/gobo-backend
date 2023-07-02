@@ -47,8 +47,8 @@ def workbench(task):
     #id = "1672030817634205696" # Text RT of tweet with video
     id = "1671615034584190977" # Text and video fo tweet with video
     # id = "1670498291556012035" # Non-Quote RT
-    # client.list_posts("meakoopa")
-    client.get_user("meakoopa")
+    client.list_posts("meakoopa")
+    # client.get_user("meakoopa")
 
 
 # def workbench(task):

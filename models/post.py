@@ -76,11 +76,15 @@ def view_identity_feed(data):
 
 
         feed = []
-        next_token = rows[-1].secondary
         posts = []
         sources = []
         seen_posts = set()
         seen_sources = set()
+        if len(rows) == 0:
+            next_token = None
+        else:
+            next_token = rows[-1].secondary
+
 
         for row in rows:
             id = row.target_id
@@ -114,10 +118,13 @@ def view_identity_feed(data):
             sources.append(row.to_dict())    
 
 
-
-        return {
+        output = {
             "feed": feed,
             "posts": posts,
             "sources": sources,
-            "next": next_token
         }
+
+        if next_token is not None:
+            output["next"] = next_token
+
+        return output

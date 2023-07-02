@@ -18,6 +18,7 @@ class Lens(Base):
     person_id: Mapped[int]
     category: Mapped[Optional[str]]
     configuration: Mapped[Optional[str]]
+    active: Mapped[bool] = mapped_column(insert_default=True)
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
@@ -33,6 +34,7 @@ class Lens(Base):
         data = {
             "id": self.id,
             "person_id": self.person_id,
+            "active": self.active,
             "created": self.created,
             "updated": self.updated
         }
@@ -47,6 +49,7 @@ class Lens(Base):
 
     def update(self, data):
         self.person_id = data["person_id"]
+        self.active = data.get("active", True)
         write_optional(self, data, optional)
 
         configuration = data.get("configuration")

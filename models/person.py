@@ -12,8 +12,8 @@ tableDict = {
 }
 
 
-add, get, update, remove, query, find = itemgetter(
-    "add", "get", "update", "remove", "query", "find"
+add, get, update, remove, query, find, pluck = itemgetter(
+    "add", "get", "update", "remove", "query", "find", "pluck"
 )(define_crud(Person))
 
 # Because the person table records are implicity created via our connection

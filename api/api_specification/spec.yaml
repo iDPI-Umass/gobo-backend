@@ -110,6 +110,9 @@ shards:
     oauth_token_secret:
       description: The OAuth secret token associated with this identity access.
       type: string
+    active:
+      description: This flag provides a hint as to the visibility of posts from this identity in certain feeds.
+      type: boolean
 
   identity: &identity
     type: object
@@ -170,6 +173,9 @@ shards:
     category:
       description: Describes the type of lens and controls how it acts on the feed
       type: string
+    active:
+      description: This flag provides a hint as to this lens effect on a given feed.
+      type: boolean
     configuration:
       description: Description of a given lens configuration. Varies based on lens category.
       type: object
@@ -775,6 +781,24 @@ resources:
     template: /people/{person_id}/identities/{id}
     route: /people/<int:person_id>/identities/<int:id>
     methods:
+      post:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ active ]
+            properties:
+              active:
+                description: Controls the visibility of the feed emenating from this identity in the full feed.
+                type: boolean
+        response:
+          status: 200
+          type: application/json
+          schema: *identity
+
       delete:
         request:
           authorization:

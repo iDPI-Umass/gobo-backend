@@ -58,8 +58,8 @@ def find_and_remove(data):
         row = session.scalars(statement).first()
 
         if row == None:
-            return
+            return None
         else:
             session.delete(row)
             session.commit()
-            return
+            return row.to_dict()

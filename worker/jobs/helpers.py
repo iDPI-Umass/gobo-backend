@@ -48,7 +48,7 @@ def set_pull_sources(Client, queue):
             source = models.source.upsert(_source)
             sources.append(source)
       
-        reconcile_sources(identity["person_id"], sources)
+        reconcile_sources(identity, sources)
 
         for source in sources:
             queue.put_details("pull posts", {
@@ -140,15 +140,14 @@ def set_pull_posts(queue):
 
     return pull_posts
 
-def reconcile_sources(person_id, sources):
-    base_url = sources[0]["base_url"]
+def reconcile_sources(identity, sources):
     desired_sources = []
     for source in sources:
         desired_sources.append(source["id"])
     
     results = models.link.pull([
-        where("origin_type", "person"),
-        where("origin_id", person_id),
+        where("origin_type", "identity"),
+        where("origin_id", identity["id"]),
         where("target_type", "source"),
         where("name", "follows")
     ])
@@ -156,22 +155,22 @@ def reconcile_sources(person_id, sources):
     current_sources = []
     source_ids = [ result["target_id"] for result in results ]
     for source in models.source.pluck(source_ids):
-        if source["base_url"] == base_url:
+        if source["base_url"] == identity["base_url"]:
             current_sources.append(source["id"])
 
 
     difference = list(set(desired_sources) - set(current_sources))
     for source_id in difference:
-        logging.info(f"For person {person_id}, adding source {source_id}")
+        logging.info(f"For identity {identity['id']}, adding source {source_id}")
         queues.database.put_details("follow", {
-            "person_id": person_id,
+            "identity_id": identity["id"],
             "source_id": source_id
         })
 
     difference = list(set(current_sources) - set(desired_sources))
     for source_id in difference:
-        logging.info(f"For person {person_id}, removing source {source_id}")
+        logging.info(f"For identity {identity['id']}, removing source {source_id}")
         queues.database.put_details("unfollow", {
-            "person_id": person_id,
+            "identity_id": identity["id"],
             "source_id": source_id
         })
