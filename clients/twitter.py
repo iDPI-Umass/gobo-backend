@@ -14,7 +14,11 @@ class Tweet():
         self.user = User(_.user)
         self.content = _.rawContent
         self.url = _.url
-        self.published = joy.time.to_iso_string(_.date)
+        self.published = joy.time.convert(
+            start = "date",
+            end = "iso",
+            value = _.date
+        )
         self.attachments = []
         self.poll = None
         self.share = None
@@ -45,7 +49,11 @@ class Tweet():
         if type(_.card) == sns.PollCard:
             self.poll = {
                 "total": 0,
-                "ends": joy.time.to_iso_string(_.card.endDate),
+                "ends": joy.time.convert(
+                    start = "date",
+                    end = "iso",
+                    value = _.card.endDate
+                ),
                 "options": []
             }
 

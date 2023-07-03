@@ -19,7 +19,11 @@ class Status():
         self.account = Account(_.account)
         self.content = _.content
         self.url = _.url
-        self.published = joy.time.to_iso_string(_.created_at)
+        self.published = joy.time.convert(
+            start = "date",
+            end = "iso",
+            value = _.created_at
+        )
         self.attachments = []
         self.poll = None
         self.reblog = None
@@ -38,7 +42,11 @@ class Status():
         if poll != None:
             self.poll = {
               "total": poll.votes_count,
-              "ends": joy.time.to_iso_string(poll.expires_at),
+              "ends": joy.time.convert(
+                  start = "date",
+                  end = "iso",
+                  value = poll.expires_at
+              ),
               "options": []
             }
 

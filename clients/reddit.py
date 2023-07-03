@@ -2,9 +2,13 @@ import logging
 import json
 from os import environ
 import praw
+from pmaw import PushshiftAPI
 import joy
 import models
+from .gobo_reddit import GOBOReddit
 from .helpers import guess_mime, md, partition
+
+gobo_reddit = GOBOReddit()
 
 def is_image(url):
     return url.startswith("https://i.redd.it/")
@@ -15,38 +19,58 @@ def is_video(url):
 def is_gallery(url):
     return url.startswith("https://www.reddit.com/gallery/")
 
-def is_poll(submission):
-    return getattr(submission, "poll_data", None) != None
+def get_subreddit(submission):
+    subreddit = submission["subreddit"]
+    if type(subreddit) is str:
+        return subreddit
+    else:
+        return subreddit.display_name
+
+def get_poll(submission):
+    poll = submission.get("poll_data", None)
+    if poll is not None:
+        return poll
+    
+    poll = getattr(submission, "poll_data", None)
+    if poll is not None:
+        output = vars(poll)
+        output.options = []
+        for option in poll.options:
+            output.append(vars(option))
+        return output
+
+    return None
+   
 
 class Submission():
-    def __init__(self, _):
-        logging.info({
-            "id": _.name,
-            "title": _.title
-        })
-        
+    def __init__(self, _):        
         self._ = _
-        self.id = _.name
-        self.title = _.title
+        self.id = f"t3_{_['id']}"
+        self.title = _["title"]
         self.content = None
-        self.published = joy.time.unix_to_iso(_.created_utc)
-        self.url = Reddit.BASE_URL + _.permalink
-        self.subreddit = Subreddit(_.subreddit)
-        self.crosspost_parent = getattr(_, "crosspost_parent", None)
+        self.published = joy.time.convert(
+            start = "unix",
+            end = "iso",
+            value = _["created_utc"]
+        )
+        self.url = Reddit.BASE_URL + _["permalink"]
+        self.subreddit = get_subreddit(_)
+        self.crosspost_parent = _.get("crosspost_parent", None)
         self.attachments = []
         self.poll = None
 
+        url = _["url"]
+        poll = get_poll(_)
 
-
-        if is_image(_.url) == True:
+        if is_image(url) == True:
             self.attachments.append({
-                "url": _.url,
-                "type": guess_mime(_.url)
+                "url": url,
+                "type": guess_mime(url)
             })
         
-        elif is_video(_.url) == True:
+        elif is_video(url) == True:
             try:
-                url = _.media["reddit_video"]["fallback_url"]
+                url = _["media"]["reddit_video"]["fallback_url"]
                 content_type = guess_mime(url) or "video/mp4"
                 self.attachments.append({
                     "url": url,
@@ -55,9 +79,9 @@ class Submission():
             except Exception as e:
                 logging.warning(e)                              
         
-        elif is_gallery(_.url) == True:
+        elif is_gallery(url) == True:
             try:
-                for key, value in _.media_metadata.items():
+                for key, value in _["media_metadata"].items():
                     if value["status"] == "valid":
                         content_type = value["m"]
                         best = None
@@ -75,28 +99,31 @@ class Submission():
             except Exception as e:
                 logging.warning(e)
 
-        elif is_poll(_):
-            poll = _.poll_data
-            ends = poll.voting_end_timestamp
+        elif poll is not None:
+            ends = poll["voting_end_timestamp"]
             if ends > 1e10:
                 ends = ends / 1000
 
             self.poll = {
-                "total": poll.total_vote_count,
-                "ends": joy.time.unix_to_iso(ends),
+                "total": poll["total_vote_count"],
+                "ends": joy.time.convert(
+                    start = "unix",
+                    end = "iso",
+                    value = ends
+                ),
                 "options": []
             }
        
-            for option in poll.options:
+            for option in poll["options"]:
                 self.poll["options"].append({
-                    "key": getattr(option, "text", ""),
-                    "count": getattr(option, "vote_count", 0)
+                    "key": option.get("text", ""),
+                    "count": option.get("vote_count", 0)
                 })
 
-        elif _.is_self == True:
-            self.content = getattr(_, "selftext", None)
+        elif _["is_self"] == True:
+            self.content = _.get("selftext", None)
         else:
-            self.content = _.url
+            self.content = url
 
 # The id and username swap is awkward. The subreddit "name" is its full name,
 # an absolute reference in the Reddit API. However, we reference subreddits
@@ -221,25 +248,20 @@ class Reddit():
 
         name = source["name"]
         last_retrieved = source.get("last_retrieved")
-        generator = self.client.subreddit(name).new(limit=None)
 
 
 
-        if last_retrieved == None:
-            for i, item in enumerate(generator):
-                submission = Submission(item)
-                if i < 25:
-                    submissions.append()
-                else:
-                    break
+        _submissions = []
+        for item in gobo_reddit.get_new_ids(name):
+            _submissions.append(Submission(item))
+
+        if last_retrieved is None:
+            submissions.extend(_submissions)
         else:
-            for item in generator:
-                submission = Submission(item)
+            for submission in _submissions:
                 if submission.published > last_retrieved:
                     submissions.append(submission)
-                else:
-                    break
-        
+
 
 
         secondary = set()
@@ -257,18 +279,26 @@ class Reddit():
 
         if len(secondary) > 0:
             for sublist in list(partition(list(secondary), 100)):
-                generator = self.client.info(sublist)
+                generator = self.client.info(fullnames = sublist)
                 for item in generator:
-                    submissions.append(Submission(item))
+                    submissions.append(Submission(vars(item)))
 
 
 
         seen_subreddits = set()
+        subreddit_dict = {}
         for submission in submissions:
-            if submission.subreddit.id not in seen_subreddits:
-                seen_subreddits.add(submission.subreddit.id)
-                subreddits.append(submission.subreddit)
+            if submission.subreddit not in seen_subreddits:
+                seen_subreddits.add(submission.subreddit)
 
+        generator = self.client.info(subreddits = list(seen_subreddits))
+        for item in generator:
+            subreddit = Subreddit(item)
+            subreddits.append(subreddit)
+            subreddit_dict[subreddit.name] = subreddit
+
+        for submission in submissions:
+            submission.subreddit = subreddit_dict[submission.subreddit]
 
 
         return {

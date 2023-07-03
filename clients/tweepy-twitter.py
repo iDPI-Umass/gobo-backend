@@ -12,7 +12,11 @@ class Tweet():
         self.id = _.id
         self.author_id = _.author_id
         self.content = _.text
-        self.published = joy.time.to_iso_string(_.created_at)
+        self.published = joy.time.convert(
+            start = "date",
+            end = "iso",
+            value = _.created_at
+        )
         self.media_keys = (_.attachments or {}).get("media_keys") or []
         self.quote_tweet_ids = []
 

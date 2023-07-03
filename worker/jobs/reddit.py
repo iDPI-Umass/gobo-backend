@@ -43,14 +43,36 @@ pull_posts = set_pull_posts(
 )
 
 
-def workbench(task):
-    client = Reddit(task.details["identity"])
+# def workbench(task):
+#     client = Reddit(task.details["identity"])
     
-    # id = "14f9q07" # Submission that's crossposted
-    # client.get_post(id)
+#     # id = "14f9q07" # Submission that's crossposted
+#     # client.get_post(id)
     
-    # ids = ["t3_14f6btr"]
-    # client.pluck_posts(ids)
+#     # ids = ["t3_14f6btr"]
+#     # client.pluck_posts(ids)
 
-    id = "10yt1ch" # Submission with poll
-    client.get_post(id)
+#     id = "10yt1ch" # Submission with poll
+#     client.get_post(id)
+
+
+def workbench(task):
+    posts = models.post.pull([
+        where("base_url", Reddit.BASE_URL)
+    ])
+
+    ids = []
+    for post in posts:
+        if not post["platform_id"].startswith("t3_"):
+            ids.append(post["id"])
+
+    links = models.link.pull([
+        where("origin_type", "post"),
+        where("origin_id", ids, "in")
+    ])
+
+    for link in links:
+        models.link.remove(link["id"])
+
+    for id in ids:
+        models.post.remove(id)
