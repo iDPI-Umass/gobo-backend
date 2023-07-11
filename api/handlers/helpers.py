@@ -17,6 +17,8 @@ def parse_page_query(data):
 
     if per_page < 1:
         raise http_errors.bad_request(f"per_page {per_page} is invalid")
+    if per_page > 100:
+        per_page = 100
     if page < 1:
         raise http_errors.bad_request(f"page {page} is invalid")
 
