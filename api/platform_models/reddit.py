@@ -93,6 +93,14 @@ def confirm_identity(registration, data):
       "name": "has-identity",
       "secondary": None
     })
+
+    models.task.add({
+        "queue": "reddit",
+        "name": "pull sources",
+        "details": {
+            "identity": identity
+        }
+    })
     
     models.registration.remove(registration["id"])
 

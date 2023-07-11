@@ -84,6 +84,21 @@ shards:
       <<: *personCore
       <<: *timestamp
 
+  storeCore: &storeCore
+    <<: *person_id
+    name:
+      type: string
+    content:
+      type: object
+
+  store: &store
+    type: object
+    additionalProperties: false
+    properties:
+      <<: *id
+      <<: *storeCore
+      <<: *timestamp
+
   identityCore: &identityCore
     <<: *person_id
     platform_id:
@@ -762,6 +777,30 @@ resources:
           status: 200
           schema: *person
 
+  person_store:
+    template: /people/{person_id}/stores/{name}
+    route: /people/<int:person_id>/stores/<name>
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+        response:
+          status: 200
+          type: application/json
+          schema: *store
+
+      put:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema: *store
+        response:
+          status: 200
+          type: application/json
+          schema: *store
+
   person_identities:
     template: /people/{person_id}/identities{?per_page,page}
     route: /people/<int:person_id>/identities
@@ -833,7 +872,7 @@ resources:
           schema: *lens
 
   person_lens:
-    template: /people/{person_id}/lenses/{id}
+    template: /people/{person_id}/lenses/{id}{?per_page,page,category}
     route: /people/<int:person_id>/lenses/<int:id>
     methods:
       put:
