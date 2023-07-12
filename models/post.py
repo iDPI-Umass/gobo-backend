@@ -77,6 +77,7 @@ def view_identity_feed(data):
 
         feed = []
         posts = []
+        shares = []
         sources = []
         seen_posts = set()
         seen_sources = set()
@@ -100,6 +101,7 @@ def view_identity_feed(data):
         rows = session.scalars(statement).all()
 
         for row in rows:
+            shares.append([row.origin_id, row.target_id])
             seen_posts.add(row.target_id)
 
         statement = select(Post).where(Post.id.in_(list(seen_posts)))
@@ -121,6 +123,7 @@ def view_identity_feed(data):
         output = {
             "feed": feed,
             "posts": posts,
+            "shares": shares,
             "sources": sources,
         }
 

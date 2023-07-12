@@ -918,6 +918,13 @@ resources:
                 description: List of posts that appear somewhere in this feed segment.
                 type: array
                 items: *post
+              shares:
+                description: List of post references that have share relationships.
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: integer
               sources:
                 description: List of sources that appear somewhere in this feed segment.
                 type: array
