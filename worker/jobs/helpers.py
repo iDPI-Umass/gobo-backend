@@ -6,14 +6,14 @@ import queues
 where = models.helpers.where
 
 
-def set_identity_follow_fanout(where_statement, queue):
+def set_identity_follow_fanout(where_statements, queue):
     def identity_follow_fanout(task):
         page = task.details.get("page") or 1
         per_page = 500
         query = {
             "per_page": per_page,
             "page": page,
-            "where": where_statement
+            "where": where_statements
         }
 
         identities = models.identity.query(query)
@@ -57,6 +57,60 @@ def set_pull_sources(Client, queue):
             })
 
     return pull_sources
+
+
+# TODO: Can we refactor the platform clients so we are not required to look up
+#    an identity? Probably not as we move into more private posts. In that case
+#    we should refactor some of the primitives here to make this less error-prone
+#    to write.
+def set_read_sources(where_statements, Client, queue):
+    def read_sources(task):
+        page = task.details.get("page") or 1
+        per_page = 500
+        query = {
+            "per_page": per_page,
+            "page": page,
+            "where": where_statements
+        }
+
+
+        sources = models.source.query(query)
+        for source in sources:
+            link = models.link.random([
+                where("origin_type", "identity"),
+                where("target_type", "source"),
+                where("target_id", source["id"]),
+                where("name", "follows")
+            ])
+
+            if link is None:
+                continue
+
+            identity = models.identity.get(link["origin_id"])
+            if identity is None:
+                continue
+
+            base_url = identity["base_url"]
+            mastodon_client = models.mastodon_client.find({"base_url": base_url})
+        
+            if mastodon_client == None:
+                client = Client(identity)
+            else:
+                client = Client(mastodon_client, identity)
+
+            queue.put_details("pull posts", {
+                "client": client,
+                "source": source
+            })
+
+
+        if len(sources) == per_page:
+            task.update({"page": page + 1})
+            queue.put_task(task)
+
+    return read_sources
+
+
 
 def set_pull_posts(queue):
     def pull_posts(task):

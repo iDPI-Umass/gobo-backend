@@ -246,18 +246,35 @@ def add_post_to_followers(task):
         })
 
 
-def workbench(task):    
-    links = models.link.pull([])
-    keys = set()
+def reset_all_posts():
+    posts = models.post.pull([])
+    for post in posts:
+        models.post.remove(post["id"])
+
+
+
+    links = models.link.pull([
+      where("origin_type", "post")
+    ])
     for link in links:
-        a = link["origin_type"]
-        b = link["origin_id"]
-        c = link["target_type"]
-        d = link["target_id"]
-        e = link["name"]
-        key = f"{a}{b}{c}{d}{e}"
-        if key in keys:
-            logging.warning(key)
-            # models.link.remove(link["id"])
-        else:
-            keys.add(key)
+       models.link.remove(link["id"])
+
+
+
+    links = models.link.pull([
+      where("target_type", "post")
+    ])
+    for link in links:
+       models.link.remove(link["id"])
+
+
+
+    links = models.link.pull([
+      where("name", "last-retrieved")
+    ])
+    for link in links:
+       models.link.remove(link["id"])
+
+
+def workbench(task):
+    reset_all_posts()

@@ -33,6 +33,9 @@ def safe_add(data):
 
 def upsert(data):
     with Session() as session:
+        if data.get("url") is None:
+            raise Exception("upsert requires post have URL")
+
         statement = select(Post)
         statement = statement.where(Post.url == data["url"])
         statement = statement.limit(1)

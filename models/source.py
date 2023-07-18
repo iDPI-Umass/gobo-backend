@@ -30,6 +30,9 @@ def safe_add(data):
 
 def upsert(data):
     with Session() as session:
+        if data.get("url") is None:
+            raise Exception("upsert requires source have url")
+
         statement = select(Source)
         statement = statement.where(Source.url == data["url"])
         statement = statement.limit(1)

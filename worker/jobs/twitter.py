@@ -29,7 +29,7 @@ def dispatch(task):
 
 
 identity_follow_fanout = set_identity_follow_fanout(
-    where_statement = [ where("base_url", Twitter.BASE_URL) ],
+    where_statements = [ where("base_url", Twitter.BASE_URL) ],
     queue = queues.twitter
 )
 

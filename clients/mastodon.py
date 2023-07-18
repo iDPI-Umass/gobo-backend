@@ -145,6 +145,9 @@ class Mastodon():
         posts = []
         edges = []
         for status in data["statuses"]:
+            if status.url is None:
+                continue
+
             source = sources[status.account.id]
 
             post = {

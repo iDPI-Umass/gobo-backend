@@ -6,8 +6,8 @@ from db import tables
 from .helpers import define_crud
 
 
-add, get, update, remove, query, find, pull = itemgetter(
-    "add", "get", "update", "remove", "query", "find", "pull"
+add, get, update, remove, query, find, pull, random = itemgetter(
+    "add", "get", "update", "remove", "query", "find", "pull", "random"
 )(define_crud(tables.Link))
 
 
@@ -30,6 +30,18 @@ def safe_add(data):
 
 def upsert(data):
     with Session() as session:
+        if data.get("origin_type") is None:
+            raise Exception("upsert requires link have origin_type")
+        if data.get("origin_id") is None:
+            raise Exception("upsert requires link have origin_id")
+        if data.get("target_type") is None:
+            raise Exception("upsert requires link have target_type")
+        if data.get("target_id") is None:
+            raise Exception("upsert requires link have target_id")
+        if data.get("name") is None:
+            raise Exception("upsert requires link have name")
+
+
         statement = select(tables.Link)
         for key, value in data.items():
             statement = statement.where(getattr(tables.Link, key) == value)

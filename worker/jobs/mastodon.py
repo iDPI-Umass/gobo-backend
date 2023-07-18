@@ -5,6 +5,7 @@ import queues
 from clients import Twitter, Reddit, Mastodon
 from .helpers import set_identity_follow_fanout
 from .helpers import set_pull_sources
+from .helpers import set_read_sources
 from .helpers import set_pull_posts
 
 where = models.helpers.where
@@ -18,6 +19,8 @@ def dispatch(task):
         identity_follow_fanout(task)
     elif task.name == "pull sources":
         pull_sources(task)
+    elif task.name == "read sources":
+        read_sources(task)
     elif task.name == "pull posts":
         pull_posts(task)
     else:
@@ -27,7 +30,7 @@ def dispatch(task):
 
 
 identity_follow_fanout = set_identity_follow_fanout(
-    where_statement = [ 
+    where_statements = [ 
         where("base_url", Twitter.BASE_URL, "neq"),
         where("base_url", Reddit.BASE_URL, "neq")
     ],
@@ -35,6 +38,15 @@ identity_follow_fanout = set_identity_follow_fanout(
 )
 
 pull_sources = set_pull_sources(
+    Client = Mastodon,
+    queue = queues.mastodon
+)
+
+read_sources = set_read_sources(
+    where_statements = [ 
+        where("base_url", Twitter.BASE_URL, "neq"),
+        where("base_url", Reddit.BASE_URL, "neq")
+    ],
     Client = Mastodon,
     queue = queues.mastodon
 )

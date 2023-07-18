@@ -139,6 +139,35 @@ def define_crud(Table):
 
             return results
 
+    def random(where_statements):
+        with Session() as session:
+            statement = select(Table)
+
+            for expression in where_statements:
+                key = expression["key"]
+                value = expression["value"]
+                if expression["operator"] == "eq":
+                    statement = statement.where(getattr(Table, key) == value)
+                if expression["operator"] == "neq":
+                    statement = statement.where(getattr(Table, key) != value)
+                elif expression["operator"] == "gte":
+                    statement = statement.where(getattr(Table, key) >= value)
+                elif expression["operator"] == "gt":
+                    statement = statement.where(getattr(Table, key) > value)
+                elif expression["operator"] == "lte":
+                    statement = statement.where(getattr(Table, key) <= value)
+                elif expression["operator"] == "lt":
+                    statement = statement.where(getattr(Table, key) < value)
+                elif expression["operator"] == "in":
+                    statement = statement.where(getattr(Table, key).in_(value))
+                    
+            statement = statement.limit(1)
+            row = session.scalars(statement).first()
+
+            if row == None:
+                return None
+            else:
+                return row.to_dict()
 
     return {
       "add": add,
@@ -148,5 +177,6 @@ def define_crud(Table):
       "query": query,
       "find": find,
       "pull": pull,
-      "pluck": pluck
+      "pluck": pluck,
+      "random": random
     }

@@ -12,6 +12,11 @@ add, get, update, remove, query, find,  = itemgetter(
 
 def upsert(data):
     with Session() as session:
+        if data.get("person_id") is None:
+            raise Exception("upsert requires store have person_id")
+        if data.get("name") is None:
+            raise Exception("upsert requires store have name")
+
         statement = select(tables.Store) \
             .where(tables.Store.person_id == data["person_id"]) \
             .where(tables.Store.name == data["name"]) \

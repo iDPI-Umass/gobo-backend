@@ -205,6 +205,9 @@ class Reddit():
         posts = []
         edges = []
         for submission in data["submissions"]:
+            if submission.url is None:
+                continue
+
             source = sources[submission.subreddit.id]
 
             posts.append({

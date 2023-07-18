@@ -210,6 +210,9 @@ class Twitter():
         posts = []
         edges = []
         for tweet in data["tweets"]:
+            if tweet.url is None:
+                continue
+
             source = sources[tweet.user.id]
 
             posts.append({

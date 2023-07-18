@@ -19,14 +19,23 @@ def start_sources():
     safe_start()
     queues.api.put_details("poll", {})
 
-    # schedule.every(6).hours.do(
-    #     queues.twitter.put, queues.Task("identity follow fanout")
-    # )
 
-    # schedule.every(6).hours.do(
-    #     queues.reddit.put, queues.Task("identity follow fanout")
-    # )
+    # Handles follower-list (source) updates.
+    schedule.every(12).hours.do(
+        queues.reddit.put_details, "identity follow fanout"
+    )
 
-    # schedule.every(6).hours.do(
-    #     queues.mastodon.put, queues.Task("identity follow fanout")
-    # )
+    schedule.every(12).hours.do(
+        queues.mastodon.put_details, "identity follow fanout"
+    )
+
+
+
+    # Pull the latest posts from the tracked sources.
+    schedule.every().hour.do(
+        queues.reddit.put_details, "read sources"
+    )
+
+    schedule.every().hour.do(
+        queues.mastodon.put_details, "read sources"
+    )
