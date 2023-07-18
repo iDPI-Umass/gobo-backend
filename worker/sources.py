@@ -19,14 +19,14 @@ def start_sources():
     safe_start()
     queues.api.put_details("poll", {})
 
-    # schedule.every(12).hours.do(
-    #     queues.twitter.put, queues.Task("start pull sources")
+    # schedule.every(6).hours.do(
+    #     queues.twitter.put, queues.Task("identity follow fanout")
     # )
 
-    # schedule.every(12).hours.do(
-    #     queues.reddit.put, queues.Task("start pull sources")
+    # schedule.every(6).hours.do(
+    #     queues.reddit.put, queues.Task("identity follow fanout")
     # )
 
-    # schedule.every(12).hours.do(
-    #     queues.mastodon.put, queues.Task("start pull sources")
+    # schedule.every(6).hours.do(
+    #     queues.mastodon.put, queues.Task("identity follow fanout")
     # )

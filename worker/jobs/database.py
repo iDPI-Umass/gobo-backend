@@ -246,34 +246,18 @@ def add_post_to_followers(task):
         })
 
 
-def workbench(task):
-    per_page = 1000
-   
-    query = {
-        "page": 1,
-        "per_page": per_page,
-        "where": [
-            where("origin_type", "person"),
-            where("target_type", "source"),
-            where("name", "follows")
-        ]
-    }    
-        
-    links = models.link.query(query)
-    identities = {}
+def workbench(task):    
+    links = models.link.pull([])
+    keys = set()
     for link in links:
-        source = models.source.get(link["target_id"])
-
-        identity = models.identity.find({
-            "person_id": link["origin_id"],
-            "base_url": source["base_url"]
-        })
-
-        models.link.remove(link["id"])
-        models.link.upsert({
-            "origin_type": "identity",
-            "origin_id": identity["id"],
-            "target_type": "source",
-            "target_id": source["id"],
-            "name": "follows"
-        })
+        a = link["origin_type"]
+        b = link["origin_id"]
+        c = link["target_type"]
+        d = link["target_id"]
+        e = link["name"]
+        key = f"{a}{b}{c}{d}{e}"
+        if key in keys:
+            logging.warning(key)
+            # models.link.remove(link["id"])
+        else:
+            keys.add(key)

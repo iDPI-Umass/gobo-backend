@@ -933,6 +933,43 @@ resources:
                 description: token that allows the client to fetch the next page fo the feed.
                 type: string
 
+  post_graph:
+    template: /post-graph/{id}
+    route: /post-graph/<int:id>
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ feed, posts, sources ]
+            properties:
+              feed:
+                description: Array of ordered post IDs for this feed. The order depends on the feed being requested.
+                type: array
+                items:
+                  type: integer
+              posts:
+                description: List of posts that appear somewhere in this feed segment.
+                type: array
+                items: *post
+              shares:
+                description: List of post references that have share relationships.
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: integer
+              sources:
+                description: List of sources that appear somewhere in this feed segment.
+                type: array
+                items: *source
+
   action_onboard_identity_start:
     template: /actions/onboard-identity
     route: /actions/onboard-identity

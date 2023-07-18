@@ -81,8 +81,13 @@ def view_identity_feed(data):
         sources = []
         seen_posts = set()
         seen_sources = set()
+
+        # The next_token tells the client how to try to get the next page.
+        # If we've just pulled an empty page, the client can try again later
+        # with the same next_token. Depending how secondary is calculated,
+        # there might be something there. 
         if len(rows) == 0:
-            next_token = None
+            next_token = data.get("start")
         else:
             next_token = rows[-1].secondary
 
@@ -131,3 +136,50 @@ def view_identity_feed(data):
             output["next"] = next_token
 
         return output
+
+
+def view_post_graph(id):
+    with Session() as session:
+        feed = []
+        posts = []
+        shares = []
+        sources = []
+        seen_posts = set()
+        seen_sources = set()
+
+        feed.append(id)
+        seen_posts.add(id)
+
+        statement = select(Link) \
+            .where(Link.origin_type == "post") \
+            .where(Link.origin_id.in_(feed)) \
+            .where(Link.target_type == "post") \
+            .where(Link.name == "shares")
+
+        rows = session.scalars(statement).all()
+
+        for row in rows:
+            shares.append([row.origin_id, row.target_id])
+            seen_posts.add(row.target_id)
+
+        statement = select(Post).where(Post.id.in_(list(seen_posts)))
+        rows = session.scalars(statement).all()
+        for row in rows:
+            posts.append(row.to_dict()) 
+
+      
+
+        for post in posts:
+            seen_sources.add(post["source_id"])
+
+        statement = select(Source).where(Source.id.in_(list(seen_sources)))
+        rows = session.scalars(statement).all()
+        for row in rows:
+            sources.append(row.to_dict())    
+
+        return {
+            "feed": feed,
+            "posts": posts,
+            "shares": shares,
+            "sources": sources,
+        }

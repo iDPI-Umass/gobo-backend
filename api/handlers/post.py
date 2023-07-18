@@ -45,3 +45,10 @@ def post_delete(id):
         raise http_errors.not_found(f"post {id} is not found")
 
     return ""
+
+def post_graph_get(id):
+    result = models.post.view_post_graph(id)
+    if len(result["feed"]) == 0:
+        raise http_errors.not_found(f"post {id} is not found")
+    
+    return result
