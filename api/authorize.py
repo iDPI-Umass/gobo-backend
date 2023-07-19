@@ -4,6 +4,7 @@ from flask import Flask, request, g
 import httpx
 from jose import jwt
 import http_errors
+import models
 
 # TODO: Configuration
 AUTH0_DOMAIN = "dev-j72vlrggk1ft8e8u.us.auth0.com"
