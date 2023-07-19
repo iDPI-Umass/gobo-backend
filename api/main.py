@@ -79,5 +79,6 @@ for name, resource in spec["resources"].items():
         decorate(wrapped)
 
 
-# Startup Flask server
-app.run(host="0.0.0.0", debug=True)
+# Startup Flask server if in development
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", debug=True)

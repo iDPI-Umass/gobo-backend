@@ -57,7 +57,7 @@ def poll_database(task):
 
 
     if len(tasks) == 0:
-        time.sleep(1)
+        time.sleep(10)
     else:
         task.update({"last": tasks[-1]})
     
