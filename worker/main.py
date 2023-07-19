@@ -4,12 +4,30 @@ load_dotenv()
 
 
 # Configure GOBO logging
+from logging import config
 import logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
-    level=logging.INFO
-)
+config.dictConfig({
+    "version": 1,
+    "formatters": {"default": {
+      "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+    }},
+    "handlers": {
+        "stdout": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+            "formatter": "default"
+        },
+        "file_trace": {
+            "class": "logging.FileHandler",
+            "filename": "gobo.log",
+            "formatter": "default"
+        }
+    },
+    "root": {
+        "level": "INFO",
+        "handlers": ["stdout", "file_trace"]
+    }
+})
 
 
 # Establish worker threads that drive its work.

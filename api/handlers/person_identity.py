@@ -55,7 +55,7 @@ def person_identity_delete(person_id, id):
             "queue": "database",
             "name": "remove identity",
             "details": {
-                "identity": identity
+                "identity_id": id
             }
         })
 
