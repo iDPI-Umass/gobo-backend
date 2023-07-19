@@ -96,26 +96,32 @@ def get_roles():
 
 
 def authorize_request(configuration):
-    schema = configuration.get("request").get("authorization")
-    if schema is None:
-        schema = []
-    
-    if "public" in schema:
-        return
-    
-    roles = get_roles()
-    if "admin" in roles:
-        return
-    
-    for role in roles:
-        if role in schema:
+    try:
+        schema = configuration.get("request").get("authorization")
+        if schema is None:
+            schema = []
+        
+        if "public" in schema:
             return
-
-    if "person" in schema:
-        person = models.person.lookup(g.claims["sub"])
-        g.person = person
-        if person["id"] == request.args["person_id"]:
+        
+        roles = get_roles()
+        if "admin" in roles:
             return
+        
+        for role in roles:
+            if role in schema:
+                return
+
+        if "person" in schema:
+            person = models.person.lookup(g.claims["sub"])
+            g.person = person
+            if person["id"] == request.view_args.get("person_id"):
+                return
+
+        raise Exception("no matching permissions")
+    
+    except Exception:
+        raise http_errors.unauthorized("requester lacks proper permissions")
 
     
-    raise http_errors.unauthorized("requester lacks proper permissions")
+    
