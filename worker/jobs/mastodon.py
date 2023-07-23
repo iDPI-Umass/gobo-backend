@@ -25,6 +25,8 @@ def dispatch(task):
         pull_posts(task)
     elif task.name == "clear last retrieved":
         clear_last_retrieved(task)
+    elif task.name == "clear all last retrieved":
+        clear_all_last_retrieved(task)
     else:
         logging.warning("No matching job for task: %s", task)
     
@@ -58,6 +60,29 @@ pull_posts = set_pull_posts(
 )
 
 def clear_last_retrieved(task):
+    url = task.details.get("url")
+    if url is None:
+        raise Exception("clear last retrieved: needs target url to find source")
+    
+    source = models.source.find({"url": url})
+    if source is None:
+        raise Exception("clear last retrireved: no matching source was found for this task")
+    
+    link = models.link.find({
+        "origin_type": "source",
+        "origin_id": source["id"],
+        "target_type": "source",
+        "target_id": source["id"],
+        "name": "last-retrieved"
+    })
+
+    link["secondary"] = None
+    models.link.upsert(link)
+    queues.mastodon.put_details("read sources", {})
+
+    
+
+def clear_all_last_retrieved(task):
     results = models.identity.pull([ 
         where("base_url", Twitter.BASE_URL, "neq"),
         where("base_url", Reddit.BASE_URL, "neq")

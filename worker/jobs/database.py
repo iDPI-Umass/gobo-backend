@@ -15,8 +15,12 @@ def dispatch(task):
         unfollow(task)
     elif task.name == "remove identity":
         remove_identity(task)
+    elif task.name == "add post to source":
+        add_post_to_source(task)
     elif task.name == "add post to followers":
         add_post_to_followers(task)
+    elif task.name == "add interpost edge":
+        add_interpost_edge(task)
     elif task.name == "rebuild feed":
         rebuild_feed(task)
     elif task.name == "workbench":
@@ -245,6 +249,65 @@ def add_post_to_followers(task):
             "secondary": f"{post['published']}::{post['id']}"
         })
 
+
+
+def add_post_to_source(task):
+    post = task.details.get("post")
+    if post is None:
+        raise Exception("add post to source: needs post")
+
+    post = models.post.upsert(post)
+    models.link.upsert({
+        "origin_type": "source",
+        "origin_id": post["source_id"],
+        "target_type": "post",
+        "target_id": post["id"],
+        "name": "has-post",
+        "secondary": f"{post['published']}::{post['id']}"
+    })
+
+    queues.database.put_details("add post to followers", {
+        "page": 1,
+        "per_page": 500,
+        "post": post
+    })
+
+
+
+def add_interpost_edge(task):
+    base_url = task.details.get("base_url")
+    data = task.details.get("edge_reference")
+    if base_url is None:
+        raise Exception("add shares to post: need to specify base_url both posts belong to.")
+    if data is None:
+        raise Exception("add shares to post: needs edge primitive")
+
+
+    origin = models.post.find({
+        "base_url": base_url,
+        "platform_id": data["origin_reference"]
+    })
+    if origin is None:
+        raise Exception("origin post is not available in post table")
+
+    target = models.post.find({
+        "base_url": base_url,
+        "platform_id": data["target_reference"]
+    })
+    if target is None:
+        raise Exception("target post is not available in post table")
+
+
+    models.link.upsert({
+        "origin_type": "post",
+        "origin_id": origin["id"],
+        "target_type": "post",
+        "target_id": target["id"],
+        "name": data["name"],
+        "secondary": f"{target['published']}::{target['id']}"
+    })
+
+                 
 
 def reset_all_posts():
     posts = models.post.pull([])

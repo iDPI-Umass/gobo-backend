@@ -150,7 +150,7 @@ def define_crud(Table):
                 value = expression["value"]
                 if expression["operator"] == "eq":
                     statement = statement.where(getattr(Table, key) == value)
-                if expression["operator"] == "neq":
+                elif expression["operator"] == "neq":
                     statement = statement.where(getattr(Table, key) != value)
                 elif expression["operator"] == "gte":
                     statement = statement.where(getattr(Table, key) >= value)

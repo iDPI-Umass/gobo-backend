@@ -110,6 +110,7 @@ def set_pull_posts(queue):
     def pull_posts(task):
         client = task.details.get("client")
         source = task.details.get("source")
+        base_url = source["base_url"]
         if client == None or source == None:
             raise Exception("pull posts task lacks needed inputs")
 
@@ -131,60 +132,19 @@ def set_pull_posts(queue):
         data["sources"] = sources
 
 
-        # Get GOBO IDs for the posts and link to their author sources.
         post_data = client.map_posts(data)
-        posts = []
-        id_map = {}
-        for _post in post_data["posts"]:
-            post = models.post.upsert(_post)
-            posts.append(post)
-            id_map[post["platform_id"]] = post
-
-            models.link.upsert({
-                "origin_type": "source",
-                "origin_id": post["source_id"],
-                "target_type": "post",
-                "target_id": post["id"],
-                "name": "has-post",
-                "secondary": f"{post['published']}::{post['id']}"
-            })
 
 
-        def find(platform_id):
-            item = id_map.get(platform_id)
-            if item == None:
-                item = models.post.find({
-                    "base_url": source["base_url"],
-                    "platform_id": platform_id 
-                })
-                id_map[item["platform_id"]] = item
-
-            return item
-
-
-        # Establish inter-post edges using the confirmed GOBO IDs.
-        for edge in post_data["edges"]:
-            if edge["origin_type"] == "post" and edge["target_type"] == "post":
-                origin = find(edge["origin_reference"])
-                target = find(edge["target_reference"])
-
-                models.link.upsert({
-                    "origin_type": "post",
-                    "origin_id": origin["id"],
-                    "target_type": "post",
-                    "target_id": target["id"],
-                    "name": edge["name"],
-                    "secondary": f"{target['published']}::{target['id']}"
-                })            
-
-
-        # Add each post to the feeds of each author follower.
-        for post in posts:
-            queues.database.put_details("add post to followers", {
-                "page": 1,
-                "per_page": 500,
+        for post in post_data["posts"]:
+            queues.database.put_details("add post to source", {
                 "post": post
             })
+        for edge in post_data["edges"]:
+            queues.database.put_details("add interpost edge", {
+                "base_url": base_url,
+                "edge_reference": edge
+            })              
+
 
     return pull_posts
 
