@@ -23,6 +23,8 @@ def dispatch(task):
         add_interpost_edge(task)
     elif task.name == "rebuild feed":
         rebuild_feed(task)
+    elif task.name == "clean follows":
+        clean_follows(task)
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -336,6 +338,20 @@ def reset_all_posts():
     ])
     for link in links:
        models.link.remove(link["id"])
+
+
+def clean_follows(task):
+    links = models.link.pull([
+        where("origin_type", "identity"),
+        where("target_type", "source"),
+        where("name", "follows")
+    ])
+
+    for link in links:
+        identity = models.identity.get(link["origin_id"])
+        if identity is None:
+            models.link.remove(link["id"])
+
 
 
 def workbench(task):
