@@ -93,11 +93,11 @@ def set_read_source(Client, queue):
         ])
 
         if link is None:
-            return
+            raise Exception(f"no identity found who follows source {source['id']}")
 
         identity = models.identity.get(link["origin_id"])
         if identity is None:
-            return
+            raise Exception(f"no identity found with id {link['origin_id']}")
 
         base_url = identity["base_url"]
         mastodon_client = models.mastodon_client.find({"base_url": base_url})
