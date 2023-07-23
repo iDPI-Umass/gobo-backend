@@ -205,6 +205,7 @@ class Mastodon():
             if isDone == True:
                 break
 
+            logging.info(f"Mastdon Fetch: {source['platform_id']} {max_id}")
             items = self.client.account_statuses(
                 source["platform_id"],
                 max_id = max_id
