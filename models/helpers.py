@@ -84,6 +84,8 @@ def define_crud(Table):
                     statement = statement.where(getattr(Table, key) < value)
                 elif expression["operator"] == "in":
                     statement = statement.where(getattr(Table, key).in_(value))
+                elif expression["operator"] == "not in":
+                    statement = statement.where(~getattr(Table, key).in_(value))
 
             statement = statement.order_by(attribute) \
                 .offset(offset) \
@@ -160,6 +162,8 @@ def define_crud(Table):
                     statement = statement.where(getattr(Table, key) < value)
                 elif expression["operator"] == "in":
                     statement = statement.where(getattr(Table, key).in_(value))
+                else:
+                    raise Exception(f"unknown where operator {expression['operator']}")
                     
             statement = statement.limit(1)
             row = session.scalars(statement).first()

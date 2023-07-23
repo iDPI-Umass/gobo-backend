@@ -58,12 +58,24 @@ pull_posts = set_pull_posts(
 )
 
 def clear_last_retrieved(task):
+    results = models.identity.pull([ 
+        where("base_url", Twitter.BASE_URL, "neq"),
+        where("base_url", Reddit.BASE_URL, "neq")
+    ])
+    identities = []
+    for i in results:
+        identities.append(i.id)
+    
+
     links = models.link.pull([
-        where("name", "last-retrieved")
+        where("name", "last-retrieved"),
+        where("origin_type", "source"),
+        where("origin_id", identities, "in")
     ])
 
     for link in links:
         link["secondary"] = None
         models.link.upsert(link)
+
 
     queues.mastodon.put_details("read sources", {})
