@@ -6,6 +6,7 @@ from clients import Reddit
 from .helpers import set_identity_follow_fanout
 from .helpers import set_pull_sources
 from .helpers import set_read_sources
+from .helpers import set_read_source
 from .helpers import set_pull_posts
 
 where = models.helpers.where
@@ -21,6 +22,8 @@ def dispatch(task):
         pull_sources(task)
     elif task.name == "read sources":
         read_sources(task)
+    elif task.name == "read source":
+        read_source(task)
     elif task.name == "pull posts":
         pull_posts(task)
     elif task.name == "workbench":
@@ -43,6 +46,10 @@ pull_sources = set_pull_sources(
 
 read_sources = set_read_sources(
     where_statements = [ where("base_url", Reddit.BASE_URL) ],
+    queue = queues.reddit
+)
+
+read_source = set_read_source(
     Client = Reddit,
     queue = queues.reddit
 )

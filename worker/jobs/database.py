@@ -216,7 +216,6 @@ def rebuild_feed(task):
 
 
 
-
 def add_post_to_followers(task):
     page = task.details.get("page") or 1
     per_page = task.details.get("per_page") or 500

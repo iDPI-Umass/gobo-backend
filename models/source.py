@@ -8,8 +8,8 @@ from .helpers import define_crud
 Source = tables.Source
 Link = tables.Link
 
-add, get, update, remove, query, find, pluck = itemgetter(
-    "add", "get", "update", "remove", "query", "find", "pluck"
+add, get, update, remove, query, find, pluck, pull = itemgetter(
+    "add", "get", "update", "remove", "query", "find", "pluck", "pull"
 )(define_crud(Source))
 
 def safe_add(data):

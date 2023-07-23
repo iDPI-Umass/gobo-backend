@@ -6,6 +6,7 @@ from clients import Twitter, Reddit, Mastodon
 from .helpers import set_identity_follow_fanout
 from .helpers import set_pull_sources
 from .helpers import set_read_sources
+from .helpers import set_read_source
 from .helpers import set_pull_posts
 
 where = models.helpers.where
@@ -21,6 +22,8 @@ def dispatch(task):
         pull_sources(task)
     elif task.name == "read sources":
         read_sources(task)
+    elif task.name == "read source":
+        read_source(task)
     elif task.name == "pull posts":
         pull_posts(task)
     elif task.name == "clear last retrieved":
@@ -51,6 +54,10 @@ read_sources = set_read_sources(
         where("base_url", Twitter.BASE_URL, "neq"),
         where("base_url", Reddit.BASE_URL, "neq")
     ],
+    queue = queues.mastodon
+)
+
+read_source = set_read_source(
     Client = Mastodon,
     queue = queues.mastodon
 )
@@ -64,7 +71,13 @@ def clear_last_retrieved(task):
     if url is None:
         raise Exception("clear last retrieved: needs target url to find source")
     
-    source = models.source.find({"url": url})
+    sources = models.source.pull([
+      where("url", url)
+    ])
+    logging.info(sources)
+    source = None
+    if len(sources) > 0:
+        source = sources[0]
     if source is None:
         raise Exception("clear last retrireved: no matching source was found for this task")
     
@@ -78,7 +91,7 @@ def clear_last_retrieved(task):
 
     link["secondary"] = None
     models.link.upsert(link)
-    queues.mastodon.put_details("read sources", {})
+    queues.mastodon.put_details("read source", {"source": source})
 
     
 
