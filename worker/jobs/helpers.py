@@ -93,7 +93,7 @@ def set_read_source(Client, queue):
         ])
 
         if link is None:
-            raise Exception(f"no identity found who follows source {source['id']}")
+            return
 
         identity = models.identity.get(link["origin_id"])
         if identity is None:
