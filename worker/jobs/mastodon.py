@@ -95,8 +95,8 @@ def clear_all_last_retrieved(task):
         where("base_url", Reddit.BASE_URL, "neq")
     ])
     identities = []
-    for i in results:
-        identities.append(i.id)
+    for result in results:
+        identities.append(result["id"])
     
 
     links = models.link.pull([
