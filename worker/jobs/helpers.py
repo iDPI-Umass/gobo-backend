@@ -69,7 +69,7 @@ def set_read_sources(where_statements, queue):
 
         sources = models.source.query(query)
         for source in sources:
-            queue.put_details( "read source", {"source", source})
+            queue.put_details( "read source", {"source": source})
 
         if len(sources) == per_page:
             task.update({"page": page + 1})

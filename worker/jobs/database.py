@@ -37,7 +37,7 @@ def follow(task):
     if identity_id is None or source_id is None:
         raise Exception("follow requires source and identity IDs")
 
-    models.link.safe_add({
+    models.link.upsert({
         "origin_type": "identity",
         "origin_id": identity_id,
         "target_type": "source",

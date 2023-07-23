@@ -71,13 +71,7 @@ def clear_last_retrieved(task):
     if url is None:
         raise Exception("clear last retrieved: needs target url to find source")
     
-    sources = models.source.pull([
-      where("url", url)
-    ])
-    logging.info(sources)
-    source = None
-    if len(sources) > 0:
-        source = sources[0]
+    source = models.source.find({"url": url})
     if source is None:
         raise Exception("clear last retrireved: no matching source was found for this task")
     

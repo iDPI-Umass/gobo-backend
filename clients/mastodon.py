@@ -1,5 +1,6 @@
 import logging
 from os import environ
+import re
 import mastodon
 import joy
 import models
@@ -30,8 +31,8 @@ class Status():
 
         if _.reblog is not None:
             self.reblog = Status(_.reblog)
-        if _.reblog is not None and _.url is None:
-            self.url = self.reblog.url
+        if self.url.endswith("/activity"):
+            self.url = re.sub("\/activity$", "", self.url)
 
         for attachment in _.media_attachments:
             url = attachment["url"]

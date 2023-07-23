@@ -12,23 +12,6 @@ add, get, update, remove, query, find, pull, random = itemgetter(
 )(define_crud(Link))
 
 
-def safe_add(data):
-    with Session() as session:
-        statement = select(Link)
-        for key, value in data.items():
-            statement = statement.where(getattr(Link, key) == value)
-        statement = statement.limit(1)
-
-        row = session.scalars(statement).first()
-
-        if row == None:
-            row = Link.write(data)
-            session.add(row)
-            session.commit()
-            return row.to_dict()
-        else:
-            return row.to_dict()
-
 def upsert(data):
     with Session() as session:
         if data.get("origin_type") is None:
@@ -48,8 +31,14 @@ def upsert(data):
             .where(Link.origin_id == data["origin_id"]) \
             .where(Link.target_type == data["target_type"]) \
             .where(Link.target_id == data["target_id"]) \
-            .where(Link.name == data["name"]) \
-            .limit(1)
+            .where(Link.name == data["name"])
+
+        # Secondary is not mandatory, but we need to avoid creating another
+        # link if there is a match on this dimension.
+        if data.get("secondary") is not None:
+            statement = statement.where(Link.secondary == data["secondary"])
+          
+        statement = statement.limit(1)
        
         row = session.scalars(statement).first()
 
