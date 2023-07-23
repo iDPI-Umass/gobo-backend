@@ -50,12 +50,6 @@ def set_pull_sources(Client, queue):
       
         reconcile_sources(identity, sources)
 
-        for source in sources:
-            queue.put_details("pull posts", {
-                "client": client,
-                "source": source,
-            })
-
     return pull_sources
 
 

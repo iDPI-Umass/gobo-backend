@@ -5,23 +5,24 @@ from db.base import Session
 from db import tables
 from .helpers import define_crud
 
+Link = tables.Link
 
 add, get, update, remove, query, find, pull, random = itemgetter(
     "add", "get", "update", "remove", "query", "find", "pull", "random"
-)(define_crud(tables.Link))
+)(define_crud(Link))
 
 
 def safe_add(data):
     with Session() as session:
-        statement = select(tables.Link)
+        statement = select(Link)
         for key, value in data.items():
-            statement = statement.where(getattr(tables.Link, key) == value)
+            statement = statement.where(getattr(Link, key) == value)
         statement = statement.limit(1)
 
         row = session.scalars(statement).first()
 
         if row == None:
-            row = tables.Link.write(data)
+            row = Link.write(data)
             session.add(row)
             session.commit()
             return row.to_dict()
@@ -42,15 +43,18 @@ def upsert(data):
             raise Exception("upsert requires link have name")
 
 
-        statement = select(tables.Link)
-        for key, value in data.items():
-            statement = statement.where(getattr(tables.Link, key) == value)
-        statement = statement.limit(1)
-
+        statement = select(Link) \
+            .where(Link.origin_type == data["origin_type"]) \
+            .where(Link.origin_id == data["origin_id"]) \
+            .where(Link.target_type == data["target_type"]) \
+            .where(Link.target_id == data["target_id"]) \
+            .where(Link.name == data["name"]) \
+            .limit(1)
+       
         row = session.scalars(statement).first()
 
         if row == None:
-            row = tables.Link.write(data)
+            row = Link.write(data)
             session.add(row)
             session.commit()
             return row.to_dict()
@@ -62,9 +66,9 @@ def upsert(data):
 
 def find_and_remove(data):
     with Session() as session:
-        statement = select(tables.Link)
+        statement = select(Link)
         for key, value in data.items():
-            statement = statement.where(getattr(tables.Link, key) == value)
+            statement = statement.where(getattr(Link, key) == value)
         statement = statement.limit(1)
 
         row = session.scalars(statement).first()

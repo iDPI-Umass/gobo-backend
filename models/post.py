@@ -33,12 +33,13 @@ def safe_add(data):
 
 def upsert(data):
     with Session() as session:
-        if data.get("url") is None:
-            raise Exception("upsert requires post have URL")
+        if data.get("base_url") is None or data.get("platform_id") is None:
+            raise Exception("upsert requires post have base_url and platform_id")
 
-        statement = select(Post)
-        statement = statement.where(Post.url == data["url"])
-        statement = statement.limit(1)
+        statement = select(Post) \
+            .where(Post.base_url == data["base_url"]) \
+            .where(Post.platform_id == data["platform_id"]) \
+            .limit(1)
 
         row = session.scalars(statement).first()
 

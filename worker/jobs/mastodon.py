@@ -23,6 +23,8 @@ def dispatch(task):
         read_sources(task)
     elif task.name == "pull posts":
         pull_posts(task)
+    elif task.name == "clear last retrieved":
+        clear_last_retrieved(task)
     else:
         logging.warning("No matching job for task: %s", task)
     
@@ -54,3 +56,14 @@ read_sources = set_read_sources(
 pull_posts = set_pull_posts(
     queue = queues.mastodon
 )
+
+def clear_last_retrieved(task):
+    links = models.link.pull([
+        where("name", "last-retrieved")
+    ])
+
+    for link in links:
+        link["secondary"] = None
+        models.link.upsert(link)
+
+    queues.mastodon.put_details("read sources", {})

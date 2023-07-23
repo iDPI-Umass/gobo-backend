@@ -28,8 +28,10 @@ class Status():
         self.poll = None
         self.reblog = None
 
-        if _.reblog != None:
+        if _.reblog is not None:
             self.reblog = Status(_.reblog)
+        if _.reblog is not None and _.url is None:
+            self.url = self.reblog.url
 
         for attachment in _.media_attachments:
             url = attachment["url"]
@@ -145,7 +147,7 @@ class Mastodon():
         posts = []
         edges = []
         for status in data["statuses"]:
-            if status.url is None:
+            if status.id is None:
                 continue
 
             source = sources[status.account.id]
@@ -198,7 +200,7 @@ class Mastodon():
         statuses = []
         accounts = []
 
-
+        count = 1
         while True:
             if isDone == True:
                 break
@@ -208,12 +210,18 @@ class Mastodon():
                 max_id = max_id
             )
 
+            if len(items) == 0:
+                break
+
             max_id = str(items[-1].id)
 
             if last_retrieved == None:
                 for item in items:
                     statuses.append(Status(item))
-                isDone = True
+                    count += 1
+                    if count >= 1000:
+                        isDone = True
+                        break
             else:
                 for item in items:
                     status = Status(item)
