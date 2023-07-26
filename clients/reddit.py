@@ -1,6 +1,7 @@
 import logging
 import json
 from os import environ
+import html
 import praw
 from pmaw import PushshiftAPI
 import joy
@@ -46,7 +47,7 @@ class Submission():
     def __init__(self, _):        
         self._ = _
         self.id = f"t3_{_['id']}"
-        self.title = _["title"]
+        self.title = _.get("title", None)
         self.content = None
         self.published = joy.time.convert(
             start = "unix",
@@ -58,6 +59,9 @@ class Submission():
         self.crosspost_parent = _.get("crosspost_parent", None)
         self.attachments = []
         self.poll = None
+
+        if self.title is not None:
+            self.title = html.unescape(self.title)
 
         url = _["url"]
         poll = get_poll(_)

@@ -31,7 +31,9 @@ class Status():
 
         if _.reblog is not None:
             self.reblog = Status(_.reblog)
-        if self.url.endswith("/activity"):
+        if self.url is None and self.reblog is not None:
+            self.url = self.reblog.url
+        if self.url is not None and self.url.endswith("/activity"):
             self.url = re.sub("\/activity$", "", self.url)
 
         for attachment in _.media_attachments:

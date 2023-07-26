@@ -1,4 +1,5 @@
 import logging
+import html
 import models
 import queues
 
@@ -25,6 +26,8 @@ def dispatch(task):
         rebuild_feed(task)
     elif task.name == "clean follows":
         clean_follows(task)
+    elif task.name == "escape titles":
+        escape_titles(task)
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -308,7 +311,26 @@ def add_interpost_edge(task):
         "secondary": f"{target['published']}::{target['id']}"
     })
 
-                 
+def escape_titles(task):
+    query = {
+        "page": 1,
+        "per_page": 500,
+        "where": []
+    }
+
+    while True:
+        posts = models.post.query(query)
+        for post in posts:
+            title = post.get("title", None)
+            if title is not None:
+                post["title"] = html.unescape(title)
+                models.post.update(post["id"], post)
+
+        query["page"] += 1
+        if len(posts) == 0:
+            break
+
+
 
 def reset_all_posts():
     posts = models.post.pull([])
