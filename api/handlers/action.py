@@ -75,7 +75,7 @@ def action_pull_identity_sources_post():
 
     task = models.task.add({
       "queue": queue,
-      "name": "pull sources",
+      "name": "pull sources after onboarding",
       "details": {
         "identity": identity
       }
