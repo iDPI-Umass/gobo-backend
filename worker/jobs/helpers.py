@@ -33,12 +33,16 @@ def set_pull_sources(Client, queue):
             raise Exception("pull posts task requires an identity to run")
         
         base_url = identity["base_url"]
-        mastodon_client = models.mastodon_client.find({"base_url": base_url})
-    
-        if mastodon_client == None:
-            client = Client(identity)
-        else:
+
+        if Client.__name__ == "Mastodon":
+            mastodon_client = models.mastodon_client.find({"base_url": base_url})
+            if mastodon_client == None:
+                logging.warning(f"no mastodon client found for {base_url}")
+                return
             client = Client(mastodon_client, identity)
+        else:
+            client = Client(identity)
+            
 
         data = client.list_sources()
         _sources = client.map_sources(data)
@@ -103,12 +107,15 @@ def set_read_source(Client, queue):
             raise Exception(f"no identity found with id {link['origin_id']}")
 
         base_url = identity["base_url"]
-        mastodon_client = models.mastodon_client.find({"base_url": base_url})
 
-        if mastodon_client == None:
-            client = Client(identity)
-        else:
+        if Client.__name__ == "Mastodon":
+            mastodon_client = models.mastodon_client.find({"base_url": base_url})
+            if mastodon_client == None:
+                logging.warning(f"no mastodon client found for {base_url}")
+                return
             client = Client(mastodon_client, identity)
+        else:
+            client = Client(identity)
 
         queue.put_details("pull posts", {
             "client": client,
@@ -129,6 +136,7 @@ def set_pull_posts(queue):
 
         link = models.source.get_last_retrieved(source["id"])
         source["last_retrieved"] = link.get("secondary")
+        logging.info(source)
 
 
         last_retrieved = joy.time.now()

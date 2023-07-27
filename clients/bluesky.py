@@ -75,6 +75,19 @@ class Post():
     def repost_create(_):
         self = Post()
         self.share = Post.regular_create(_)
+        self.author = Actor(_.reason.by)
+        self.content = None
+        self.url = self.share.url
+        self.attachments = []
+        self.poll = None
+
+        
+        self.published = getattr(
+            _.reason, 
+            "indexedAt", 
+            getattr(_.reason, "indexed_at", None)
+        )
+
 
         # Bluesky (or this client library) represents reposts as virtual resources
         # without a standalone ID or URI. GOBO's abstract post model at a minimum
@@ -82,25 +95,13 @@ class Post():
         # graph model point to a standalone resource as the right approach to
         # offer optionality in the future. I'm going to create a virtual
         # ID as a placeholder for this resource within GOBO.
-        self.id = f"gobo:{joy.crypto.random({'encoding': 'safe-base64'})}"
+        self.id = f"gobo:{self.author.id}:{self.published}:{_.post.cid}"
 
         # TODO: This suggests that we should model the relationship between
         # posts with empty content and their targets as "reposts" instead of
         # uniformly using "shares". The latter works for our immediate needs,
         # but graph calculations could be helped by that hint.
 
-
-        self.author = Actor(_.reason.by)
-        self.content = None
-        self.url = self.share.url
-        self.published = getattr(
-            _.reason, 
-            "indexedAt", 
-            getattr(_.reason, "indexed_at", None)
-        )
-
-        self.attachments = []
-        self.poll = None
 
         return self
 

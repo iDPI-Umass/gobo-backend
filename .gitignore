@@ -163,6 +163,7 @@ cython_debug/
 
 ## Project Specific
 /postgres-data
+.DS_Store
 
 ## Carefully avoid double committing mounted volume files
 /db/joy

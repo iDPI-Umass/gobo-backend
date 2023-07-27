@@ -102,23 +102,24 @@ def clear_last_retrieved(task):
     
 
 def clear_all_last_retrieved(task):
-    results = models.identity.pull([ 
-        where("base_url", Twitter.BASE_URL, "neq"),
-        where("base_url", Reddit.BASE_URL, "neq")
+    results = models.source.pull([ 
+        where("base_url", Bluesky.BASE_URL)
     ])
-    identities = []
+
+    sources = []
     for result in results:
-        identities.append(result["id"])
+        sources.append(result["id"])
     
 
     links = models.link.pull([
         where("name", "last-retrieved"),
         where("origin_type", "source"),
-        where("origin_id", identities, "in")
+        where("origin_id", sources, "in")
     ])
 
     for link in links:
         link["secondary"] = None
+        logging.info(link)
         models.link.upsert(link)
 
 

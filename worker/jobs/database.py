@@ -24,6 +24,8 @@ def dispatch(task):
         add_post_to_followers(task)
     elif task.name == "add interpost edge":
         add_interpost_edge(task)
+    elif task.name == "remove post":
+        remove_post(task)
     elif task.name == "rebuild feed":
         rebuild_feed(task)
     elif task.name == "clean follows":
@@ -167,6 +169,31 @@ def remove_identity(task):
             query["page"] = query["page"] + 1
         else:
             break
+
+def remove_post(task):
+    post = task.details.get("post")
+    if post is None:
+        raise Exception("remove post requires post")
+
+    links = models.link.pull([
+        where("origin_type", "post"),
+        where("origin_id", post["id"])
+    ])
+
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = models.link.pull([
+        where("target_type", "post"),
+        where("target_id", post["id"])
+    ])
+
+    for link in links:
+        models.link.remove(link["id"])
+
+    models.post.remove(post["id"])
+
+    
 
 def rebuild_feed(task):
     person_id = task.details.get("person_id")

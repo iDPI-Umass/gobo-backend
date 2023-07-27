@@ -46,8 +46,6 @@ def person_identity_delete(person_id, id):
     person = get_viewer(person_id)
     check_claim(person_id, id)
 
-    identity = models.identity.get(id)
-
     models.link.find_and_remove({
       "origin_type": "person",
       "origin_id": person_id,
@@ -58,13 +56,12 @@ def person_identity_delete(person_id, id):
     
     models.identity.remove(id)
 
-    if identity is not None:
-        models.task.add({
-            "queue": "database",
-            "name": "remove identity",
-            "details": {
-                "identity_id": id
-            }
-        })
+    models.task.add({
+        "queue": "database",
+        "name": "remove identity",
+        "details": {
+            "identity_id": id
+        }
+    })
 
     return ""
