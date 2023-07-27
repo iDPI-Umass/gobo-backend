@@ -173,7 +173,6 @@ class Reddit():
     def get_post(self, id):
         item = self.client.submission(id = id)
         submission = Submission(item)
-        logging.info(submission.poll)
         return submission
 
     def pluck_posts(self, ids):

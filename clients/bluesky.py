@@ -151,7 +151,6 @@ class Bluesky():
         actors = []
         cursor = None
         while True:
-            logging.info("pulling follows")
             result = self.client.bsky.graph.get_follows({
                 "actor": self.me,
                 "cursor": cursor

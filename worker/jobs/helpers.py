@@ -136,7 +136,6 @@ def set_pull_posts(queue):
 
         link = models.source.get_last_retrieved(source["id"])
         source["last_retrieved"] = link.get("secondary")
-        logging.info(source)
 
 
         last_retrieved = joy.time.now()

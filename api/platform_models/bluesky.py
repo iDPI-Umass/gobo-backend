@@ -57,9 +57,6 @@ def confirm_identity(registration, data):
 
     # Fetch profile data to associate with this identity.
     try:
-        logging.info(data["bluesky_login"])
-        logging.info(data["bluesky_secret"])
-
         client = Bluesky({
             "oauth_token": data["bluesky_login"],
             "oauth_token_secret": data["bluesky_secret"]
