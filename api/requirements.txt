@@ -15,3 +15,4 @@ pmaw==3.0.0
 Mastodon.py==1.8.1
 Markdown==3.4.3
 mdx-linkify==2.1
+atproto==0.0.23

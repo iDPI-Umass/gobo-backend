@@ -27,7 +27,7 @@ def upsert(data):
 
         row = session.scalars(statement).first()
 
-        if row == None:
+        if row is None:
             row = Post.write(data)
             session.add(row)
             session.commit()
@@ -38,13 +38,26 @@ def upsert(data):
             return row.to_dict()
 
 
-    source_ids = set()
-    for post in posts:
-        id = post.get("source_id")
-        if id != None:
-            source_ids.add(id)
-    
-    sources = models.source.pluck(list(source_ids))
+def safe_add(data):
+    with Session() as session:
+        if data.get("base_url") is None or data.get("platform_id") is None:
+            raise Exception("upsert requires post have base_url and platform_id")
+
+        statement = select(Post) \
+            .where(Post.base_url == data["base_url"]) \
+            .where(Post.platform_id == data["platform_id"]) \
+            .limit(1)
+
+        row = session.scalars(statement).first()
+
+        if row is None:
+            row = Post.write(data)
+            session.add(row)
+            session.commit()
+            return row.to_dict()
+        else:
+            return row.to_dict()
+
 
 def view_identity_feed(data):
     with Session() as session:

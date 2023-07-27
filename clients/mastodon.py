@@ -148,6 +148,7 @@ class Mastodon():
         
         
         posts = []
+        partials = []
         edges = []
         for status in data["statuses"]:
             if status.id is None:
@@ -155,7 +156,7 @@ class Mastodon():
 
             source = sources[status.account.id]
 
-            post = {
+            posts.append({
                 "source_id": source["id"],
                 "base_url": self.base_url,
                 "platform_id": status.id,
@@ -165,9 +166,7 @@ class Mastodon():
                 "published": status.published,
                 "attachments": status.attachments,
                 "poll": status.poll
-            }
-
-            posts.append(post)
+            })
 
             if status.reblog != None:
                 edges.append({
@@ -177,9 +176,30 @@ class Mastodon():
                     "target_reference": status.reblog.id,
                     "name": "shares",
                 })
+        
+
+        for status in data["partials"]:
+            if status.id is None:
+                continue
+
+            source = sources[status.account.id]
+
+            partials.append({
+                "source_id": source["id"],
+                "base_url": self.base_url,
+                "platform_id": status.id,
+                "title": None,
+                "content": status.content,
+                "url": status.url,
+                "published": status.published,
+                "attachments": status.attachments,
+                "poll": status.poll
+            })
+
 
         return {
             "posts": posts,
+            "partials": partials,
             "edges": edges
         }
 
@@ -197,10 +217,11 @@ class Mastodon():
 
     def get_post_graph(self, source):
         isDone = False
-        last_retrieved = source.get("last_retrieved")
+        last_retrieved = source.get("last_retrieved", None)
         max_id = None
 
         statuses = []
+        partials = []
         accounts = []
 
         count = 1
@@ -238,10 +259,12 @@ class Mastodon():
 
         seen_statuses = set()
         for status in statuses:
+            seen_statuses.add(status.id)
+        for status in statuses:
             reblog = status.reblog
-            if reblog != None and reblog.id not in seen_statuses:
+            if reblog is not None and reblog.id not in seen_statuses:
                 seen_statuses.add(reblog.id)
-                statuses.append(reblog)
+                partials.append(reblog)
 
 
         seen_accounts = set()
@@ -250,8 +273,14 @@ class Mastodon():
             if account.id not in seen_accounts:
                 seen_accounts.add(account.id)
                 accounts.append(account)
+        for status in partials:
+            account = status.account
+            if account.id not in seen_accounts:
+                seen_accounts.add(account.id)
+                accounts.append(account)
 
         return {
             "statuses": statuses,
+            "partials": partials,
             "accounts": accounts
         }

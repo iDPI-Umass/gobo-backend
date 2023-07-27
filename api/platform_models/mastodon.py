@@ -43,14 +43,14 @@ def get_redirect_url(person, base_url):
     else:
         models.registration.update(registration["id"], _registration)
 
-    return url
+    return  {"redirect_url": url}
 
 
 def validate_callback(data, base_url):
     output = {
       "base_url": base_url,
-      "state": data.get("state"),
-      "code": data.get("code")
+      "state": data.get("state", None),
+      "code": data.get("code", None)
     }
 
     if output["state"] == None:

@@ -26,6 +26,8 @@ def dispatch(task):
         read_source(task)
     elif task.name == "pull posts":
         pull_posts(task)
+    elif task.name == "pull sources after onboarding":
+        pull_sources_after_onboarding(task)
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -70,6 +72,15 @@ pull_posts = set_pull_posts(
 
 #     id = "10yt1ch" # Submission with poll
 #     client.get_post(id)
+
+
+def pull_sources_after_onboarding(task):
+    sources = pull_sources(task)
+    for source in sources:
+        queues.reddit.put_details("read source", {
+            "source": source
+        })
+
 
 
 def workbench(task):

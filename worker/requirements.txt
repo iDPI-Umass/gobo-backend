@@ -11,3 +11,4 @@ Mastodon.py==1.8.1
 schedule==1.2.0
 Markdown==3.4.3
 mdx-linkify==2.1
+atproto==0.0.23

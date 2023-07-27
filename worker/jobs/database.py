@@ -18,6 +18,8 @@ def dispatch(task):
         remove_identity(task)
     elif task.name == "add post to source":
         add_post_to_source(task)
+    elif task.name == "add partial post":
+        add_partial_post(task)
     elif task.name == "add post to followers":
         add_post_to_followers(task)
     elif task.name == "add interpost edge":
@@ -276,6 +278,14 @@ def add_post_to_source(task):
         "post": post
     })
 
+# In cases where we see a post, but may not have the full picture, use
+# this safe_add method to avoid overwriting the full post.
+def add_partial_post(task):
+    post = task.details.get("post")
+    if post is None:
+        raise Exception("add post to source: needs post")
+
+    post = models.post.safe_add(post)
 
 
 def add_interpost_edge(task):

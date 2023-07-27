@@ -28,13 +28,13 @@ def get_redirect_url(person):
     else:
         models.registration.update(registration["id"], _registration)
 
-    return url
+    return  {"redirect_url": url}
 
 
 def validate_callback(data):
     output = {
-      "state": data.get("state"),
-      "code": data.get("code")
+      "state": data.get("state", None),
+      "code": data.get("code", None)
     }
 
     if output["state"] == None:

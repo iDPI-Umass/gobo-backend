@@ -994,11 +994,12 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            required: [ redirect_url ]
             properties:
               redirect_url:
                 description: The URL the GOBO client should redirect the browser so the person may login
                 type: string
+              state:
+                description: For Bluesky, we don't make use of a redirect flow. Use this nonce to give us some flow integrity. 
 
   action_onboard_identity_callback:
     template: /actions/onboard-identity-callback
@@ -1017,18 +1018,21 @@ resources:
               base_url:
                 description: The base URL that identifies the target social media provider.
                 type: string
-              oauth_token:
-                description: Required for Twitter. Querystring parameter provided in the authentication callback.
-                type: string
-              oauth_verifier:
-                description: Required for Twitter. Querystring parameter provided in the authentication callback.
-                type: string
               code:
                 description: Required for Reddit and Mastodon. Querystring parameter provided in the authentication callback.
                 type: string 
               state:
-                description: Required for Reddit. Querystring parameter provided in the authentication callback.
+                description: Required for Bluesky and Reddit. Querystring parameter provided in the authentication callback.
                 type: string
+              bluesky_login:
+                description: >
+                  Required for Bluesky. The login identifier for this person's account on Bluesky. Example: person.bsky.social
+                type: string
+              bluesky_secret:
+                description: >
+                  Required for Bluesky. An "App Password" created for GOBO. Do NOT put root password here.
+                type: string
+
         response:
           status: 200
           type: application/json

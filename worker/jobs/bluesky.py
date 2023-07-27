@@ -1,8 +1,9 @@
 import logging
+import re
 import joy
 import models
 import queues
-from clients import Bluesky, Reddit, Mastodon
+from clients import Bluesky
 from .helpers import set_identity_follow_fanout
 from .helpers import set_pull_sources
 from .helpers import set_read_sources
@@ -13,7 +14,7 @@ where = models.helpers.where
 
 
 def dispatch(task):
-    task.handler = "mastodon"
+    task.handler = "bluesky"
     logging.info("dispatching: %s", task)
 
     if task.name == "identity follow fanout":
@@ -32,6 +33,8 @@ def dispatch(task):
         clear_last_retrieved(task)
     elif task.name == "clear all last retrieved":
         clear_all_last_retrieved(task)
+    elif task.name == "workbench":
+        workbench(task)
     else:
         logging.warning("No matching job for task: %s", task)
     
@@ -39,40 +42,38 @@ def dispatch(task):
 
 
 identity_follow_fanout = set_identity_follow_fanout(
-    where_statements = [ 
-        where("base_url", Bluesky.BASE_URL, "neq"),
-        where("base_url", Reddit.BASE_URL, "neq")
+    where_statements = [
+      where("base_url", Bluesky.BASE_URL)
     ],
-    queue = queues.mastodon
+    queue = queues.bluesky
 )
 
 pull_sources = set_pull_sources(
-    Client = Mastodon,
-    queue = queues.mastodon
+    Client = Bluesky,
+    queue = queues.bluesky
 )
 
 read_sources = set_read_sources(
     where_statements = [ 
-        where("base_url", Bluesky.BASE_URL, "neq"),
-        where("base_url", Reddit.BASE_URL, "neq")
+        where("base_url", Bluesky.BASE_URL)
     ],
-    queue = queues.mastodon
+    queue = queues.bluesky
 )
 
 read_source = set_read_source(
-    Client = Mastodon,
-    queue = queues.mastodon
+    Client = Bluesky,
+    queue = queues.bluesky
 )
 
 pull_posts = set_pull_posts(
-    queue = queues.mastodon
+    queue = queues.bluesky
 )
 
 
 def pull_sources_after_onboarding(task):
     sources = pull_sources(task)
     for source in sources:
-        queues.mastodon.put_details("read source", {
+        queues.bluesky.put_details("read source", {
             "source": source
         })
 
@@ -96,13 +97,13 @@ def clear_last_retrieved(task):
 
     link["secondary"] = None
     models.link.upsert(link)
-    queues.mastodon.put_details("read source", {"source": source})
+    queues.bluesky.put_details("read source", {"source": source})
 
     
 
 def clear_all_last_retrieved(task):
     results = models.identity.pull([ 
-        where("base_url", Bluesky.BASE_URL, "neq"),
+        where("base_url", Twitter.BASE_URL, "neq"),
         where("base_url", Reddit.BASE_URL, "neq")
     ])
     identities = []
@@ -121,4 +122,14 @@ def clear_all_last_retrieved(task):
         models.link.upsert(link)
 
 
-    queues.mastodon.put_details("read sources", {})
+    queues.bluesky.put_details("read sources", {})
+
+
+
+def workbench(task):
+    id = task.details.get("id")
+    identity = models.identity.get(id)
+
+    client = Bluesky(identity)
+    # result = client.get_post_graph({})
+    

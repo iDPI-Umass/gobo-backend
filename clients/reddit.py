@@ -207,6 +207,7 @@ class Reddit():
             sources[item["platform_id"]] = item
 
         posts = []
+        partials = []
         edges = []
         for submission in data["submissions"]:
             if submission.id is None:
@@ -235,8 +236,28 @@ class Reddit():
                     "name": "shares",
                 })
 
+        for submission in data["partials"]:
+            if submission.id is None:
+              continue
+
+            source = sources[submission.subreddit.id]
+
+            partials.append({
+                "source_id": source["id"],
+                "base_url": Reddit.BASE_URL,
+                "platform_id": submission.id,
+                "title": submission.title,
+                "content": submission.content,
+                "url": submission.url,
+                "published": submission.published,
+                "attachments": submission.attachments,
+                "poll": submission.poll
+            })
+
+
         return {
             "posts": posts,
+            "partials": partials,
             "edges": edges
         }
 
@@ -251,10 +272,11 @@ class Reddit():
 
     def get_post_graph(self, source):
         submissions = []
+        partials = []
         subreddits = []
 
         name = source["name"]
-        last_retrieved = source.get("last_retrieved")
+        last_retrieved = source.get("last_retrieved", None)
 
 
 
@@ -288,13 +310,16 @@ class Reddit():
             for sublist in list(partition(list(secondary), 100)):
                 generator = self.client.info(fullnames = sublist)
                 for item in generator:
-                    submissions.append(Submission(vars(item)))
+                    partials.append(Submission(vars(item)))
 
 
 
         seen_subreddits = set()
         subreddit_dict = {}
         for submission in submissions:
+            if submission.subreddit not in seen_subreddits:
+                seen_subreddits.add(submission.subreddit)
+        for submission in partials:
             if submission.subreddit not in seen_subreddits:
                 seen_subreddits.add(submission.subreddit)
 
@@ -310,5 +335,6 @@ class Reddit():
 
         return {
             "submissions": submissions,
+            "partials": partials,
             "subreddits": subreddits
         }

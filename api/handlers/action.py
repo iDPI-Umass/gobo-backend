@@ -2,7 +2,7 @@ import logging
 from flask import request, g
 import http_errors
 import models
-from platform_models import twitter, reddit, mastodon
+from platform_models import bluesky, reddit, mastodon
 from .helpers import parse_base_url
 
 
@@ -11,14 +11,14 @@ def action_onboard_identity_start_post():
     person = models.person.lookup(authority_id)
     base_url = parse_base_url(request.json)
 
-    if base_url == twitter.BASE_URL:
-        redirect_url = twitter.get_redirect_url(person)
+    if base_url == bluesky.BASE_URL:
+        response = bluesky.get_redirect_url(person)
     elif base_url == reddit.BASE_URL:
-        redirect_url = reddit.get_redirect_url(person)
+        response = reddit.get_redirect_url(person)
     else:
-        redirect_url = mastodon.get_redirect_url(person, base_url)
+        response = mastodon.get_redirect_url(person, base_url)
 
-    return {"redirect_url": redirect_url}
+    return response
   
 
 def action_onboard_identity_callback_post():
@@ -37,9 +37,9 @@ def action_onboard_identity_callback_post():
         )
 
 
-    if base_url == twitter.BASE_URL:
-        data = twitter.validate_callback(request.json)
-        identity = twitter.confirm_identity(registration, data)
+    if base_url == bluesky.BASE_URL:
+        data = bluesky.validate_callback(request.json)
+        identity = bluesky.confirm_identity(registration, data)
     elif base_url == reddit.BASE_URL:
         data = reddit.validate_callback(request.json)
         identity = reddit.confirm_identity(registration, data)
@@ -66,8 +66,8 @@ def action_pull_identity_sources_post():
 
     base_url = identity["base_url"]
 
-    if base_url == twitter.BASE_URL:
-        queue = "twitter"
+    if base_url == bluesky.BASE_URL:
+        queue = "bluesky"
     elif base_url == reddit.BASE_URL:
         queue = "reddit"
     else:
@@ -101,8 +101,8 @@ def action_workbench_post():
 
     base_url = identity["base_url"]
 
-    if base_url == twitter.BASE_URL:
-        queue = "twitter"
+    if base_url == bluesky.BASE_URL:
+        queue = "bluesky"
     elif base_url == reddit.BASE_URL:
         queue = "reddit"
     else:

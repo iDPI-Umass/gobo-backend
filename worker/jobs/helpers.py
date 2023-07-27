@@ -49,6 +49,7 @@ def set_pull_sources(Client, queue):
             sources.append(source)
       
         reconcile_sources(identity, sources)
+        return sources
 
     return pull_sources
 
@@ -92,6 +93,8 @@ def set_read_source(Client, queue):
             where("name", "follows")
         ])
 
+        # If there is no link, this source is incidential on someone's feed,
+        # so it is not directly watched for posts here.
         if link is None:
             return
 
@@ -147,6 +150,10 @@ def set_pull_posts(queue):
 
         for post in post_data["posts"]:
             queues.database.put_details("add post to source", {
+                "post": post
+            })
+        for post in post_data["partials"]:
+            queues.database.put_details("add partial post", {
                 "post": post
             })
         for edge in post_data["edges"]:

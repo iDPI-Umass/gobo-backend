@@ -5,6 +5,10 @@ import models
 from db import tables
 from .helpers import get_viewer, parse_page_query
 
+def censor_identity(identity):
+    identity.pop("oauth_token", None)
+    identity.pop("oauth_token_secret", None)
+
 
 def check_claim(person_id, id):
     identity = models.identity.get(id)
@@ -24,6 +28,9 @@ def person_identities_get(person_id):
     query["resource"] = "identity"
 
     identities = models.person.get_links(tables.Identity, query)
+    for identity in identities:
+        censor_identity(identity)
+    
     return identities
 
 def person_identity_post(person_id, id):
@@ -32,6 +39,7 @@ def person_identity_post(person_id, id):
 
     identity["active"] = request.json["active"]
     identity = models.identity.update(id, identity)
+    censor_identity(identity)
     return identity
 
 def person_identity_delete(person_id, id):

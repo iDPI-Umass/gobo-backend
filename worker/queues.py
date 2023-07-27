@@ -81,7 +81,7 @@ class Queue():
 
 api = Queue("api")
 test = Queue("test")
-twitter = Queue("twitter")
+bluesky = Queue("bluesky")
 reddit = Queue("reddit")
 mastodon = Queue("mastodon")
 database = Queue("database")

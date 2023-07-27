@@ -44,8 +44,8 @@ def poll_database(task):
 
         if queue == "test":
             queues.test.put_dict(_task)
-        elif queue == "twitter":
-            queues.twitter.put_dict(_task)
+        elif queue == "bluesky":
+            queues.bluesky.put_dict(_task)
         elif queue == "reddit":
             queues.reddit.put_dict(_task)
         elif queue == "mastodon":

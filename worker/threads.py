@@ -45,9 +45,9 @@ def start_database(count):
         thread = Thread(queues.database, jobs.database.dispatch)
         thread.start()
 
-def start_twitter(count):
+def start_bluesky(count):
     for i in range(count):
-        thread = Thread(queues.twitter, jobs.twitter.dispatch)
+        thread = Thread(queues.bluesky, jobs.bluesky.dispatch)
         thread.start()
 
 def start_reddit(count):
