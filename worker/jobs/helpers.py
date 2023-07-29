@@ -140,10 +140,7 @@ def set_pull_posts(queue):
 
         last_retrieved = joy.time.now()
         data = client.get_post_graph(source)
-        link["secondary"] = last_retrieved
-        models.link.update(link["id"], link)
-
-
+        
         sources = []
         _sources = client.map_sources(data)
         for _source in _sources:
@@ -153,7 +150,8 @@ def set_pull_posts(queue):
 
 
         post_data = client.map_posts(data)
-
+        link["secondary"] = last_retrieved
+        models.link.update(link["id"], link)
 
         for post in post_data["posts"]:
             queues.database.put_details("add post to source", {
@@ -167,7 +165,7 @@ def set_pull_posts(queue):
             queues.database.put_details("add interpost edge", {
                 "base_url": base_url,
                 "edge_reference": edge
-            })              
+            })           
 
 
     return pull_posts

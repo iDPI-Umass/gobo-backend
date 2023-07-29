@@ -17,7 +17,12 @@ def to_unix(d):
     return int(d.timestamp())
 
 
-def convert(start, end, value):
+def convert(start, end, value, optional):
+    if option == True and value is None:
+        return None
+    if value is None:
+        raise Exception("joy.time.convert: time value was not provided")
+
     if start == "date":
         d = value
     elif start == "iso":

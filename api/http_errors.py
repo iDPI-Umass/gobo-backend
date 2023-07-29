@@ -5,6 +5,10 @@ class HTTPError(Exception):
       self.status = status
       self.message = message
 
+  def __str__(self):
+      return f"status {self.status}: {self.message}"
+
+
 def bad_request(message):
     return HTTPError(400, message)
 def unauthorized(message):

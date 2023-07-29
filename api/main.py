@@ -17,20 +17,32 @@ config.dictConfig({
             "stream": "ext://flask.logging.wsgi_errors_stream",
             "formatter": "default"
         },
-        "file_trace": {
-            "class": "logging.FileHandler",
+        "main_trace": {
+            "class": "logging.handlers.RotatingFileHandler",
             "filename": "gobo.log",
-            "formatter": "default"
+            "formatter": "default",
+            "maxBytes": 10000000, # 10 MB
+            "backupCount": 1
+        },
+        "problem_trace": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "gobo-problem.log",
+            "level": "WARN",
+            "formatter": "default",
+            "maxBytes": 10000000, # 10 MB
+            "backupCount": 1
         }
     },
-    "root": {
-        "level": "INFO",
-        "handlers": ["wsgi", "file_trace"]
+   "root": {
+          "level": "INFO",
+          "handlers": ["wsgi", "main_trace", "problem_trace"]
     }
 })
 
 
 # Instntiate Flask app
+from time import process_time
+import math
 from flask import Flask, request, make_response
 from flask_cors import CORS
 app = Flask(__name__)
@@ -44,18 +56,25 @@ from validate import validate_request
 from authorize import authorize_request
 import handlers
 
+def log_duration(start, status):
+    end = process_time()
+    duration = math.floor((end - start) * 1000)
+    logging.info(f"{status} {duration}ms {request.method} {request.full_path}")
 
 def wrap_handler(alias, configuration, handler):
 
     def f(*args, **kwargs):
-        try:
+        start = process_time()
+        response = None
+        status = None
+
+        try:            
             authorize_request(configuration)
             validate_request(configuration)
             result = handler(*args, **kwargs)
             status = configuration["response"]["status"]
             response = make_response(result, status)
             response.headers.add("Access-Control-Allow-Origin", "*")
-            return response
         except (Exception, HTTPError) as e:
             status = getattr(e, "status", 500)
             if status == 500:
@@ -69,7 +88,9 @@ def wrap_handler(alias, configuration, handler):
           
             response = make_response(result, status)
             response.headers.add("Access-Control-Allow-Origin", "*")
-            return response
+        
+        log_duration(start, status)
+        return response
     
     # Flask needs unique function names internally.
     # Rename the wrapper function to match the inner function.

@@ -14,6 +14,16 @@ def isRepost(item):
 
 post_id_regex = re.compile(r"app\.bsky\.feed\.post/(.+)$")
 
+def build_post(item):
+    try:
+        return Post.create(item)
+    except Exception as e:
+        logging.error(e)
+        logging.error("\n\n")
+        logging.error(item)
+        logging.error("\n\n")
+        return None
+
 class Post():
     @staticmethod
     def create(_):
@@ -149,6 +159,7 @@ class Bluesky():
         id = self.identity["platform_id"]
 
         actors = []
+        actors.append(Actor(self.get_profile()))
         cursor = None
         while True:
             result = self.client.bsky.graph.get_follows({
@@ -265,15 +276,22 @@ class Bluesky():
 
             if last_retrieved is None:
                 for item in result.feed:
+                    post = build_post(item)
+                    if post is None:
+                        continue
+
                     count += 1
                     if count < 1000:
-                        posts.append(Post.create(item))
+                        posts.append(post)
                     else:
                         isDone = True
                         break
             else:
                 for item in result.feed:
-                    post = Post.create(item)
+                    post = build_post(item)
+                    if post is None:
+                        continue
+
                     if post.published > last_retrieved:
                         posts.append(post)
                     else:

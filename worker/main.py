@@ -17,15 +17,25 @@ config.dictConfig({
             "stream": "ext://sys.stdout",
             "formatter": "default"
         },
-        "file_trace": {
-            "class": "logging.FileHandler",
+        "main_trace": {
+            "class": "logging.handlers.RotatingFileHandler",
             "filename": "gobo.log",
-            "formatter": "default"
+            "formatter": "default",
+            "maxBytes": 10000000, # 10 MB
+            "backupCount": 1
+        },
+        "problem_trace": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "gobo-problem.log",
+            "level": "WARN",
+            "formatter": "default",
+            "maxBytes": 10000000, # 10 MB
+            "backupCount": 1
         }
     },
-    "root": {
+   "root": {
         "level": "INFO",
-        "handlers": ["stdout", "file_trace"]
+        "handlers": ["stdout", "main_trace", "problem_trace"]
     }
 })
 

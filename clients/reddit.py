@@ -41,7 +41,16 @@ def get_poll(submission):
         return output
 
     return None
-   
+
+def build_submission(item):
+    try:
+        return Submission.create(item)
+    except Exception as e:
+        logging.error(e)
+        logging.error("\n\n")
+        logging.error(item)
+        logging.error("\n\n")
+        return None
 
 class Submission():
     def __init__(self, _):        
@@ -52,7 +61,7 @@ class Submission():
         self.published = joy.time.convert(
             start = "unix",
             end = "iso",
-            value = _["created_utc"]
+            value = _["created_utc"],
         )
         self.url = Reddit.BASE_URL + _["permalink"]
         self.subreddit = get_subreddit(_)
@@ -113,7 +122,8 @@ class Submission():
                 "ends": joy.time.convert(
                     start = "unix",
                     end = "iso",
-                    value = ends
+                    value = ends,
+                    optional = True
                 ),
                 "options": []
             }
@@ -281,7 +291,9 @@ class Reddit():
 
         _submissions = []
         for item in gobo_reddit.get_new_ids(name):
-            _submissions.append(Submission(item))
+            submission = build_submission(item)
+            if submission is not None:
+                _submissions.append(submission)
 
         if last_retrieved is None:
             submissions.extend(_submissions)
@@ -329,6 +341,8 @@ class Reddit():
             subreddit_dict[subreddit.name] = subreddit
 
         for submission in submissions:
+            submission.subreddit = subreddit_dict[submission.subreddit]
+        for submission in partials:
             submission.subreddit = subreddit_dict[submission.subreddit]
 
 

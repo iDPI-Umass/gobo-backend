@@ -13,6 +13,16 @@ redirect_uris = [
     "https://gobo.social/add-identity-callback"
 ]
 
+def build_status(item):
+    try:
+        return Status.create(item)
+    except Exception as e:
+        logging.error(e)
+        logging.error("\n\n")
+        logging.error(item)
+        logging.error("\n\n")
+        return None
+
 class Status():
     def __init__(self, _):
         self._ = _
@@ -50,7 +60,8 @@ class Status():
               "ends": joy.time.convert(
                   start = "date",
                   end = "iso",
-                  value = poll.expires_at
+                  value = poll.expires_at,
+                  optional = True
               ),
               "options": []
             }
@@ -209,6 +220,7 @@ class Mastodon():
         items = self.client.account_following(id, limit=None)
         
         accounts = []
+        accounts.append(Account(self.get_profile()))
         for item in items:
             accounts.append(Account(item))
 
@@ -242,14 +254,21 @@ class Mastodon():
 
             if last_retrieved == None:
                 for item in items:
-                    statuses.append(Status(item))
+                    status = build_status(item)
+                    if status is None:
+                        continue
+                    
+                    statuses.append(status)
                     count += 1
                     if count >= 1000:
                         isDone = True
                         break
             else:
                 for item in items:
-                    status = Status(item)
+                    status = build_status(item)
+                    if status is None:
+                        continue
+                    
                     if status.published > last_retrieved:
                         statuses.append(status)
                     else:
