@@ -44,7 +44,7 @@ def get_poll(submission):
 
 def build_submission(item):
     try:
-        return Submission.create(item)
+        return Submission(item)
     except Exception as e:
         logging.error(e)
         logging.error("\n\n")

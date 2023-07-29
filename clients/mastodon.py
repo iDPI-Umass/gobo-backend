@@ -15,7 +15,7 @@ redirect_uris = [
 
 def build_status(item):
     try:
-        return Status.create(item)
+        return Status(item)
     except Exception as e:
         logging.error(e)
         logging.error("\n\n")

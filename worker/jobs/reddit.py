@@ -28,6 +28,10 @@ def dispatch(task):
         pull_posts(task)
     elif task.name == "pull sources after onboarding":
         pull_sources_after_onboarding(task)
+    elif task.name == "clear last retrieved":
+        clear_last_retrieved(task)
+    elif task.name == "clear all last retrieved":
+        clear_all_last_retrieved(task)
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -80,6 +84,55 @@ def pull_sources_after_onboarding(task):
         queues.reddit.put_details("read source", {
             "source": source
         })
+
+
+
+def clear_last_retrieved(task):
+    url = task.details.get("url")
+    if url is None:
+        raise Exception("clear last retrieved: needs target url to find source")
+    
+    source = models.source.find({"url": url})
+    if source is None:
+        raise Exception("clear last retrireved: no matching source was found for this task")
+    
+    link = models.link.find({
+        "origin_type": "source",
+        "origin_id": source["id"],
+        "target_type": "source",
+        "target_id": source["id"],
+        "name": "last-retrieved"
+    })
+
+    link["secondary"] = None
+    models.link.upsert(link)
+    queues.bluesky.put_details("read source", {"source": source})
+
+
+def clear_all_last_retrieved(task):
+    results = models.source.pull([ 
+        where("base_url", Reddit.BASE_URL)
+    ])
+
+    sources = []
+    for result in results:
+        sources.append(result["id"])
+    
+
+    links = models.link.pull([
+        where("name", "last-retrieved"),
+        where("origin_type", "source"),
+        where("origin_id", sources, "in")
+    ])
+
+    for link in links:
+        link["secondary"] = None
+        logging.info(link)
+        models.link.upsert(link)
+
+
+    queues.reddit.put_details("read sources", {})
+
 
 
 
