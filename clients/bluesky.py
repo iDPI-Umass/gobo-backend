@@ -18,7 +18,7 @@ def build_post(item):
     try:
         return Post.create(item)
     except Exception as e:
-        logging.error(e)
+        logging.error(e, exc_info=True)
         logging.error("\n\n")
         logging.error(item)
         logging.error("\n\n")
@@ -51,13 +51,16 @@ class Post():
             "createdAt", 
             getattr(_.post.record, "created_at", None)
         )
-
       
         self.attachments = []
         if hasattr(_.post, "embed") and hasattr(_.post.embed, "images") and _.post.embed.images is not None:
             types = {}
-            for item in _.post.record.embed.images:
-                types[item.image.ref] = item.image.mime_type
+            if isinstance(_.post.record.embed, dict):
+              for item in _.post.record.embed["images"]:
+                  types[item.image.ref] = item["image"]["mimeType"]
+            else:
+              for item in _.post.record.embed.images:
+                  types[item.image.ref] = item.image.mime_type
 
             for item in _.post.embed.images:
                 url = item.fullsize

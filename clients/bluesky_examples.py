@@ -185,3 +185,70 @@
 #   reply=None, 
 #   _type='app.bsky.feed.defs#feedViewPost'
 # )
+
+
+
+
+
+FeedViewPost(
+  post=PostView(
+    author=ProfileViewBasic(did='did:plc:bas4q6ksuie6quze6t4z7sga', handle='rabble.nz', avatar='https://cdn.bsky.social/imgproxy/6tyrN1SOlwNGBNFdanRWIsVW1FemIidRg6xFm1x3vnI/rs:fill:1000:1000:1:0/plain/bafkreiceht2zjzxpeddnshjxanurdeejatf2ecckmjfscbkbrxbsopsnzu@jpeg', displayName='Rabble', labels=[], viewer=ViewerState(blockedBy=False, blocking=None, followedBy='at://did:plc:bas4q6ksuie6quze6t4z7sga/app.bsky.graph.follow/3juexkkri4g2n', following='at://did:plc:2rudx3aynidk45zbx6llukln/app.bsky.graph.follow/3jues7lxirj2v', muted=False, mutedByList=None, _type='app.bsky.actor.defs#viewerState'), _type='app.bsky.actor.defs#profileViewBasic'),
+    cid='bafyreidiwjxztv5ztokwi5sy6l6xhh4uy53wwzn7z7jo4cbvl43xarmlza', 
+    indexedAt='2023-03-10T04:39:30.907Z',
+    record=Main(
+      createdAt='2023-03-10T04:39:30.500Z', 
+      text='Where are people going as they leave twitter? http://www.deweysquare.com/wp-content/uploads/2023/03/DSG-Snapshot-of-the-Twitter-Migration-March-2023.pdf', 
+      embed={
+        '$type': 'app.bsky.embed.images',
+        'images': [{
+          'alt': '', 
+          'image': {
+            'cid': 'bafkreigjfq73vt7qmm52toqnjeenlvxrpfat3bfh3dk43inxx2xfa6i7d4', 
+            'mimeType': 'image/jpeg'
+          }
+        }]
+      }, 
+      entities=[
+        Entity(
+          index=TextSlice(
+            end=152,
+            start=46, 
+            _type='app.bsky.feed.post#textSlice'
+          ),
+          type='link', 
+          value='http://www.deweysquare.com/wp-content/uploads/2023/03/DSG-Snapshot-of-the-Twitter-Migration-March-2023.pdf',
+          _type='app.bsky.feed.post#entity'
+        )
+      ], 
+      facets=None, 
+      langs=None,
+      reply=None, 
+      _type='app.bsky.feed.post'
+    ), 
+    uri='at://did:plc:bas4q6ksuie6quze6t4z7sga/app.bsky.feed.post/3jqklgi6yvs2y',
+    embed=View(
+      images=[
+        ViewImage(
+          alt='',
+          fullsize='https://cdn.bsky.social/imgproxy/8-1wPOdOdbwwZHfjpTrKysexjXV_0DTfFyIpPbNmmnA/rs:fit:2000:2000:1:0/plain/bafkreigjfq73vt7qmm52toqnjeenlvxrpfat3bfh3dk43inxx2xfa6i7d4@jpeg',
+          thumb='https://cdn.bsky.social/imgproxy/AiBCMd63S5cWdp2sO4dwpXKb9LQaHPIHRF9c82H7p4o/rs:fit:1000:1000:1:0/plain/bafkreigjfq73vt7qmm52toqnjeenlvxrpfat3bfh3dk43inxx2xfa6i7d4@jpeg', 
+          _type='app.bsky.embed.images#viewImage'
+        )
+      ],
+      _type='app.bsky.embed.images#view'
+    ),
+    labels=[], 
+    likeCount=9,
+    replyCount=2,
+    repostCount=4,
+    viewer=ViewerState(
+      like=None,
+      repost=None,
+      _type='app.bsky.feed.defs#viewerState'
+    ), 
+    _type='app.bsky.feed.defs#postView'
+  ), 
+  reason=None,
+  reply=None,
+  _type='app.bsky.feed.defs#feedViewPost'
+)

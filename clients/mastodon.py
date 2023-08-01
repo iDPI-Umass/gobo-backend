@@ -17,7 +17,7 @@ def build_status(item):
     try:
         return Status(item)
     except Exception as e:
-        logging.error(e)
+        logging.error(e, exc_info=True)
         logging.error("\n\n")
         logging.error(item)
         logging.error("\n\n")

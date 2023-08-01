@@ -46,7 +46,7 @@ def build_submission(item):
     try:
         return Submission(item)
     except Exception as e:
-        logging.error(e)
+        logging.error(e, exc_info=True)
         logging.error("\n\n")
         logging.error(item)
         logging.error("\n\n")

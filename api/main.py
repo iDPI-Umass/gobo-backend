@@ -24,9 +24,9 @@ config.dictConfig({
             "maxBytes": 10000000, # 10 MB
             "backupCount": 1
         },
-        "problem_trace": {
+        "error_trace": {
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "gobo-problem.log",
+            "filename": "gobo-error.log",
             "level": "WARN",
             "formatter": "default",
             "maxBytes": 10000000, # 10 MB
@@ -35,7 +35,7 @@ config.dictConfig({
     },
    "root": {
           "level": "INFO",
-          "handlers": ["wsgi", "main_trace", "problem_trace"]
+          "handlers": ["wsgi", "main_trace", "error_trace"]
     }
 })
 
