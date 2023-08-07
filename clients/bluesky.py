@@ -1,8 +1,7 @@
 import logging
 import json
 import re
-from atproto import Client
-from atproto.xrpc_client import models
+from .gobo_bluesky import GOBOBluesky
 import joy
 from .helpers import guess_mime
 
@@ -12,19 +11,9 @@ def isRepost(data):
 
     if reason is None:
         return False
-    if reason["_type"] != "app.bsky.feed.defs#reasonRepost":
+    if reason["$type"] != "app.bsky.feed.defs#reasonRepost":
         return False
     return True
-
-def isReply(data):
-    reply = data.get("reply", None)
-
-    if reply is None:
-        return False
-    if reply["_type"] != "app.bsky.feed.defs#replyRef":
-        return False
-    return True
-
 
 def json_failure(value):
     logging.info(vars(value))
@@ -51,8 +40,7 @@ def parse_object(input):
         return parse_object(vars(input))
 
 
-def build_post(item):
-    data = parse_object(item)
+def build_post(data):
     try:
         # logging.info(json.dumps(data, indent = 2, default = json_failure))
         return Post.create(data)
@@ -64,27 +52,10 @@ def build_post(item):
         return None
 
 
-def get_regular_content(data):
-    text = data["post"]["record"].get("text", "")
-    if isReply(data):
-        actor = data["reply"]["parent"]["author"]
-        text = f"{Actor.get_anchor(actor)} {text}"
-    return text
-
-
-def get_attachments(post):
+def get_attachments(embed):
     attachments = []
     
-    imbed = post.get("embed", None)
-    if imbed is None:
-        return attachments
-
-    media = imbed.get("media", None)
-    if media is not None:
-        images = media.get("images", None)
-    else:
-        images = imbed.get("images", None)
-    
+    images = embed.get("images", None)
     if images is None:
         return attachments
 
@@ -100,44 +71,46 @@ def get_attachments(post):
     return attachments
 
 
-def get_regular_share(post):
-    # logging.info(json.dumps(post, indent = 2, default = json_failure))
-    embed = post.get("embed")
-    if embed is None:
-        return None
-
-    record = embed.get("record")
-    if record is None:
-        return None
-
-    # TODO: wtf bluesky?
-    if record.get("record", None) is not None:
-        record = record["record"]
-    
+def get_record_view(data):
+    record = data.get("record")
     author = record.get("author")
-    if author is None:
-        return None
+    value = record.get("value")
 
-    # There's a split in indentification.
-    # The Bluesky URL uses the random identifier with the author's handle.
-    # The full ID uses the random identifier with the author's did
-    value = record["value"]
-    match = post_id_regex.search(record["uri"])
-    id = match.group(1)
-    
     self = Post()
     self.id = record["uri"]
     self.author = Actor(author)
     self.content = value.get("text", "")
-    self.url = f"{Bluesky.BASE_URL}/profile/{self.author.username}/post/{id}"
-    self.published = value.get("createdAt", record.get("created_at", None))
-      
-    self.attachments = get_attachments(record)
-    self.share = None # get_regular_share(record)
+    self.url = Post.get_url(self)
+    self.published = value.get("createdAt", None)
+
+    self.attachments = []
+    self.share = None
+    self.reply = None
     self.poll = None
+
+    embeds = record.get("embeds", [])
+    for embed in embeds:
+        if embed["$type"] in ["app.bsky.embed.record#view", "app.bsky.embed.record#viewRecord"]:
+            self.share = get_record_view(embed)
+        elif embed["$type"] == "app.bsky.embed.recordWithMedia#view":
+            self.share = get_record_view(embed["record"])
+            self.attachments = get_attachments(embed["media"])
+        elif embed["$type"] == "app.bsky.embed.images#view":
+            self.attachments = get_attachments(embed)
 
     return self
 
+
+def get_reply(data):
+    reply = data.get("reply")
+    if reply is None:
+        return None
+    
+    post = reply.get("parent")
+    if post is None:
+        return None
+
+    return Post.create_core(post)
 
 
 class Post():
@@ -147,7 +120,81 @@ class Post():
             return Post.create_repost(data)
         else:
             return Post.create_regular(data)
+        
+    def __str__(self):
+        return json.dumps({
+            "id": self.id,
+            "author": str(self.author),
+            "content": self.content,
+            "url": self.url,
+            "published": self.published,
+            "attachments": self.attachments,
+            "share": self.share.to_dict(),
+            "reply": self.reply.to_dict()
+        }, indent=2)
+    
+    def to_dict(self):
+        output = {
+            "id": self.id,
+            "author": str(self.author),
+            "content": self.content,
+            "url": self.url,
+            "published": self.published,
+            "attachments": self.attachments,
+        }
 
+        if self.share is not None:
+            output.share = self.share.to_dict()
+        if self.reply is not None:
+            output.reply = self.reply.to_dict()
+
+        return output
+
+    @staticmethod
+    def get_url(post):
+        # There's a split in indentification.
+        # The Bluesky URL uses the random identifier with the author's handle.
+        # The full ID uses the random identifier with the author's did
+        match = post_id_regex.search(post.id)
+        id = match.group(1)
+        return f"{Bluesky.BASE_URL}/profile/{post.author.username}/post/{id}"
+
+
+    @staticmethod
+    def create_core(post):
+        author = post["author"]
+        record = post["record"]
+
+        self = Post()
+        self.id = post["uri"]
+        self.author = Actor(author)
+        self.content = record.get("text", None)
+        self.url = Post.get_url(self)
+        self.published = record.get("createdAt", None)
+          
+        self.attachments = []
+        self.share = None
+        self.reply = None
+        self.poll = None
+
+        embed = post.get("embed", {"$type": None})
+        if embed["$type"] in ["app.bsky.embed.record#view", "app.bsky.embed.record#viewRecord"]:
+            self.share = get_record_view(embed)
+        elif embed["$type"] == "app.bsky.embed.recordWithMedia#view":
+            self.share = get_record_view(embed["record"])
+            self.attachments = get_attachments(embed["media"])
+        elif embed["$type"] == "app.bsky.embed.images#view":
+            self.attachments = get_attachments(embed)
+
+        return self
+    
+
+    @staticmethod
+    def create_regular(data):
+        self = Post.create_core(data["post"])
+        self.reply = get_reply(data)
+        return self
+    
 
     @staticmethod
     def create_repost(data):
@@ -159,10 +206,11 @@ class Post():
         self.author = Actor(reason["by"])
         self.content = None
         self.url = self.share.url
+        self.published = reason.get("indexedAt", None)
+
         self.attachments = []
+        self.reply = None
         self.poll = None
-        
-        self.published = reason.get("indexedAt", reason.get("indexed_at", None))
 
         # Bluesky (or this client library) represents reposts as virtual resources
         # without a standalone ID or URI. GOBO's abstract post model at a minimum
@@ -179,46 +227,27 @@ class Post():
         self.id = f"gobo:{self.author.id}:{self.published}:{post['cid']}"
         return self
 
-    @staticmethod
-    def create_regular(data):
-        post = data["post"]
-        record = post["record"]
-
-        # There's a split in indentification.
-        # The Bluesky URL uses the random identifier with the author's handle.
-        # The full ID uses the random identifier with the author's did
-        match = post_id_regex.search(post["uri"])
-        id = match.group(1)
-        
-        self = Post()
-        self.id = post["uri"]
-        self.author = Actor(post["author"])
-        self.content = get_regular_content(data)
-        self.url = f"{Bluesky.BASE_URL}/profile/{self.author.username}/post/{id}"
-        self.published = record.get("createdAt", record.get("created_at", None))
-          
-        self.attachments = get_attachments(post)
-        self.share = get_regular_share(post)
-        self.poll = None
-
-        return self
-
 
 
 class Actor():
     def __init__(self, data):
         did = data["did"]
         handle = data["handle"]
-        if handle.endswith(r".bsky.social"):
-            url = f"{Bluesky.BASE_URL}/profile/{handle}"
-        else:
-            url = f"{Bluesky.BASE_URL}/profile/{did}"
 
         self.id = did
-        self.url = url
+        self.url = Actor.get_url(data)
         self.username = handle
-        self.name = data.get("displayName", data.get("display_name", None))
+        self.name = data.get("displayName", None)
         self.icon_url = data["avatar"]
+
+    def __str__(self):
+        return json.dumps({
+            "id": self.id,
+            "url": self.url,
+            "username": self.username,
+            "name": self.name,
+            "icon_url": self.icon_url
+        }, indent=2)
 
     @staticmethod
     def get_url(data):
@@ -239,21 +268,46 @@ class Actor():
 class Bluesky():
     BASE_URL = "https://bsky.app"
 
-    def __init__(self, identity):
-        self.identity = identity
-        self.me = self.identity["oauth_token"]
-        self.client = Client()
-        self.client.login(
-            login = identity.get("oauth_token", None),
-            password = identity.get("oauth_token_secret", None)
-        )
+    def __init__(self, identity = None):
+        self.seen_types = set()
+        self.seen_type_examples = {}
+
+        if identity is not None:
+            self.identity = identity
+            self.me = self.identity["oauth_token"]
+            self.client = GOBOBluesky()
+            self.client.login(
+                login = identity.get("oauth_token", None),
+                password = identity.get("oauth_token_secret", None)
+            )
 
     def get_profile(self):
-        return self.client.bsky.actor.get_profile({
-            "actor": self.me
-        })
+        return self.client.get_profile(self.me)
+    
+    def parse_types(self, input):
+        if isinstance(input, primitive):
+            return
+        elif isinstance(input, list):
+            for item in input:
+                self.parse_types(item)
+            return
+        elif isinstance(input, dict):
+            _type = input.get("$type", None)
+            if _type is not None:
+                self.seen_types.add(_type)
+                if self.seen_type_examples.get(_type, None) is None:
+                    self.seen_type_examples[_type] = []
+                self.seen_type_examples[_type].append(input)
 
-
+            for key, value in input.items():
+                self.parse_types(value)
+            return
+        else:
+            raise Exception("this is supposed to be JSON")
+        
+    @staticmethod
+    def build_post(post):
+        return build_post(post)
 
 
     def list_sources(self):
@@ -263,15 +317,11 @@ class Bluesky():
         actors.append(Actor(self.get_profile()))
         cursor = None
         while True:
-            result = self.client.bsky.graph.get_follows({
-                "actor": self.me,
-                "cursor": cursor
-            })
-
-            for item in result.follows:
+            result = self.client.get_follows(self.me, cursor)
+            for item in result["feed"]:
                 actors.append(Actor(item))
 
-            cursor = result.cursor
+            cursor = result.get("cursor", None)
             if cursor is None:
                 break
 
@@ -379,25 +429,22 @@ class Bluesky():
             if isDone == True:
                 break
 
-            result = self.client.bsky.feed.get_author_feed({
-                "actor": source["username"],
-                "cursor": cursor
-            })
+            result = self.client.get_author_feed(source["username"], cursor)
 
             if last_retrieved is None:
-                for item in result.feed:
+                for item in result["feed"]:
                     post = build_post(item)
                     if post is None:
                         continue
 
                     count += 1
-                    if count < 50:
+                    if count < 100:
                         posts.append(post)
                     else:
                         isDone = True
                         break
             else:
-                for item in result.feed:
+                for item in result["feed"]:
                     post = build_post(item)
                     if post is None:
                         continue
@@ -408,7 +455,7 @@ class Bluesky():
                         isDone = True
                         break
           
-            cursor = result.cursor
+            cursor = result.get("cursor", None)
             if cursor is None:
                 break
          
