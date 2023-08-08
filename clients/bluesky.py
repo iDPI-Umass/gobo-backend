@@ -76,6 +76,24 @@ def get_record_view(data):
     author = record.get("author")
     value = record.get("value")
 
+    # TODO: This isn't a post. It looks like a list of sources, which we might
+    #       want to represent with GOBO abstractions. Punt for now.
+    if record["$type"] == "app.bsky.feed.defs#generatorView":
+        return None
+    
+    # TODO: How do we want to represent graph structures where one of the nodes
+    #       is defunct? It's mostly a client-side issue, so I wonder if this
+    #       should be some sort of constant, like Bluesky's approach.
+    if record["$type"] == "app.bsky.embed.record#viewNotFound":
+        return None
+    
+    # TODO: Our assumption for a follower being able to view this source's post
+    #       does not apply to secondary and tetiary posts in the graph.
+    #       Punt for now, which errs on the side of privacy, but there's an
+    #       an access control calculation problem here.
+    if record["$type"] == "app.bsky.embed.record#viewBlocked":
+        return None
+
     self = Post()
     self.id = record["uri"]
     self.author = Actor(author)
@@ -116,39 +134,14 @@ def get_reply(data):
 class Post():
     @staticmethod
     def create(data):
+        if data is None:
+            raise Exception("raw dictionary passed to Post constructor is None")
+
         if isRepost(data):
             return Post.create_repost(data)
         else:
             return Post.create_regular(data)
-        
-    def __str__(self):
-        return json.dumps({
-            "id": self.id,
-            "author": str(self.author),
-            "content": self.content,
-            "url": self.url,
-            "published": self.published,
-            "attachments": self.attachments,
-            "share": self.share.to_dict(),
-            "reply": self.reply.to_dict()
-        }, indent=2)
-    
-    def to_dict(self):
-        output = {
-            "id": self.id,
-            "author": str(self.author),
-            "content": self.content,
-            "url": self.url,
-            "published": self.published,
-            "attachments": self.attachments,
-        }
 
-        if self.share is not None:
-            output.share = self.share.to_dict()
-        if self.reply is not None:
-            output.reply = self.reply.to_dict()
-
-        return output
 
     @staticmethod
     def get_url(post):
@@ -173,6 +166,7 @@ class Post():
         self.published = record.get("createdAt", None)
           
         self.attachments = []
+        self.is_repost = False
         self.share = None
         self.reply = None
         self.poll = None
@@ -185,6 +179,9 @@ class Post():
             self.attachments = get_attachments(embed["media"])
         elif embed["$type"] == "app.bsky.embed.images#view":
             self.attachments = get_attachments(embed)
+        elif embed["$type"] == "app.bsky.embed.external#view":
+            url = embed["external"].get("uri", "")
+            self.content += f"\n\n {url}"
 
         return self
     
@@ -202,6 +199,7 @@ class Post():
         reason = data["reason"]
 
         self = Post()
+        self.is_repost = True
         self.share = Post.create_regular(data)
         self.author = Actor(reason["by"])
         self.content = None
@@ -231,6 +229,9 @@ class Post():
 
 class Actor():
     def __init__(self, data):
+        if data is None:
+            raise Exception("raw dictionary passed to Actor constructor is None")
+
         did = data["did"]
         handle = data["handle"]
 
@@ -238,16 +239,7 @@ class Actor():
         self.url = Actor.get_url(data)
         self.username = handle
         self.name = data.get("displayName", None)
-        self.icon_url = data["avatar"]
-
-    def __str__(self):
-        return json.dumps({
-            "id": self.id,
-            "url": self.url,
-            "username": self.username,
-            "name": self.name,
-            "icon_url": self.icon_url
-        }, indent=2)
+        self.icon_url = data.get("avatar", None)
 
     @staticmethod
     def get_url(data):
@@ -379,7 +371,24 @@ class Bluesky():
                     "target_reference": post.share.id,
                     "name": "shares",
                 })
-        
+
+            if post.reply != None:
+                if post.is_repost == True:
+                    edges.append({
+                        "origin_type": "post",
+                        "origin_reference": post.share.id,
+                        "target_type": "post",
+                        "target_reference": post.reply.id,
+                        "name": "replies",
+                    })
+                else:
+                    edges.append({
+                        "origin_type": "post",
+                        "origin_reference": post.id,
+                        "target_type": "post",
+                        "target_reference": post.reply.id,
+                        "name": "replies",
+                    })
 
         for post in data["partials"]:
             if post.id is None:
@@ -408,6 +417,14 @@ class Bluesky():
                     "name": "shares",
                 })
 
+            if post.reply != None:
+                edges.append({
+                    "origin_type": "post",
+                    "origin_reference": post.id,
+                    "target_type": "post",
+                    "target_reference": post.reply.id,
+                    "name": "replies",
+                })
 
         return {
             "posts": posts,
@@ -438,7 +455,7 @@ class Bluesky():
                         continue
 
                     count += 1
-                    if count < 100:
+                    if count < 4:
                         posts.append(post)
                     else:
                         isDone = True
@@ -465,14 +482,26 @@ class Bluesky():
         for post in posts:
             seen_posts.add(post.id)
         for post in posts:
+            reply = post.reply
+            if reply is not None and reply.id not in seen_posts:
+                seen_posts.add(reply.id)
+                partials.append(reply)
+
             share = post.share
             if share is not None and share.id not in seen_posts:
                 seen_posts.add(share.id)
                 partials.append(share)
+                
+                reply = share.reply
+                if reply is not None and reply.id not in seen_posts:
+                    seen_posts.add(reply.id)
+                    partials.append(reply)
+
                 share = share.share
-                if share is not None and share is type(Post) and share.id not in seen_posts:
+                if share is not None and share.id not in seen_posts:
                     seen_posts.add(share.id)
                     partials.append(share)
+      
 
 
         seen_actors = set()
@@ -486,6 +515,7 @@ class Bluesky():
             if actor.id not in seen_actors:
                 seen_actors.add(actor.id)
                 actors.append(actor)
+
 
         return {
             "posts": posts,

@@ -925,6 +925,13 @@ resources:
                   type: array
                   items:
                     type: integer
+              replies:
+                description: List of post references that have reply relationships.
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: integer
               sources:
                 description: List of sources that appear somewhere in this feed segment.
                 type: array

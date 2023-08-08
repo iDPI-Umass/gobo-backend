@@ -79,9 +79,11 @@ def view_identity_feed(data):
         feed = []
         posts = []
         shares = []
+        replies = []
         sources = []
         seen_posts = set()
         seen_sources = set()
+        roots = set()
 
         # The next_token tells the client how to try to get the next page.
         # If we've just pulled an empty page, the client can try again later
@@ -98,6 +100,7 @@ def view_identity_feed(data):
             feed.append(id)
             seen_posts.add(id)
 
+        # Secondary Shares
         statement = select(Link) \
             .where(Link.origin_type == "post") \
             .where(Link.origin_id.in_(feed)) \
@@ -109,14 +112,47 @@ def view_identity_feed(data):
         for row in rows:
             shares.append([row.origin_id, row.target_id])
             seen_posts.add(row.target_id)
+            roots.add(row.target_id)
 
+        # Tertiary Shares
+        statement = select(Link) \
+            .where(Link.origin_type == "post") \
+            .where(Link.origin_id.in_(list(roots))) \
+            .where(Link.target_type == "post") \
+            .where(Link.name == "shares")
+
+        rows = session.scalars(statement).all()
+
+        for row in rows:
+            shares.append([row.origin_id, row.target_id])
+            seen_posts.add(row.target_id)
+
+
+        # Now we have basis to look for all reply secondary posts
+        for id in feed:
+            roots.add(id)
+
+        statement = select(Link) \
+            .where(Link.origin_type == "post") \
+            .where(Link.origin_id.in_(list(roots))) \
+            .where(Link.target_type == "post") \
+            .where(Link.name == "replies")
+
+        rows = session.scalars(statement).all()
+
+        for row in rows:
+            replies.append([row.origin_id, row.target_id])
+            seen_posts.add(row.target_id)
+
+
+        # Now we have all primary, secondary, and tertiary posts. Fetch all.
         statement = select(Post).where(Post.id.in_(list(seen_posts)))
         rows = session.scalars(statement).all()
         for row in rows:
             posts.append(row.to_dict()) 
 
       
-
+        # And with all full posts, we can see their source IDs. Pull all sources.
         for post in posts:
             seen_sources.add(post["source_id"])
 
@@ -126,11 +162,13 @@ def view_identity_feed(data):
             sources.append(row.to_dict())    
 
 
+        # Package the response body.
         output = {
             "feed": feed,
             "posts": posts,
             "shares": shares,
-            "sources": sources,
+            "replies": replies,
+            "sources": sources
         }
 
         if next_token is not None:
