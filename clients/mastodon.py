@@ -38,9 +38,12 @@ class Status():
         self.attachments = []
         self.poll = None
         self.reblog = None
+        self.reply = None
 
         if _.reblog is not None:
             self.reblog = Status(_.reblog)
+        if _.in_reply_to_id is not None:
+            self.reply = str(_.in_reply_to_id)
         if self.url is None and self.reblog is not None:
             self.url = self.reblog.url
         if self.url is not None and self.url.endswith("/activity"):
@@ -170,13 +173,9 @@ class Mastodon():
         posts = []
         partials = []
         edges = []
-        for status in data["statuses"]:
-            if status.id is None:
-                continue
 
-            source = sources[status.account.id]
-
-            posts.append({
+        def map_post(source, status):
+            return {
                 "source_id": source["id"],
                 "base_url": self.base_url,
                 "platform_id": status.id,
@@ -186,9 +185,25 @@ class Mastodon():
                 "published": status.published,
                 "attachments": status.attachments,
                 "poll": status.poll
-            })
+            }
 
-            if status.reblog != None:
+
+        for status in data["statuses"]:
+            if status.id is None:
+                continue
+            source = sources[status.account.id]
+            posts.append(map_post(source, status))
+
+
+        for status in data["partials"]:
+            if status.id is None:
+                continue
+            source = sources[status.account.id]
+            partials.append(map_post(source, status))
+
+        
+        for status in (data["statuses"] + data["partials"]):
+            if status.reblog is not None:
                 edges.append({
                     "origin_type": "post",
                     "origin_reference": status.id,
@@ -196,25 +211,15 @@ class Mastodon():
                     "target_reference": status.reblog.id,
                     "name": "shares",
                 })
-        
 
-        for status in data["partials"]:
-            if status.id is None:
-                continue
-
-            source = sources[status.account.id]
-
-            partials.append({
-                "source_id": source["id"],
-                "base_url": self.base_url,
-                "platform_id": status.id,
-                "title": None,
-                "content": status.content,
-                "url": status.url,
-                "published": status.published,
-                "attachments": status.attachments,
-                "poll": status.poll
-            })
+            if status.reply is not None:
+                edges.append({
+                    "origin_type": "post",
+                    "origin_reference": status.id,
+                    "target_type": "post",
+                    "target_reference": status.reply,
+                    "name": "replies",
+                })
 
 
         return {
@@ -253,7 +258,8 @@ class Mastodon():
             logging.info(f"Mastdon Fetch: {source['platform_id']} {max_id}")
             items = self.client.account_statuses(
                 source["platform_id"],
-                max_id = max_id
+                max_id = max_id,
+                limit=40
             )
 
             if len(items) == 0:
@@ -269,7 +275,7 @@ class Mastodon():
                     
                     statuses.append(status)
                     count += 1
-                    if count >= 1000:
+                    if count >= 400:
                         isDone = True
                         break
             else:
@@ -286,13 +292,43 @@ class Mastodon():
 
 
         seen_statuses = set()
+        reply_ids = set()
         for status in statuses:
             seen_statuses.add(status.id)
-        for status in statuses:
+        
+        for status in statuses: 
             reblog = status.reblog
             if reblog is not None and reblog.id not in seen_statuses:
                 seen_statuses.add(reblog.id)
                 partials.append(reblog)
+
+        for status in statuses:
+            reply = status.reply
+            if reply is not None and reply not in seen_statuses:
+                seen_statuses.add(reply)
+                reply_ids.add(reply) 
+
+
+
+        registered = models.post.pull([
+            models.helpers.where("base_url", source["base_url"]),
+            models.helpers.where("platform_id", list(reply_ids), "in")
+        ])
+
+        for item in registered:
+            reply_ids.remove(item["platform_id"])
+
+        for id in reply_ids:
+            try:
+                logging.info(f"Mastodon: fetching reply {id}")
+                status = Status(self.client.status(id))
+                # We need to stop traversing the graph so we don't pull in lots of replies.
+                # By definition, Mastodon does not allow replies to boosted statuses.
+                status.reply = None
+                partials.append(status)
+            except Exception as e:
+                logging.warning(f"failed to fetch status {id} {e}")
+
 
 
         seen_accounts = set()
@@ -306,6 +342,8 @@ class Mastodon():
             if account.id not in seen_accounts:
                 seen_accounts.add(account.id)
                 accounts.append(account)
+
+
 
         return {
             "statuses": statuses,

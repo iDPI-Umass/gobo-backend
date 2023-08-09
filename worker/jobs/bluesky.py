@@ -131,24 +131,14 @@ def clear_all_last_retrieved(task):
 
 
 def hard_reset_posts(task):
-    sources = models.source.pull([
+    posts = models.post.pull([
         where("base_url", Bluesky.BASE_URL)
     ])
 
-    for source in sources:
-        links = models.link.pull([
-            where("origin_type", "source"),
-            where("origin_id", source["id"]),
-            where("target_type", "post"),
-            where("name", "has-post")
-        ])
-
-        for link in links:
-            queues.database.put_details( "remove post", {
-                "post": {
-                    "id": link["target_id"]
-                }
-            })
+    for post in posts:
+        queues.database.put_details( "remove post", {
+            "post": post
+        })
 
 
 def workbench(task):

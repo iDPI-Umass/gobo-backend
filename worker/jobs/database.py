@@ -313,6 +313,14 @@ def add_partial_post(task):
         raise Exception("add post to source: needs post")
 
     post = models.post.safe_add(post)
+    models.link.upsert({
+        "origin_type": "source",
+        "origin_id": post["source_id"],
+        "target_type": "post",
+        "target_id": post["id"],
+        "name": "has-post",
+        "secondary": f"{post['published']}::{post['id']}"
+    })
 
 
 def add_interpost_edge(task):
@@ -336,7 +344,7 @@ def add_interpost_edge(task):
         "platform_id": data["target_reference"]
     })
     if target is None:
-        raise Exception("target post is not available in post table")
+        raise Exception(f"target post is not available in post table {task.details}")
 
 
     models.link.upsert({

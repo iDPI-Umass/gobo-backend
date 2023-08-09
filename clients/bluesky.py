@@ -358,13 +358,9 @@ class Bluesky():
         posts = []
         partials = []
         edges = []
-        for post in data["posts"]:
-            if post.id is None:
-                continue
 
-            source = sources[post.author.id]
-
-            posts.append({
+        def map_post(source, post):
+            return {
                 "source_id": source["id"],
                 "base_url": Bluesky.BASE_URL,
                 "platform_id": post.id,
@@ -374,53 +370,27 @@ class Bluesky():
                 "published": post.published,
                 "attachments": post.attachments,
                 "poll": post.poll
-            })
+            }
 
-            if post.share != None:
-                edges.append({
-                    "origin_type": "post",
-                    "origin_reference": post.id,
-                    "target_type": "post",
-                    "target_reference": post.share.id,
-                    "name": "shares",
-                })
 
-            if post.reply != None:
-                if post.is_repost == True:
-                    edges.append({
-                        "origin_type": "post",
-                        "origin_reference": post.share.id,
-                        "target_type": "post",
-                        "target_reference": post.reply.id,
-                        "name": "replies",
-                    })
-                else:
-                    edges.append({
-                        "origin_type": "post",
-                        "origin_reference": post.id,
-                        "target_type": "post",
-                        "target_reference": post.reply.id,
-                        "name": "replies",
-                    })
+        for post in data["posts"]:
+            if post.id is None:
+                continue
+            source = sources[post.author.id]
+            posts.append(map_post(source, post))
+
 
         for post in data["partials"]:
             if post.id is None:
                 continue
-
             source = sources[post.author.id]
+            partials.append(map_post(source, post))
 
-            partials.append({
-                "source_id": source["id"],
-                "base_url": Bluesky.BASE_URL,
-                "platform_id": post.id,
-                "title": None,
-                "content": post.content,
-                "url": post.url,
-                "published": post.published,
-                "attachments": post.attachments,
-                "poll": post.poll
-            })
-
+           
+        for post in (data["posts"] + data["partials"]):
+            if post.id is None:
+                continue
+            
             if post.share != None:
                 edges.append({
                     "origin_type": "post",
@@ -528,6 +498,7 @@ class Bluesky():
             if actor.id not in seen_actors:
                 seen_actors.add(actor.id)
                 actors.append(actor)
+
 
 
         return {
