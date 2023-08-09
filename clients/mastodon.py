@@ -46,6 +46,15 @@ class Status():
         if self.url is not None and self.url.endswith("/activity"):
             self.url = re.sub("\/activity$", "", self.url)
 
+        if _.card is not None:
+            self.attachments.append({
+                "type": "application/json+gobo-syndication",
+                "source": _.card["url"],
+                "title": _.card["title"],
+                "description": _.card["description"],
+                "media": _.card.get("image", None)
+            })
+
         for attachment in _.media_attachments:
             url = attachment["url"]
             self.attachments.append({

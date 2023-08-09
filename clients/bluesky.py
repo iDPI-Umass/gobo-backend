@@ -71,6 +71,18 @@ def get_attachments(embed):
     return attachments
 
 
+def get_external(embed):
+    thumb = embed["external"].get("thumb", None)
+    
+    return {
+        "type": "application/json+gobo-syndication",
+        "source": embed["external"]["uri"],
+        "title": embed["external"]["title"],
+        "description": embed["external"]["description"],
+        "media": thumb
+    }
+
+
 def get_record_view(data):
     record = data.get("record")
     author = record.get("author")
@@ -112,9 +124,11 @@ def get_record_view(data):
             self.share = get_record_view(embed)
         elif embed["$type"] == "app.bsky.embed.recordWithMedia#view":
             self.share = get_record_view(embed["record"])
-            self.attachments = get_attachments(embed["media"])
+            self.attachments.extend(get_attachments(embed["media"]))
         elif embed["$type"] == "app.bsky.embed.images#view":
-            self.attachments = get_attachments(embed)
+            self.attachments.extend(get_attachments(embed))
+        elif embed["$type"] == "app.bsky.embed.external#view":
+            self.attachments.append(get_external(embed))
 
     return self
 
@@ -176,12 +190,11 @@ class Post():
             self.share = get_record_view(embed)
         elif embed["$type"] == "app.bsky.embed.recordWithMedia#view":
             self.share = get_record_view(embed["record"])
-            self.attachments = get_attachments(embed["media"])
+            self.attachments.extend(get_attachments(embed["media"]))
         elif embed["$type"] == "app.bsky.embed.images#view":
-            self.attachments = get_attachments(embed)
+            self.attachments.extend(get_attachments(embed))
         elif embed["$type"] == "app.bsky.embed.external#view":
-            url = embed["external"].get("uri", "")
-            self.content += f"\n\n {url}"
+            self.attachments.append(get_external(embed))
 
         return self
     
@@ -455,7 +468,7 @@ class Bluesky():
                         continue
 
                     count += 1
-                    if count < 4:
+                    if count < 1000:
                         posts.append(post)
                     else:
                         isDone = True

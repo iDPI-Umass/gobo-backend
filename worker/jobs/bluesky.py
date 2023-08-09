@@ -34,6 +34,8 @@ def dispatch(task):
         clear_last_retrieved(task)
     elif task.name == "clear all last retrieved":
         clear_all_last_retrieved(task)
+    elif task.name == "hard reset posts":
+        hard_reset_posts(task)
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -128,25 +130,25 @@ def clear_all_last_retrieved(task):
 
 
 
-# def workbench(task):
-#     sources = models.source.pull([
-#         where("base_url", Bluesky.BASE_URL)
-#     ])
+def hard_reset_posts(task):
+    sources = models.source.pull([
+        where("base_url", Bluesky.BASE_URL)
+    ])
 
-#     for source in sources:
-#         links = models.link.pull([
-#             where("origin_type", "source"),
-#             where("origin_id", source["id"]),
-#             where("target_type", "post"),
-#             where("name", "has-post")
-#         ])
+    for source in sources:
+        links = models.link.pull([
+            where("origin_type", "source"),
+            where("origin_id", source["id"]),
+            where("target_type", "post"),
+            where("name", "has-post")
+        ])
 
-#         for link in links:
-#             queues.database.put_details( "remove post", {
-#                 "post": {
-#                     "id": link["target_id"]
-#                 }
-#             })
+        for link in links:
+            queues.database.put_details( "remove post", {
+                "post": {
+                    "id": link["target_id"]
+                }
+            })
 
 
 def workbench(task):
