@@ -277,6 +277,43 @@ shards:
       <<: *postCore
       <<: *timestamp
 
+  newPost: &newPost
+    type: object
+    additionalProperties: false
+    required: [ targets, post ]
+    properties:
+      targets:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required: [ identity ]
+          properties:
+            identity:
+              description: The ID of the target identity. GOBO will create a post on your behalf with this provider.
+              type: integer
+            metadata:
+              description: Platform specific configuration needed to create this post. For example, a target subreddit.
+              type: object
+      post:
+        type: object
+        additionalProperties: false
+        required: [ content ]
+        properties:
+          title:
+            type: string
+          content:
+            type: string
+          attachments:
+            description: List of URLs where you can find media attachments for this post.
+            type: array
+            items: 
+              type: object
+          poll:
+            description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
+            type: object     
+
 resources:
   discovery:
     template: /
@@ -939,6 +976,23 @@ resources:
               next:
                 description: token that allows the client to fetch the next page fo the feed.
                 type: string
+
+  person_posts:
+    template: /people/{person_id}/posts
+    route: /people/<int:person_id>/posts
+    methods:
+      post:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema: *newPost
+        response:
+          status: 200
+          type: application/json
+          schema: 
+            type: array
+            items: *task
 
   post_graph:
     template: /post-graph/{id}

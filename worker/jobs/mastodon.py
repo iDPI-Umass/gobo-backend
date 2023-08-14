@@ -34,6 +34,8 @@ def dispatch(task):
         clear_all_last_retrieved(task)
     elif task.name == "hard reset posts":
         hard_reset_posts(task)
+    elif task.name == "create post":
+        create_post(task)
     else:
         logging.warning("No matching job for task: %s", task)
     
@@ -136,3 +138,23 @@ def hard_reset_posts(task):
         queues.database.put_details( "remove post", {
             "post": post
         })
+
+
+
+def create_post(task):
+    identity = task.details.get("identity", None)
+    if identity is None:
+        raise Exception("bluesky: create_post requires identity")
+    post = task.details.get("post", None)
+    if post is None:
+        raise Exception("bluesky: create_post requires post")
+    metadata = task.details.get("metadata", {})
+
+    base_url = identity["base_url"]
+    mastodon_client = models.mastodon_client.find({"base_url": base_url})
+    if mastodon_client == None:
+        logging.warning(f"no mastodon client found for {base_url}")
+        return
+    
+    client = Mastodon(mastodon_client, identity)
+    client.create_post(post, metadata)

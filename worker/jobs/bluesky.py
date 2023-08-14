@@ -36,6 +36,8 @@ def dispatch(task):
         clear_all_last_retrieved(task)
     elif task.name == "hard reset posts":
         hard_reset_posts(task)
+    elif task.name == "create post":
+        create_post(task)
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -139,6 +141,21 @@ def hard_reset_posts(task):
         queues.database.put_details( "remove post", {
             "post": post
         })
+
+
+
+def create_post(task):
+    identity = task.details.get("identity", None)
+    if identity is None:
+        raise Exception("bluesky: create_post requires identity")
+    post = task.details.get("post", None)
+    if post is None:
+        raise Exception("bluesky: create_post requires post")
+    metadata = task.details.get("metadata", {})
+
+    client = Bluesky(identity)
+    client.create_post(post, metadata)
+       
 
 
 def workbench(task):

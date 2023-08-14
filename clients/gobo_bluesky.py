@@ -49,6 +49,7 @@ class GOBOBluesky():
         if data is not None:
             data = json.dumps(data)
             headers["Content-Type"] = "application/json"
+        return data
             
       
     def bluesky_get(self, url, headers = None):
@@ -109,3 +110,14 @@ class GOBOBluesky():
         })
        
         return self.bluesky_get(url)
+    
+    def create_post(self, post):
+        url = self.build_url("com.atproto.repo.createRecord", {})
+
+        data = {
+            "repo": self.did,
+            "collection": "app.bsky.feed.post",
+            "record": post
+        }
+
+        return self.bluesky_post(url, data)

@@ -32,6 +32,8 @@ def dispatch(task):
         clear_last_retrieved(task)
     elif task.name == "clear all last retrieved":
         clear_all_last_retrieved(task)
+    elif task.name == "create post":
+        create_post(task)
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -133,6 +135,19 @@ def clear_all_last_retrieved(task):
 
     queues.reddit.put_details("read sources", {})
 
+
+
+def create_post(task):
+    identity = task.details.get("identity", None)
+    if identity is None:
+        raise Exception("reddit: create_post requires identity")
+    post = task.details.get("post", None)
+    if post is None:
+        raise Exception("reddit: create_post requires post")
+    metadata = task.details.get("metadata", {})
+
+    client = Reddit(identity)
+    client.create_post(post, metadata)
 
 
 

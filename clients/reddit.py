@@ -191,6 +191,25 @@ class Reddit():
         for item in generator:
             submissions.append(Submission(item))
         return submissions
+    
+    def create_post(self, post, metadata):
+        title = post.get("title", None)
+        if title is None:
+            raise Exception("reddit posts must include a title")
+        logging.info(metadata)
+        subreddit = metadata.get("subreddit", None)
+        if subreddit is None:
+            raise Exception("reddit post requires a subreddit to be specified in metadata")
+
+        self.client.subreddit(subreddit).submit(
+            title = title,
+            selftext = post.get("content", None)
+            # TODO: Handle media
+            # inline_media: Dict[str, praw.models.InlineMedia] | None = None,
+            # TODO: Handle spoiler and NSFW
+            # nsfw: bool = False,
+            # spoiler: bool = False
+        )
 
     def map_sources(self, data):
         subreddits = data.get("subreddits") or []

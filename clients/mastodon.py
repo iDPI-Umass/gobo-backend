@@ -146,6 +146,22 @@ class Mastodon():
 
     def get_profile(self):
         return self.client.me()
+    
+    def create_post(self, post, metadata):
+        return self.client.status_post(
+            status = post.get("content", ""),
+            idempotency_key = joy.crypto.random({"encoding": "safe-base64"}),
+            # TODO: Include media
+            # media_ids=None,
+            # TODO: Do we want to include sensitive flag and spoiler text in metadata?
+            # sensitive=False,
+            # visibility=None,
+            # spoiler_text=None,
+            # TODO: Do we want to include langauge metadata?
+            # language=None,
+            # TODO: Do we want to include polls?
+            # poll=None,
+        )
 
     def map_sources(self, data):
         base_url = self.base_url

@@ -313,7 +313,18 @@ class Bluesky():
     @staticmethod
     def build_post(post):
         return build_post(post)
-
+    
+    def create_post(self, post, metadata):
+        return self.client.create_post({
+            "text": post.get("content", ""),
+            "createdAt": joy.time.now()
+            # TODO: We'll need app.bsky.embed.images here
+            # "embed": {
+            #     "images": []
+            # },
+            # TODO: Do we want to include language metadata?
+            # "langs": []
+        })
 
     def list_sources(self):
         id = self.identity["platform_id"]
