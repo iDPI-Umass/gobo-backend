@@ -153,14 +153,14 @@ class Mastodon():
             idempotency_key = joy.crypto.random({"encoding": "safe-base64"}),
             # TODO: Include media
             # media_ids=None,
-            # TODO: Do we want to include sensitive flag and spoiler text in metadata?
-            # sensitive=False,
+            sensitive = metadata.get("sensitive", False),
+            spoiler_text = metadata.get("spoiler", None),
+            # TODO: Do we want to include visibility configuration in Mastodon metadata?
             # visibility=None,
-            # spoiler_text=None,
             # TODO: Do we want to include langauge metadata?
             # language=None,
             # TODO: Do we want to include polls?
-            # poll=None,
+            # poll=None
         )
 
     def map_sources(self, data):

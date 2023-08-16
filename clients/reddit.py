@@ -169,7 +169,7 @@ class Reddit():
 
     def get_redirect_url(self, state):
         return self.client.auth.url(
-            scopes = ["identity", "mysubreddits", "read"],
+            scopes = ["identity", "mysubreddits", "read", "submit"],
             state=state,
             duration = "permanent"
         )
@@ -196,19 +196,17 @@ class Reddit():
         title = post.get("title", None)
         if title is None:
             raise Exception("reddit posts must include a title")
-        logging.info(metadata)
         subreddit = metadata.get("subreddit", None)
         if subreddit is None:
             raise Exception("reddit post requires a subreddit to be specified in metadata")
 
         self.client.subreddit(subreddit).submit(
             title = title,
-            selftext = post.get("content", None)
+            selftext = post.get("content", None),
             # TODO: Handle media
             # inline_media: Dict[str, praw.models.InlineMedia] | None = None,
-            # TODO: Handle spoiler and NSFW
-            # nsfw: bool = False,
-            # spoiler: bool = False
+            nsfw = metadata.get("nsfw", False),
+            spoiler = metadata.get("spoiler", False)
         )
 
     def map_sources(self, data):
