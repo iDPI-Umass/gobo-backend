@@ -20,30 +20,30 @@ def start_sources():
     queues.api.put_details("poll", {})
 
 
-    # # Handles follower-list (source) updates.
-    # schedule.every(12).hours.do(
-    #     queues.bluesky.put_details, "identity follow fanout"
-    # )
+    # Handles follower-list (source) updates.
+    schedule.every(12).hours.do(
+        queues.bluesky.put_details, "identity follow fanout"
+    )
 
-    # schedule.every(12).hours.do(
-    #     queues.reddit.put_details, "identity follow fanout"
-    # )
+    schedule.every(12).hours.do(
+        queues.reddit.put_details, "identity follow fanout"
+    )
 
-    # schedule.every(12).hours.do(
-    #     queues.mastodon.put_details, "identity follow fanout"
-    # )
+    schedule.every(12).hours.do(
+        queues.mastodon.put_details, "identity follow fanout"
+    )
 
 
 
-    # # Pull the latest posts from the tracked sources.
-    # schedule.every().hour.do(
-    #     queues.bluesky.put_details, "read sources"
-    # )
+    # Pull the latest posts from the tracked sources.
+    schedule.every().hour.do(
+        queues.bluesky.put_details, "read sources"
+    )
 
-    # schedule.every().hour.do(
-    #     queues.reddit.put_details, "read sources"
-    # )
+    schedule.every().hour.do(
+        queues.reddit.put_details, "read sources"
+    )
 
-    # schedule.every().hour.do(
-    #     queues.mastodon.put_details, "read sources"
-    # )
+    schedule.every().hour.do(
+        queues.mastodon.put_details, "read sources"
+    )
