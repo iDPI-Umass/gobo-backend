@@ -8,3 +8,4 @@ from .registration import *
 from .source import *
 from .store import *
 from .task import *
+from .draft_image import *

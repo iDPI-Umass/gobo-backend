@@ -175,3 +175,6 @@ cython_debug/
 /worker/joy
 /worker/models
 /worker/clients
+/draft_images
+/api/draft_images
+/worker/draft_images

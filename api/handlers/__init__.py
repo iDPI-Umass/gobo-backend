@@ -16,3 +16,4 @@ from .person_identity import *
 from .person_lens import *
 from .person_identity_feed import *
 from .person_post import *
+from .person_draft_image import *

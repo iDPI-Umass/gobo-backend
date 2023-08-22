@@ -277,6 +277,33 @@ shards:
       <<: *postCore
       <<: *timestamp
 
+  imageCore: &imageCore    
+    id:
+      description: Unqiue identifier for the uploaded image to GOBO cross-posting
+      type: string
+    person_id:
+      description: The ID of the person this draft image is associated with.
+      type: integer
+    mime_type:
+      description: MIME type of this image
+      type: string
+    name:
+      description: Provided name for this image.
+      type: string
+    alt:
+      description: Provided alt text for this image
+    published:
+      description: flag indicated whether this image has been used in a post publish task
+      type: boolean
+
+  image: &image
+    type: object
+    additionalProperties: false
+    required: [ id, person_id ]
+    properties:
+      <<: *imageCore
+      <<: *timestamp
+
   newPost: &newPost
     type: object
     additionalProperties: false
@@ -976,6 +1003,32 @@ resources:
               next:
                 description: token that allows the client to fetch the next page fo the feed.
                 type: string
+
+  person_draft_images:
+    template: /people/{person_id}/draft-images
+    route: /people/<int:person_id>/draft-images
+    methods:
+      post:
+        description: "Accepts mutlipart upload of image. Form fields are 'file', 'name', and 'alt'."
+        request:
+          authorization:
+            - person
+          type: multipart/form-data
+        response:
+          status: 200
+          type: application/json
+          schema: *image
+
+  person_draft_image:
+    template: /people/{person_id}/draft-images/{id}
+    route: /people/<int:person_id>/draft-images/<id>
+    methods:
+      delete:
+        request:
+          authorization:
+            - person
+        response:
+          status: 204
 
   person_posts:
     template: /people/{person_id}/posts
