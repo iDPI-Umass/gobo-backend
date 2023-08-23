@@ -148,19 +148,36 @@ class Mastodon():
         return self.client.me()
     
     def create_post(self, post, metadata):
+        media_ids = []
+        for draft in post.get("attachments", []):
+            result = self.upload_media(draft)
+            media_ids.append(result["id"])
+
+        allowed_visibility = [ "public", "private", "direct", "unlisted" ]
+        visibility = metadata.get("visibility", "public")
+        if visibility not in allowed_visibility:
+            raise Exception(f"visibility {visibility} is invalid")
+
+
         return self.client.status_post(
             status = post.get("content", ""),
             idempotency_key = joy.crypto.random({"encoding": "safe-base64"}),
-            # TODO: Include media
-            # media_ids=None,
+            media_ids = media_ids,
             sensitive = metadata.get("sensitive", False),
             spoiler_text = metadata.get("spoiler", None),
-            # TODO: Do we want to include visibility configuration in Mastodon metadata?
-            # visibility=None,
+            visibility = visibility,
             # TODO: Do we want to include langauge metadata?
             # language=None,
             # TODO: Do we want to include polls?
             # poll=None
+        )
+    
+    def upload_media(self, draft):
+        return self.client.media_post(
+            media_file = draft["data"],
+            mime_type = draft["mime_type"],
+            description = draft["alt"],
+            focus = (0, 0)
         )
 
     def map_sources(self, data):

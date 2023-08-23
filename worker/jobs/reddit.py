@@ -1,5 +1,5 @@
 import logging
-import joy
+import os
 import models
 import queues
 from clients import Reddit
@@ -146,8 +146,22 @@ def create_post(task):
         raise Exception("reddit: create_post requires post")
     metadata = task.details.get("metadata", {})
 
+
+    attachments = []
+    for draft in post["attachments"]:
+        filename = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), draft["id"])
+        if os.path.exists(filename):
+            draft["image_path"] = filename
+            attachments.append(draft)
+
+    post["attachments"] = attachments
+
+
     client = Reddit(identity)
     client.create_post(post, metadata)
+    for draft in post["attachments"]:
+        draft["published"] = True
+        models.draft_image.update(draft["id"], draft)
 
 
 

@@ -1,5 +1,5 @@
 import logging
-import joy
+import os
 import models
 import queues
 from clients import Bluesky, Reddit, Mastodon
@@ -150,6 +150,19 @@ def create_post(task):
         raise Exception("bluesky: create_post requires post")
     metadata = task.details.get("metadata", {})
 
+
+    attachments = []
+    for draft in post["attachments"]:
+        filename = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), draft["id"])
+        if os.path.exists(filename):
+            with open(filename, "rb") as f:
+                _draft = dict(draft)
+                _draft["data"] = f.read()
+                attachments.append(_draft)
+
+    post["attachments"] = attachments
+
+
     base_url = identity["base_url"]
     mastodon_client = models.mastodon_client.find({"base_url": base_url})
     if mastodon_client == None:
@@ -158,3 +171,6 @@ def create_post(task):
     
     client = Mastodon(mastodon_client, identity)
     client.create_post(post, metadata)
+    for draft in post["attachments"]:
+        draft["published"] = True
+        models.draft_image.update(draft["id"], draft)

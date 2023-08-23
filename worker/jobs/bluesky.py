@@ -1,7 +1,5 @@
 import logging
-import re
-import json
-import joy
+import os
 import models
 import queues
 from clients import Bluesky
@@ -153,8 +151,22 @@ def create_post(task):
         raise Exception("bluesky: create_post requires post")
     metadata = task.details.get("metadata", {})
 
+    attachments = []
+    for draft in post["attachments"]:
+        filename = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), draft["id"])
+        if os.path.exists(filename):
+            with open(filename, "rb") as f:
+                _draft = dict(draft)
+                _draft["data"] = f.read()
+                attachments.append(_draft)
+
+    post["attachments"] = attachments
+
     client = Bluesky(identity)
     client.create_post(post, metadata)
+    for draft in post["attachments"]:
+        draft["published"] = True
+        models.draft_image.update(draft["id"], draft)
        
 
 

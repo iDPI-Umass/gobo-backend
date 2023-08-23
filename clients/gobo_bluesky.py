@@ -121,3 +121,10 @@ class GOBOBluesky():
         }
 
         return self.bluesky_post(url, data)
+    
+    def upload_blob(self, draft):
+        url = self.build_url("com.atproto.repo.uploadBlob", {})
+        headers = self.add_token(None)
+        headers["Content-Type"] = f"image/{draft['mime_type']}"
+        data = draft["data"]
+        return self.post(url, data = data, headers = headers)

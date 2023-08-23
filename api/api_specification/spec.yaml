@@ -333,10 +333,10 @@ shards:
           content:
             type: string
           attachments:
-            description: List of URLs where you can find media attachments for this post.
+            description: List of draft image IDs to provide as attachments in the final post.
             type: array
             items: 
-              type: object
+              type: string
           poll:
             description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
             type: object     

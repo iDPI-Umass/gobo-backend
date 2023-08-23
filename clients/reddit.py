@@ -199,15 +199,40 @@ class Reddit():
         subreddit = metadata.get("subreddit", None)
         if subreddit is None:
             raise Exception("reddit post requires a subreddit to be specified in metadata")
+        
 
-        self.client.subreddit(subreddit).submit(
-            title = title,
-            selftext = post.get("content", None),
-            # TODO: Handle media
-            # inline_media: Dict[str, praw.models.InlineMedia] | None = None,
-            nsfw = metadata.get("nsfw", False),
-            spoiler = metadata.get("spoiler", False)
-        )
+        images = []
+        for attachment in post.get("attachments", []):
+            images.append({
+                "image_path": attachment["image_path"],
+                "caption": attachment["alt"]
+            })        
+
+        if len(images) == 0:
+            self.client.subreddit(subreddit).submit(
+                title = title,
+                selftext = post.get("content", None),
+                nsfw = metadata.get("nsfw", False),
+                spoiler = metadata.get("spoiler", False)
+            )
+        elif len(images) == 1:
+            self.client.subreddit(subreddit).submit_image(
+                title = title,
+                image_path = images[0]["image_path"],
+                nsfw = metadata.get("nsfw", False),
+                spoiler = metadata.get("spoiler", False),
+                without_websockets = True
+            )         
+        else:
+            # TODO: How do we want to handle post content for galleries?
+            self.client.subreddit(subreddit).submit_gallery(
+                title = title,
+                images = images,
+                nsfw = metadata.get("nsfw", False),
+                spoiler = metadata.get("spoiler", False)
+            )
+
+
 
     def map_sources(self, data):
         subreddits = data.get("subreddits") or []

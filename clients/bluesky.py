@@ -315,13 +315,24 @@ class Bluesky():
         return build_post(post)
     
     def create_post(self, post, metadata):
+        embed = None
+        images = []
+        for attachment in post.get("attachments", []):
+            result = self.client.upload_blob(attachment)
+            images.append({
+                "image": result["blob"],
+                "alt": attachment["alt"]
+            })
+        if len(images) > 0:
+            embed = {
+                "$type": "app.bsky.embed.images",
+                "images": images
+            }
+
         return self.client.create_post({
             "text": post.get("content", ""),
-            "createdAt": joy.time.now()
-            # TODO: We'll need app.bsky.embed.images here
-            # "embed": {
-            #     "images": []
-            # },
+            "createdAt": joy.time.now(),
+            "embed": embed,
             # TODO: Do we want to include language metadata?
             # "langs": []
         })
