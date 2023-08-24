@@ -1,5 +1,7 @@
 import logging
+import os
 import html
+import joy
 import models
 import queues
 
@@ -32,6 +34,8 @@ def dispatch(task):
         clean_follows(task)
     elif task.name == "escape titles":
         escape_titles(task)
+    elif task.name == "clear image cache":
+        clear_image_cache(task)  
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -56,18 +60,17 @@ def follow(task):
     })
 
     per_page = 1000
-    while True:
-        query = {
-            "page": 1,
-            "per_page": per_page,
-            "where": [
-                where("origin_type", "source"),
-                where("origin_id", source_id),
-                where("target_type", "post"),
-                where("name", "has-post")
-            ]
-        }
-        
+    query = {
+        "page": 1,
+        "per_page": per_page,
+        "where": [
+            where("origin_type", "source"),
+            where("origin_id", source_id),
+            where("target_type", "post"),
+            where("name", "has-post")
+        ]
+    }
+    while True:    
         links = models.link.query(query)
         for link in links:
             models.link.upsert({
@@ -99,18 +102,17 @@ def unfollow(task):
     })
 
     per_page = 1000
+    query = {
+        "page": 1,
+        "per_page": per_page,
+        "where": [
+            where("origin_type", "identity"),
+            where("origin_id", identity_id),
+            where("target_type", "post"),
+            where("name", "identity-feed")
+        ]
+    }
     while True:
-        query = {
-            "page": 1,
-            "per_page": per_page,
-            "where": [
-                where("origin_type", "identity"),
-                where("origin_id", identity_id),
-                where("target_type", "post"),
-                where("name", "identity-feed")
-            ]
-        }
-        
         links = models.link.query(query)
         for link in links:
             models.link.remove(link["id"])
@@ -127,18 +129,17 @@ def remove_identity(task):
         raise Exception("remove identity requires identity_id")
 
     per_page = 1000
-    while True:
-        query = {
-            "page": 1,
-            "per_page": per_page,
-            "where": [
-                where("origin_type", "identity"),
-                where("origin_id", identity_id),
-                where("target_type", "source"),
-                where("name", "follows")
-            ]
-        }
-        
+    query = {
+          "page": 1,
+          "per_page": per_page,
+          "where": [
+              where("origin_type", "identity"),
+              where("origin_id", identity_id),
+              where("target_type", "source"),
+              where("name", "follows")
+          ]
+      }
+    while True: 
         links = models.link.query(query)
         for link in links:
             models.link.remove(link["id"])
@@ -148,19 +149,19 @@ def remove_identity(task):
         else:
             break
 
+
     per_page = 1000
-    while True:
-        query = {
-            "page": 1,
-            "per_page": per_page,
-            "where": [
-                where("origin_type", "identity"),
-                where("origin_id", identity_id),
-                where("target_type", "post"),
-                where("name", "identity-feed")
-            ]
-        }
-        
+    query = {
+        "page": 1,
+        "per_page": per_page,
+        "where": [
+            where("origin_type", "identity"),
+            where("origin_id", identity_id),
+            where("target_type", "post"),
+            where("name", "identity-feed")
+        ]
+    }
+    while True:  
         links = models.link.query(query)
         for link in links:
             models.link.remove(link["id"])
@@ -201,34 +202,32 @@ def rebuild_feed(task):
         raise Exception("rebuild feed requires person_id")
 
     per_page = 1000
+    identity_query = {
+        "page": 1,
+        "per_page": per_page,
+        "where": [
+              where("origin_type", "person"),
+              where("origin_id", person_id),
+              where("target_type", "identity"),
+              where("name", "has-identity")
+        ]
+    }
     while True:
-        identity_query = {
-            "page": 1,
-            "per_page": per_page,
-            "where": [
-                 where("origin_type", "person"),
-                  where("origin_id", person_id),
-                  where("target_type", "identity"),
-                  where("name", "has-identity")
-            ]
-        }
-
         identities = models.link.query(identity_query)
         for identity in identities:
             identity_id = identity["target_id"]
             
+            source_query = {
+                "page": 1,
+                "per_page": per_page,
+                "where": [
+                    where("origin_type", "identity"),
+                    where("origin_id", identity_id),
+                    where("target_type", "source"),
+                    where("name", "follows")
+                ]
+            }
             while True:
-                source_query = {
-                    "page": 1,
-                    "per_page": per_page,
-                    "where": [
-                        where("origin_type", "identity"),
-                        where("origin_id", identity_id),
-                        where("target_type", "source"),
-                        where("name", "follows")
-                    ]
-                }
-
                 sources = models.link.query(source_query)
                 for source in sources:
                     source_id = source["target_id"]
@@ -421,5 +420,31 @@ def clean_follows(task):
 
 
 
+def clear_image_cache(task):
+    per_page = 1000
+    time_limit = joy.time.to_iso_string(joy.time.hours_ago(12))
+    query = {
+        "page": 1,
+        "per_page": per_page,
+        "where": [
+            where("created", time_limit , "lt"),
+        ]
+    }
+    while True:
+        drafts = models.draft_image.query(query)
+        for draft in drafts:
+            filename = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), draft["id"])
+            if os.path.exists(filename):
+                os.remove(filename)
+            models.draft_image.remove(draft["id"])
+
+        if len(drafts) == per_page:
+            query["page"] = query["page"] + 1
+        else:
+            break
+
+   
+
+
 def workbench(task):
-    reset_all_posts()
+    clear_image_cache(task)

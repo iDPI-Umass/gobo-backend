@@ -19,6 +19,10 @@ def start_sources():
     safe_start()
     queues.api.put_details("poll", {})
 
+    schedule.every(12).hours.do(
+        queues.database.put_details, "clear image cache"
+    )
+
 
     # Handles follower-list (source) updates.
     schedule.every(12).hours.do(

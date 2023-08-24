@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def now():
     timestamp = datetime.utcnow().isoformat(timespec="milliseconds")
@@ -40,3 +40,6 @@ def convert(start, end, value, optional = False):
         return to_unix(d)
     else:
         raise Exception(f"unsupported end encoding {end}")
+    
+def hours_ago(hours):
+    return datetime.now() - timedelta(hours = hours)
