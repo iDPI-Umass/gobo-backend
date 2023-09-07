@@ -24,8 +24,8 @@ class Store(Base):
     @staticmethod
     def write(data):
         _data = data.copy()
-        content = _data.get("content")
-        if content != None:
+        content = _data.get("content", None)
+        if content is not None:
             _data["content"] = json.dumps(content)
         return Store(**_data)
 

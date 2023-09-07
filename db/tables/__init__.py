@@ -9,3 +9,4 @@ from .source import *
 from .store import *
 from .task import *
 from .draft_image import *
+from .post_edge import *

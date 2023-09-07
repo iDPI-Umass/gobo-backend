@@ -37,12 +37,12 @@ class Post(Base):
     def write(data):
         _data = data.copy()
         
-        attachments = _data.get("attachments")
-        if attachments != None:
+        attachments = _data.get("attachments", None)
+        if attachments is not None:
             _data["attachments"] = json.dumps(attachments)
 
-        poll = _data.get("poll")
-        if poll != None:
+        poll = _data.get("poll", None)
+        if poll is not None:
             _data["poll"] = json.dumps(poll)
         
         return Post(**_data)

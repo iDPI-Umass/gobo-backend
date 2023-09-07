@@ -4,6 +4,11 @@ shards:
       description: The unique identifier for this resource.
       type: integer
 
+  string_id: &string_id
+    id:
+      description: The unique identifier for this resource.
+      type: string
+
   person_id: &person_id
     person_id:
       description: The unique ID for the person that owns this resource.
@@ -198,7 +203,7 @@ shards:
   lens: &lens
     type: object
     additionalProperties: false
-    required: [id, person_id ]
+    required: [ id, person_id ]
     properties:
       <<: *id
       <<: *lensCore
@@ -339,7 +344,34 @@ shards:
               type: string
           poll:
             description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
-            type: object     
+            type: object   
+
+  postEdgeCore: &postEdgeCore
+    identity:
+      description: The ID of the edge origin identity
+      type: integer
+    post:
+      description: The ID of the edge target post
+      type: integer
+    name:
+      description: The name of edge connecting these vertices.
+      type: string
+      enum:
+        - like
+        - upvote
+        - downvote
+        - repost
+      
+
+  postEdge: &postEdge
+    type: object
+    additionalProperties: false
+    required: [ id, identity, post, edge ]
+    properties:
+      <<: *string_id
+      <<: *postEdgeCore
+      <<: *timestamp
+     
 
 resources:
   discovery:
@@ -929,7 +961,10 @@ resources:
           authorization:
             - person
           type: application/json
-          schema: *lensCore
+          schema:
+            type: object
+            additionalProperties: false
+            properties: *lensCore
         response:
           type: application/json
           status: 201
@@ -1046,6 +1081,47 @@ resources:
           schema: 
             type: array
             items: *task
+
+  person_post_edges:
+    template: /people/{person_id}/edges
+    route: /people/<int:person_id>/edges
+    methods:
+      post:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ identity, post, name ]
+            properties: *postEdgeCore
+        response:
+          status: 201
+          type: application/json
+          schema: 
+            type: array
+            items: *postEdge
+
+  person_post_edge:
+    template: /people/{person_id}/edges/{id}
+    route: /people/<int:person_id>/edges/<int:id>
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+        response:
+          status: 200
+          type: application/json
+          schema: *postEdge
+
+      delete:
+        request:
+          authorization:
+            - person
+        response:
+          status: 204
 
   post_graph:
     template: /post-graph/{id}

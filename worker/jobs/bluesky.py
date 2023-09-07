@@ -36,6 +36,10 @@ def dispatch(task):
         hard_reset_posts(task)
     elif task.name == "create post":
         create_post(task)
+    elif task.name == "add post edge":
+        add_post_edge(task)
+    elif task.name == "remove post edge":
+        remove_post_edge(task)
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -164,10 +168,69 @@ def create_post(task):
 
     client = Bluesky(identity)
     client.create_post(post, metadata)
+    logging.info("bluesky: create post complete")
     for draft in post["attachments"]:
         draft["published"] = True
         models.draft_image.update(draft["id"], draft)
-       
+
+
+def add_post_edge(task):
+    identity = task.details.get("identity", None)
+    if identity is None:
+        raise Exception("bluesky: add_post_edge requires identity")
+    post = task.details.get("post", None)
+    if post is None:
+        raise Exception("bluesky: add_post_edge requires post")
+    name = task.details.get("name", None)
+    if name is None:
+        raise Exception("bluesky: add_post_edge requires name")
+    edge = task.details.get("edge", None)
+    if edge is None:
+        raise Exception("blusky: add_post_edge requires edge")
+
+    if name in ["like", "repost"]:
+        client = Bluesky(identity)
+        if name == "like":
+            like_edge = client.like_post(post)
+            edge["stash"] = like_edge
+            models.post_edge.update(edge["id"], edge)
+            logging.info(f"bluesky: like post complete on {post['id']}")
+        elif name == "repost":
+            repost_edge = client.repost_post(post)
+            edge["stash"] = repost_edge
+            models.post_edge.update(edge["id"], edge)
+            logging.info(f"bluesky: repost post complete on {post['id']}")
+    else:
+        raise logging.warning(
+            f"bluesky does not have post edge action defined for {name}"
+        )
+
+def remove_post_edge(task):
+    identity = task.details.get("identity", None)
+    if identity is None:
+        raise Exception("bluesky: remove_post_edge requires identity")
+    post = task.details.get("post", None)
+    if post is None:
+        raise Exception("bluesky: remove_post_edge requires post")
+    name = task.details.get("name", None)
+    if name is None:
+        raise Exception("bluesky: remove_post_edge requires name")
+    edge = task.details.get("edge", None)
+    if edge is None:
+        raise Exception("blusky: add_post_edge requires edge")
+
+    if name in ["like", "repost"]:
+        client = Bluesky(identity)
+        if name == "like":
+            client.undo_like_post(edge)
+            logging.info(f"bluesky: undo like post complete on {post['id']}")
+        elif name == "repost":
+            client.undo_repost_post(edge)
+            logging.info(f"bluesky: undo repost post complete on {post['id']}")
+    else:
+        raise logging.warning(
+            f"bluesky does not have post edge action defined for {name}"
+        )
 
 
 def workbench(task):

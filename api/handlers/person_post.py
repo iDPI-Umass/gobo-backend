@@ -2,6 +2,7 @@ import logging
 from flask import request
 import http_errors
 import models
+from .helpers import resolve_platform
 from platform_models import bluesky, reddit
 
 
@@ -53,16 +54,8 @@ def person_posts_post(person_id):
 
     tasks = []
     for key, identity in identities.items():
-        base_url = identity["base_url"]
-        if base_url == bluesky.BASE_URL:
-            queue = "bluesky"
-        elif base_url == reddit.BASE_URL:
-            queue = "reddit"
-        else:
-            queue = "mastodon"
-
         tasks.append(models.task.add({
-            "queue": queue,
+            "queue": resolve_platform(identity["base_url"]),
             "name": "create post",
             "details": {
               "identity": identity,

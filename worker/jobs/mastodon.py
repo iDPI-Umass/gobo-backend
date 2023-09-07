@@ -36,6 +36,10 @@ def dispatch(task):
         hard_reset_posts(task)
     elif task.name == "create post":
         create_post(task)
+    elif task.name == "add post edge":
+        add_post_edge(task)
+    elif task.name == "remove post edge":
+        remove_post_edge(task)
     else:
         logging.warning("No matching job for task: %s", task)
     
@@ -144,10 +148,10 @@ def hard_reset_posts(task):
 def create_post(task):
     identity = task.details.get("identity", None)
     if identity is None:
-        raise Exception("bluesky: create_post requires identity")
+        raise Exception("mastodon: create_post requires identity")
     post = task.details.get("post", None)
     if post is None:
-        raise Exception("bluesky: create_post requires post")
+        raise Exception("mastodon: create_post requires post")
     metadata = task.details.get("metadata", {})
 
 
@@ -171,6 +175,68 @@ def create_post(task):
     
     client = Mastodon(mastodon_client, identity)
     client.create_post(post, metadata)
+    logging.info("mastodon: create post complete")
     for draft in post["attachments"]:
         draft["published"] = True
         models.draft_image.update(draft["id"], draft)
+
+
+def add_post_edge(task):
+    identity = task.details.get("identity", None)
+    if identity is None:
+        raise Exception("mastodon: add_post_edge requires identity")
+    post = task.details.get("post", None)
+    if post is None:
+        raise Exception("mastodon: add_post_edge requires post")
+    name = task.details.get("name", None)
+    if name is None:
+        raise Exception("mastodon: add_post_edge requires name")
+
+    if name in ["like", "repost"]:
+        base_url = identity["base_url"]
+        mastodon_client = models.mastodon_client.find({"base_url": base_url})
+        if mastodon_client == None:
+            logging.warning(f"no mastodon client found for {base_url}")
+            return
+        
+        client = Mastodon(mastodon_client, identity)
+        if name == "like":
+            client.favourite_post(post)
+            logging.info(f"mastodon: like post complete on {post['id']}")
+        elif name == "repost":
+            client.boost_post(post)
+            logging.info(f"mastodon: repost post complete on {post['id']}")
+    else:
+        raise logging.warning(
+            f"mastodon does not have post edge action defined for {name}"
+        )
+
+def remove_post_edge(task):
+    identity = task.details.get("identity", None)
+    if identity is None:
+        raise Exception("mastodon: remove_post_edge requires identity")
+    post = task.details.get("post", None)
+    if post is None:
+        raise Exception("mastodon: remove_post_edge requires post")
+    name = task.details.get("name", None)
+    if name is None:
+        raise Exception("mastodon: remove_post_edge requires name")
+
+    if name in ["like", "repost"]:
+        base_url = identity["base_url"]
+        mastodon_client = models.mastodon_client.find({"base_url": base_url})
+        if mastodon_client == None:
+            logging.warning(f"no mastodon client found for {base_url}")
+            return
+        
+        client = Mastodon(mastodon_client, identity)
+        if name == "like":
+            client.undo_favourite_post(post)
+            logging.info(f"mastodon: undo like post complete on {post['id']}")
+        elif name == "repost":
+            client.undo_boost_post(post)
+            logging.info(f"mastodon: undo repost post complete on {post['id']}")
+    else:
+        raise logging.warning(
+            f"mastodon does not have post edge action defined for {name}"
+        )

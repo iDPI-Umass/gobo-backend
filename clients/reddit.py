@@ -169,7 +169,7 @@ class Reddit():
 
     def get_redirect_url(self, state):
         return self.client.auth.url(
-            scopes = ["identity", "mysubreddits", "read", "submit"],
+            scopes = ["identity", "mysubreddits", "read", "submit", "vote"],
             state=state,
             duration = "permanent"
         )
@@ -231,6 +231,23 @@ class Reddit():
                 nsfw = metadata.get("nsfw", False),
                 spoiler = metadata.get("spoiler", False)
             )
+
+    def create_reply(self, post, metadata):
+        reply = metadata["reply"]
+
+        return self.client.submission(reply["platform_id"]).reply(
+            body = post["content"]
+        )
+
+
+    def upvote_post(self, post):
+        self.client.submission(post["platform_id"]).upvote()
+
+    def downvote_post(self, post):
+        self.client.submission(post["platform_id"]).downvote()
+
+    def undo_vote_post(self, post):
+        self.client.submission(post["platform_id"]).clear_vote()
 
 
 

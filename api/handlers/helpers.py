@@ -1,8 +1,17 @@
 import logging
 import re
 from flask import g
+from platform_models import bluesky, reddit
 import http_errors
 import models
+
+def resolve_platform(url):
+    if url == bluesky.BASE_URL:
+        return "bluesky"
+    elif url == reddit.BASE_URL:
+        return "reddit"
+    else:
+        return "mastodon"
 
 def parse_page_query(data):
     try:

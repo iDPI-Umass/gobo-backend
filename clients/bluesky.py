@@ -19,7 +19,9 @@ def json_failure(value):
     logging.info(vars(value))
     return "Unable to stringify this value"
 
-post_id_regex = re.compile(r"app\.bsky\.feed\.post/(.+)$")
+post_rkey_regex = re.compile(r"app\.bsky\.feed\.post/(.+)$")
+like_rkey_regex = re.compile(r"app\.bsky\.feed\.like/(.+)$")
+repost_rkey_regex = re.compile(r"app\.bsky\.feed\.repost/(.+)$")
 
 primitive = (str, int, float, bool, type(None), bytes, bytearray)
 
@@ -107,7 +109,7 @@ def get_record_view(data):
         return None
 
     self = Post()
-    self.id = record["uri"]
+    self.id = json.dumps({"uri": record["uri"], "cid": record["cid"]})
     self.author = Actor(author)
     self.content = value.get("text", "")
     self.url = Post.get_url(self)
@@ -156,15 +158,18 @@ class Post():
         else:
             return Post.create_regular(data)
 
+    # Identification in Bluesky is convoluted. Posts have an "rkey" value
+    # but referencing a post requires uri (author's did + rkey) and the cid (content hash)
+    # and the URL uses the author's handle + rkey
+    @staticmethod
+    def get_rkey(uri):
+        match = post_rkey_regex.search(uri)
+        return match.group(1)
 
     @staticmethod
     def get_url(post):
-        # There's a split in indentification.
-        # The Bluesky URL uses the random identifier with the author's handle.
-        # The full ID uses the random identifier with the author's did
-        match = post_id_regex.search(post.id)
-        id = match.group(1)
-        return f"{Bluesky.BASE_URL}/profile/{post.author.username}/post/{id}"
+        rkey = Post.get_rkey(json.loads(post.id)["uri"])
+        return f"{Bluesky.BASE_URL}/profile/{post.author.username}/post/{rkey}"
 
 
     @staticmethod
@@ -173,7 +178,7 @@ class Post():
         record = post["record"]
 
         self = Post()
-        self.id = post["uri"]
+        self.id = json.dumps({"uri": post["uri"], "cid": post["cid"]})
         self.author = Actor(author)
         self.content = record.get("text", None)
         self.url = Post.get_url(self)
@@ -238,6 +243,19 @@ class Post():
         self.id = f"gobo:{self.author.id}:{self.published}:{post['cid']}"
         return self
 
+
+
+class Like():
+    @staticmethod
+    def get_rkey(uri):
+        match = like_rkey_regex.search(uri)
+        return match.group(1)
+    
+class Repost():
+    @staticmethod
+    def get_rkey(uri):
+        match = repost_rkey_regex.search(uri)
+        return match.group(1)
 
 
 class Actor():
@@ -315,7 +333,11 @@ class Bluesky():
         return build_post(post)
     
     def create_post(self, post, metadata):
-        embed = None
+        embed = {
+            "images": None,
+            "record": None
+        }
+        
         images = []
         for attachment in post.get("attachments", []):
             result = self.client.upload_blob(attachment)
@@ -324,18 +346,79 @@ class Bluesky():
                 "alt": attachment["alt"]
             })
         if len(images) > 0:
-            embed = {
-                "$type": "app.bsky.embed.images",
-                "images": images
-            }
+            embed["images"] = images
 
-        return self.client.create_post({
+        if metadata.get("quote", None) is not None:
+            embed["record"] = json.loads(metadata["quote"]["platform_id"])
+
+        has_images = embed["images"] is not None
+        has_record = embed["record"] is not None
+        if has_record and has_images:
+            embed["$type"] = "app.bsky.embed.recordWithMedia"
+        elif has_record:
+            embed["$type"] = "app.bsky.embed.record"
+            del embed["images"]
+        elif has_images:
+            embed["$type"] = "app.bsky.embed.images"
+            del embed["record"]
+        else:
+            embed = None
+       
+
+        reply = None
+        if metadata.get("reply", None) is not None:
+            uri = json.loads(metadata["reply"]["platform_id"])["uri"]
+            parent = self.client.get_post(Post.get_rkey(uri))
+            grandparent = parent.get("reply", None)
+            reply = {
+                "parent": {
+                    "uri": parent["uri"],
+                    "cid": parent["cid"]
+                }
+            }
+            if grandparent is None:
+                reply["root"] = reply["parent"]
+            else:
+                reply["root"] = grandparent["root"]
+
+
+        post_data = {
             "text": post.get("content", ""),
+            "createdAt": joy.time.now()
+        }
+
+        if embed is not None:
+            post_data["embed"] = embed
+        if reply is not None:
+            post_data["reply"] = reply
+
+        logging.info(post_data)
+        return self.client.create_post(post_data)
+
+
+
+    def like_post(self, post):
+        return self.client.like_post({
+            "subject": json.loads(post["platform_id"]),
             "createdAt": joy.time.now(),
-            "embed": embed,
-            # TODO: Do we want to include language metadata?
-            # "langs": []
+            "$type": "app.bsky.feed.like"
         })
+    
+    def undo_like_post(self, edge):
+        rkey = Like.get_rkey(edge["stash"]["uri"])
+        return self.client.undo_like_post(rkey)
+    
+    def repost_post(self, post):
+        return self.client.repost_post({
+            "subject": json.loads(post["platform_id"]),
+            "createdAt": joy.time.now(),
+            "$type": "app.bsky.feed.repost"
+        })
+    
+    def undo_repost_post(self, edge):
+        rkey = Repost.get_rkey(edge["stash"]["uri"])
+        return self.client.undo_repost_post(rkey)
+
 
     def list_sources(self):
         id = self.identity["platform_id"]

@@ -157,7 +157,10 @@ class Mastodon():
         visibility = metadata.get("visibility", "public")
         if visibility not in allowed_visibility:
             raise Exception(f"visibility {visibility} is invalid")
-
+        
+        reply = None
+        if metadata.get("reply", None) is not None:
+            reply = metadata["reply"]["platform_id"]           
 
         return self.client.status_post(
             status = post.get("content", ""),
@@ -166,6 +169,7 @@ class Mastodon():
             sensitive = metadata.get("sensitive", False),
             spoiler_text = metadata.get("spoiler", None),
             visibility = visibility,
+            in_reply_to_id = reply,
             # TODO: Do we want to include langauge metadata?
             # language=None,
             # TODO: Do we want to include polls?
@@ -179,6 +183,19 @@ class Mastodon():
             description = draft["alt"],
             focus = (0, 0)
         )
+    
+    def favourite_post(self, post):
+        return self.client.status_favourite(post["platform_id"])
+    
+    def undo_favourite_post(self, post):
+        return self.client.status_unfavourite(post["platform_id"])
+    
+    def boost_post(self, post):
+        return self.client.status_reblog(post["platform_id"])
+    
+    def undo_boost_post(self, post):
+        return self.client.status_unreblog(post["platform_id"])
+
 
     def map_sources(self, data):
         base_url = self.base_url

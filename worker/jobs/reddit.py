@@ -32,8 +32,14 @@ def dispatch(task):
         clear_last_retrieved(task)
     elif task.name == "clear all last retrieved":
         clear_all_last_retrieved(task)
+    elif task.name == "hard reset posts":
+        hard_reset_posts(task)
     elif task.name == "create post":
         create_post(task)
+    elif task.name == "add post edge":
+        add_post_edge(task)
+    elif task.name == "remove post edge":
+        remove_post_edge(task)
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -108,7 +114,7 @@ def clear_last_retrieved(task):
 
     link["secondary"] = None
     models.link.upsert(link)
-    queues.bluesky.put_details("read source", {"source": source})
+    queues.reddit.put_details("read source", {"source": source})
 
 
 def clear_all_last_retrieved(task):
@@ -136,6 +142,16 @@ def clear_all_last_retrieved(task):
     queues.reddit.put_details("read sources", {})
 
 
+def hard_reset_posts(task):
+    posts = models.post.pull([
+        where("base_url", Reddit.BASE_URL)
+    ])
+
+    for post in posts:
+        queues.database.put_details( "remove post", {
+            "post": post
+        })
+
 
 def create_post(task):
     identity = task.details.get("identity", None)
@@ -145,6 +161,15 @@ def create_post(task):
     if post is None:
         raise Exception("reddit: create_post requires post")
     metadata = task.details.get("metadata", {})
+
+
+    # TODO: Reddit is a little funky because the replies aren't modeled as posts
+    #       currently. That might change? For now, special method and return.
+    if metadata.get("reply", None) is not None:
+        client = Reddit(identity)
+        reply = client.create_reply(post, metadata)
+        logging.info("reddit: create reply comment complete")
+        return
 
 
     attachments = []
@@ -159,9 +184,59 @@ def create_post(task):
 
     client = Reddit(identity)
     client.create_post(post, metadata)
+    logging.info("reddit: create post complete")
     for draft in post["attachments"]:
         draft["published"] = True
         models.draft_image.update(draft["id"], draft)
+
+
+def add_post_edge(task):
+    identity = task.details.get("identity", None)
+    if identity is None:
+        raise Exception("reddit: add_post_edge requires identity")
+    post = task.details.get("post", None)
+    if post is None:
+        raise Exception("reddit: add_post_edge requires post")
+    name = task.details.get("name", None)
+    if name is None:
+        raise Exception("reddit: add_post_edge requires name")
+
+    if name in ["upvote", "downvote"]:
+        client = Reddit(identity)
+        if name == "upvote":
+            client.upvote_post(post)
+            logging.info(f"reddit: upvote post complete on {post['id']}")
+        elif name == "downvote":
+            client.downvote_post(post)
+            logging.info(f"reddit: dowvote post complete on {post['id']}")
+    else:
+        raise logging.warning(
+            f"reddit does not have post edge action defined for {name}"
+        )
+
+def remove_post_edge(task):
+    identity = task.details.get("identity", None)
+    if identity is None:
+        raise Exception("reddit: remove_post_edge requires identity")
+    post = task.details.get("post", None)
+    if post is None:
+        raise Exception("reddit: remove_post_edge requires post")
+    name = task.details.get("name", None)
+    if name is None:
+        raise Exception("reddit: remove_post_edge requires name")
+
+    if name in ["upvote", "downvote"]:
+        client = Reddit(identity)
+        if name in ["upvote", "downvote"]:
+            client.undo_vote_post(post)
+            logging.info(f"reddit: undo vote post complete on {post['id']}")
+    else:
+        raise logging.warning(
+            f"reddit does not have post edge action defined for {name}"
+        )
+
+
+
 
 
 
