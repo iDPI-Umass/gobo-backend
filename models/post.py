@@ -181,6 +181,7 @@ def view_post_graph(id):
     with Session() as session:
         feed = []
         posts = []
+        replies = []
         shares = []
         sources = []
         seen_posts = set()
@@ -189,18 +190,48 @@ def view_post_graph(id):
         feed.append(id)
         seen_posts.add(id)
 
+
+        # Get the possible reply
         statement = select(Link) \
             .where(Link.origin_type == "post") \
             .where(Link.origin_id.in_(feed)) \
             .where(Link.target_type == "post") \
+            .where(Link.name == "replies")
+
+        rows = session.scalars(statement).all()
+        for row in rows:
+            replies.append([row.origin_id, row.target_id])
+            seen_posts.add(row.target_id)
+
+
+        # Get first order shares
+        statement = select(Link) \
+            .where(Link.origin_type == "post") \
+            .where(Link.origin_id.in_(list(seen_posts))) \
+            .where(Link.target_type == "post") \
             .where(Link.name == "shares")
 
         rows = session.scalars(statement).all()
-
+        ids = []
+        for row in rows:
+            shares.append([row.origin_id, row.target_id])
+            seen_posts.add(row.target_id)
+            ids.append(row.target_id)
+        
+        # Second order shares
+        statement = select(Link) \
+            .where(Link.origin_type == "post") \
+            .where(Link.origin_id.in_(ids)) \
+            .where(Link.target_type == "post") \
+            .where(Link.name == "shares")
+        
+        rows = session.scalars(statement).all()
         for row in rows:
             shares.append([row.origin_id, row.target_id])
             seen_posts.add(row.target_id)
 
+        
+        # Fetch all posts based on the IDs we've collected.
         statement = select(Post).where(Post.id.in_(list(seen_posts)))
         rows = session.scalars(statement).all()
         for row in rows:
@@ -208,6 +239,7 @@ def view_post_graph(id):
 
       
 
+        # And based on the source listed in each post, grab the source records.
         for post in posts:
             seen_sources.add(post["source_id"])
 
@@ -216,9 +248,12 @@ def view_post_graph(id):
         for row in rows:
             sources.append(row.to_dict())    
 
+
+        # Collate it all for a response graph.
         return {
             "feed": feed,
             "posts": posts,
             "shares": shares,
+            "replies": replies,
             "sources": sources,
         }
