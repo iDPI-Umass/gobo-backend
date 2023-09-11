@@ -128,7 +128,7 @@ def clear_all_last_retrieved(task):
         models.link.upsert(link)
 
 
-    queues.mastodon.put_details("read sources", {})
+    # queues.mastodon.put_details("read sources", {})
 
 
 def hard_reset_posts(task):

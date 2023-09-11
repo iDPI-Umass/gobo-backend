@@ -128,7 +128,7 @@ def clear_all_last_retrieved(task):
         models.link.upsert(link)
 
 
-    queues.bluesky.put_details("read sources", {})
+    # queues.bluesky.put_details("read sources", {})
 
 
 
