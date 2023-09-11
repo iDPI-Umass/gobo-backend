@@ -69,14 +69,14 @@ def confirm_identity(registration, data):
 
     # Pull together data to build an identity record.
     # TODO: atproto author warns they're swapping from camelCase to snake_case for attributes at some point.
-    profile_url = f"{BASE_URL}/profile/{profile.handle}"
+    profile_url = f"{BASE_URL}/profile/{profile['handle']}"
     _identity = {
         "person_id": registration["person_id"],
-        "platform_id": profile.did,
+        "platform_id": profile["did"],
         "base_url": BASE_URL,
         "profile_url": profile_url,
-        "profile_image": profile.avatar,
-        "username": profile.handle,
+        "profile_image": profile["avatar"],
+        "username": profile["handle"],
         "name": getattr(
             profile, 
             "displayName", 

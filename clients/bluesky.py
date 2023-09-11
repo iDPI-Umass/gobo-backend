@@ -428,7 +428,7 @@ class Bluesky():
         cursor = None
         while True:
             result = self.client.get_follows(self.me, cursor)
-            for item in result["feed"]:
+            for item in result["follows"]:
                 actors.append(Actor(item))
 
             cursor = result.get("cursor", None)
