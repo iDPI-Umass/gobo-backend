@@ -6,7 +6,8 @@ from db import tables
 from .helpers import get_viewer, parse_page_query
 
 allowed_stores = [
-    "feed"
+    "feed",
+    "welcome"
 ]
 
 
