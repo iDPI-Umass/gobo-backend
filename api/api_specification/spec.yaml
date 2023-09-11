@@ -886,6 +886,11 @@ resources:
           type: application/json
           schema: *store
 
+      delete:
+        request: {}
+        response:
+          status: 204
+
       put:
         request:
           authorization:

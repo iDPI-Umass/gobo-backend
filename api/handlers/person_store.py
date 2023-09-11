@@ -35,3 +35,14 @@ def person_store_put(person_id, name):
     data["name"] = name
     store = models.store.upsert(data)
     return store
+
+def person_store_delete(person_id, name):
+    store = models.store.find({
+        "person_id": person_id,
+        "name": name
+    })
+
+    if store is not None:
+        models.store.remove(store["id"])
+
+    return ""
