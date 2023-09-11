@@ -291,9 +291,13 @@ class Mastodon():
         return {"accounts": accounts}
 
 
-    def get_post_graph(self, source):
+    def get_post_graph(self, source, is_shallow = False):
         isDone = False
         last_retrieved = source.get("last_retrieved", None)
+        if is_shallow == True:
+            default_limit = 40
+        else:
+            default_limit = 400
         max_id = None
 
         statuses = []
@@ -325,7 +329,7 @@ class Mastodon():
                     
                     statuses.append(status)
                     count += 1
-                    if count >= 400:
+                    if count >= default_limit:
                         isDone = True
                         break
             else:

@@ -101,7 +101,7 @@ def confirm_identity(registration, data):
 
     models.task.add({
         "queue": "bluesky",
-        "name": "pull sources",
+        "name": "onboard sources",
         "details": {
             "identity": identity
         }

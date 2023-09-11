@@ -522,12 +522,16 @@ class Bluesky():
 
 
 
-    def get_post_graph(self, source):
+    def get_post_graph(self, source, is_shallow = False):
         posts = []
         partials = []
         actors = []
         cursor = None
         last_retrieved = source.get("last_retrieved", None)
+        if is_shallow == True:
+            default_limit = 100
+        else:
+            default_limit = 1000
         isDone = False
         count = 1
         while True:
@@ -543,7 +547,7 @@ class Bluesky():
                         continue
 
                     count += 1
-                    if count < 1000:
+                    if count < default_limit:
                         posts.append(post)
                     else:
                         isDone = True

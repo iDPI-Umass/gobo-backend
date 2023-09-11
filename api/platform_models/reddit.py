@@ -96,7 +96,7 @@ def confirm_identity(registration, data):
 
     models.task.add({
         "queue": "reddit",
-        "name": "pull sources",
+        "name": "onboard sources",
         "details": {
             "identity": identity
         }

@@ -58,6 +58,45 @@ def set_pull_sources(Client, queue):
     return pull_sources
 
 
+def set_onboard_sources(Client, queue):
+    def onboard_sources(task):
+        identity = task.details.get("identity")
+        if identity == None:
+            raise Exception("pull posts task requires an identity to run")
+        
+        base_url = identity["base_url"]
+
+        if Client.__name__ == "Mastodon":
+            mastodon_client = models.mastodon_client.find({"base_url": base_url})
+            if mastodon_client == None:
+                logging.warning(f"no mastodon client found for {base_url}")
+                return
+            client = Client(mastodon_client, identity)
+        else:
+            client = Client(identity)
+            
+
+        data = client.list_sources()
+        _sources = client.map_sources(data)
+
+        sources = []
+        for _source in _sources:
+            source = models.source.upsert(_source)
+            sources.append(source)
+      
+        reconcile_sources(identity, sources)
+        sources
+
+        for source in sources:
+            queue.put_details("pull posts", {
+                "client": client,
+                "source": source,
+                "shallow": True
+            })
+
+    return onboard_sources
+
+
 # TODO: Can we refactor the platform clients so we are not required to look up
 #    an identity? Probably not as we move into more private posts. In that case
 #    we should refactor some of the primitives here to make this less error-prone
@@ -130,6 +169,7 @@ def set_pull_posts(queue):
     def pull_posts(task):
         client = task.details.get("client")
         source = task.details.get("source")
+        is_shallow = task.details.get("shallow", False)
         base_url = source["base_url"]
         if client == None or source == None:
             raise Exception("pull posts task lacks needed inputs")
@@ -139,7 +179,7 @@ def set_pull_posts(queue):
 
 
         last_retrieved = joy.time.now()
-        data = client.get_post_graph(source)
+        data = client.get_post_graph(source, is_shallow=is_shallow)
         
         sources = []
         _sources = client.map_sources(data)
@@ -150,8 +190,9 @@ def set_pull_posts(queue):
 
 
         post_data = client.map_posts(data)
-        link["secondary"] = last_retrieved
-        models.link.update(link["id"], link)
+        if is_shallow != True:
+            link["secondary"] = last_retrieved
+            models.link.update(link["id"], link)
 
         for post in post_data["posts"]:
             queues.database.put_details("add post to source", {
