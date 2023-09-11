@@ -368,7 +368,7 @@ shards:
     additionalProperties: false
     required: [ id, identity, post, edge ]
     properties:
-      <<: *string_id
+      <<: *id
       <<: *postEdgeCore
       <<: *timestamp
      
@@ -1017,6 +1017,13 @@ resources:
                 description: List of posts that appear somewhere in this feed segment.
                 type: array
                 items: *post
+              post_edges:
+                description: List of post references that have a relationship with this identity.
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: integer
               shares:
                 description: List of post references that have share relationships.
                 type: array
@@ -1038,6 +1045,57 @@ resources:
               next:
                 description: token that allows the client to fetch the next page fo the feed.
                 type: string
+
+  person_identity_post:
+    template: /people/{person_id}/identities/{identity_id}/post/{id}
+    route: /people/<int:person_id>/identities/<int:identity_id>/post/<int:id>
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ feed, posts, sources ]
+            properties:
+              feed:
+                description: Array of ordered post IDs for this feed. The order depends on the feed being requested.
+                type: array
+                items:
+                  type: integer
+              posts:
+                description: List of posts that appear somewhere in this feed segment.
+                type: array
+                items: *post
+              post_edges:
+                description: List of post references that have a relationship with this identity.
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: integer
+              shares:
+                description: List of post references that have share relationships.
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: integer
+              replies:
+                description: List of post references that have reply relationships.
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: integer
+              sources:
+                description: List of sources that appear somewhere in this feed segment.
+                type: array
+                items: *source
 
   person_draft_images:
     template: /people/{person_id}/draft-images
@@ -1082,32 +1140,11 @@ resources:
             type: array
             items: *task
 
-  person_post_edges:
-    template: /people/{person_id}/edges
-    route: /people/<int:person_id>/edges
-    methods:
-      post:
-        request:
-          authorization:
-            - person
-          type: application/json
-          schema:
-            type: object
-            additionalProperties: false
-            required: [ identity, post, name ]
-            properties: *postEdgeCore
-        response:
-          status: 201
-          type: application/json
-          schema: 
-            type: array
-            items: *postEdge
-
   person_post_edge:
-    template: /people/{person_id}/edges/{id}
-    route: /people/<int:person_id>/edges/<int:id>
+    template: /people/{person_id}/post-edges/{identity_id}/{post_id}/{name}
+    route: /people/<int:person_id>/post-edges/<int:identity_id>/<int:post_id>/<name>
     methods:
-      get:
+      put:
         request:
           authorization:
             - person
@@ -1122,43 +1159,6 @@ resources:
             - person
         response:
           status: 204
-
-  post_graph:
-    template: /post-graph/{id}
-    route: /post-graph/<int:id>
-    methods:
-      get:
-        request:
-          authorization:
-            - person
-        response:
-          type: application/json
-          status: 200
-          schema:
-            type: object
-            additionalProperties: false
-            required: [ feed, posts, sources ]
-            properties:
-              feed:
-                description: Array of ordered post IDs for this feed. The order depends on the feed being requested.
-                type: array
-                items:
-                  type: integer
-              posts:
-                description: List of posts that appear somewhere in this feed segment.
-                type: array
-                items: *post
-              shares:
-                description: List of post references that have share relationships.
-                type: array
-                items:
-                  type: array
-                  items:
-                    type: integer
-              sources:
-                description: List of sources that appear somewhere in this feed segment.
-                type: array
-                items: *source
 
   action_onboard_identity_start:
     template: /actions/onboard-identity

@@ -25,27 +25,26 @@ def check_post(base_url, id):
         )
     return post
 
+allowed_names = ["like", "repost", "upvote", "downvote"]
+def check_name(name):
+    if name not in allowed_names:
+        raise http_errors.bad_request(f"name {name} is not a recognized edge")
 
-def edge_not_found(person_id, id):
-    raise http_errors.not_found(f"post edge {person_id}/{id} is not found")
 
 
 
-def person_post_edges_post(person_id):
-    identity = request.json["identity"]
-    post = request.json["post"]
-    name = request.json["name"]
-
-    identity = check_identity(person_id, identity)
-    post = check_post(identity["base_url"], post)
+def person_post_edge_put(person_id, identity_id, post_id, name):
+    identity = check_identity(person_id, identity_id)
+    post = check_post(identity["base_url"], post_id)
+    check_name(name)
 
     post_edge = models.post_edge.find({
-        "identity_id": identity["id"],
-        "post_id": post["id"],
+        "identity_id": identity_id,
+        "post_id": post_id,
         "name": name
     })
 
-    # We'll allow this operation to be idempotent.
+    # PUTs are idempotent.
     if post_edge is not None:
         return post_edge
 
@@ -69,45 +68,35 @@ def person_post_edges_post(person_id):
     return post_edge
 
 
-def person_post_edge_get(person_id, id):
-    edge = models.post_edge.get(id)
+
+def person_post_edge_delete(person_id, identity_id, post_id, name):
+    edge = models.post_edge.find({
+        "identity_id": identity_id,
+        "post_id": post_id,
+        "name": name
+    })
     if edge is None:
-        edge_not_found(person_id, id)
+        raise http_errors.not_found(f"post edge {name} is not found")
     
     identity = models.identity.find({
         "person_id": person_id,
-        "id": edge["identity_id"]
+        "id": identity_id
     })
     if identity is None:
-        edge_not_found(person_id, id)
-        
-    return edge
+        raise http_errors.not_found(f"post edge {name} is not found")
 
-
-def person_post_edge_delete(person_id, id):
-    edge = models.post_edge.get(id)
-    if edge is None:
-        edge_not_found(person_id, id)
-    
-    identity = models.identity.find({
-        "person_id": person_id,
-        "id": edge["identity_id"]
-    })
-    if identity is None:
-        edge_not_found(person_id, id)
-
-    post = models.post.get(edge["post_id"])
+    post = models.post.get(post_id)
     if post is None:
-        raise http_errors.not_found(f"post {id} is not found")
+        raise http_errors.not_found(f"post edge {name} is not found")
 
-    models.post_edge.remove(id)
+    models.post_edge.remove(edge["id"])
     models.task.add({
         "queue": resolve_platform(identity["base_url"]),
         "name": "remove post edge",
         "details": {
             "identity": identity,
             "post": post,
-            "name": edge["name"],
+            "name": name,
             "edge": edge
         }
     })

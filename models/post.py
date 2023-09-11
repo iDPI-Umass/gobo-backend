@@ -8,6 +8,7 @@ from .helpers import define_crud
 Post = tables.Post
 Link = tables.Link
 Source = tables.Source
+PostEdge = tables.PostEdge
 
 
 add, get, update, remove, query, find, pull = itemgetter(
@@ -61,6 +62,17 @@ def safe_add(data):
 
 def view_identity_feed(data):
     with Session() as session:
+        feed = []
+        post_edges = []
+        posts = []
+        shares = []
+        replies = []
+        sources = []
+        seen_posts = set()
+        seen_sources = set()
+
+
+        # Start by pulling a page from this identity's feed.
         statement = select(Link) \
             .where(Link.origin_type == "identity") \
             .where(Link.origin_id == data["identity_id"]) \
@@ -74,16 +86,12 @@ def view_identity_feed(data):
             .limit(data["per_page"])
 
         rows = session.scalars(statement).all()
+        for row in rows:
+            id = row.target_id
+            feed.append(id)
+            seen_posts.add(id)
 
 
-        feed = []
-        posts = []
-        shares = []
-        replies = []
-        sources = []
-        seen_posts = set()
-        seen_sources = set()
-        roots = set()
 
         # The next_token tells the client how to try to get the next page.
         # If we've just pulled an empty page, the client can try again later
@@ -95,56 +103,62 @@ def view_identity_feed(data):
             next_token = rows[-1].secondary
 
 
-        for row in rows:
-            id = row.target_id
-            feed.append(id)
-            seen_posts.add(id)
 
-        # Secondary Shares
+        # All the posts in "feed" constitute graph centers that we're
+        # considering in the HX. From these centers we want to lookup social
+        # edges, but we don't need this for the other posts in the graph.
+        statement = select(PostEdge) \
+            .where(PostEdge.identity_id == data["identity_id"]) \
+            .where(PostEdge.post_id.in_(feed)) \
+            
+        rows = session.scalars(statement).all()
+        for row in rows:
+            post_edges.append([ row.post_id, row.name ])
+
+
+
+        # Reply secondary posts go first because they might have share edges.
         statement = select(Link) \
             .where(Link.origin_type == "post") \
             .where(Link.origin_id.in_(feed)) \
             .where(Link.target_type == "post") \
-            .where(Link.name == "shares")
-
-        rows = session.scalars(statement).all()
-
-        for row in rows:
-            shares.append([row.origin_id, row.target_id])
-            seen_posts.add(row.target_id)
-            roots.add(row.target_id)
-
-        # Tertiary Shares
-        statement = select(Link) \
-            .where(Link.origin_type == "post") \
-            .where(Link.origin_id.in_(list(roots))) \
-            .where(Link.target_type == "post") \
-            .where(Link.name == "shares")
-
-        rows = session.scalars(statement).all()
-
-        for row in rows:
-            shares.append([row.origin_id, row.target_id])
-            seen_posts.add(row.target_id)
-
-
-        # Now we have basis to look for all reply secondary posts
-        for id in feed:
-            roots.add(id)
-
-        statement = select(Link) \
-            .where(Link.origin_type == "post") \
-            .where(Link.origin_id.in_(list(roots))) \
-            .where(Link.target_type == "post") \
             .where(Link.name == "replies")
 
         rows = session.scalars(statement).all()
-
         for row in rows:
             replies.append([row.origin_id, row.target_id])
             seen_posts.add(row.target_id)
 
 
+
+        # Share Secondary Posts
+        statement = select(Link) \
+            .where(Link.origin_type == "post") \
+            .where(Link.origin_id.in_(list(seen_posts))) \
+            .where(Link.target_type == "post") \
+            .where(Link.name == "shares")
+
+        rows = session.scalars(statement).all()
+        secondaries = set()
+        for row in rows:
+            shares.append([row.origin_id, row.target_id])
+            seen_posts.add(row.target_id)
+            secondaries.add(row.target_id)
+
+        # Share Tertiary Posts
+        statement = select(Link) \
+            .where(Link.origin_type == "post") \
+            .where(Link.origin_id.in_(list(secondaries))) \
+            .where(Link.target_type == "post") \
+            .where(Link.name == "shares")
+
+        rows = session.scalars(statement).all()
+        for row in rows:
+            shares.append([row.origin_id, row.target_id])
+            seen_posts.add(row.target_id)
+
+
+      
         # Now we have all primary, secondary, and tertiary posts. Fetch all.
         statement = select(Post).where(Post.id.in_(list(seen_posts)))
         rows = session.scalars(statement).all()
@@ -152,6 +166,7 @@ def view_identity_feed(data):
             posts.append(row.to_dict()) 
 
       
+
         # And with all full posts, we can see their source IDs. Pull all sources.
         for post in posts:
             seen_sources.add(post["source_id"])
@@ -162,9 +177,11 @@ def view_identity_feed(data):
             sources.append(row.to_dict())    
 
 
+
         # Package the response body.
         output = {
             "feed": feed,
+            "post_edges": post_edges,
             "posts": posts,
             "shares": shares,
             "replies": replies,
@@ -177,9 +194,10 @@ def view_identity_feed(data):
         return output
 
 
-def view_post_graph(id):
+def view_post_graph(data):
     with Session() as session:
         feed = []
+        post_edges = []
         posts = []
         replies = []
         shares = []
@@ -187,24 +205,39 @@ def view_post_graph(id):
         seen_posts = set()
         seen_sources = set()
 
-        feed.append(id)
-        seen_posts.add(id)
+        feed.append(data["id"])
+        seen_posts.add(data["id"])
 
 
-        # Get the possible reply
+        # All the posts in "feed" constitute graph centers that we're
+        # considering in the HX. From these centers we want to lookup social
+        # edges, but we don't need this for the other posts in the graph.
+        statement = select(PostEdge) \
+            .where(PostEdge.identity_id == data["identity_id"]) \
+            .where(PostEdge.post_id.in_(feed)) \
+            
+        rows = session.scalars(statement).all()
+        for row in rows:
+            post_edges.append([ row.post_id, row.name ])
+
+
+
+        # Possible Reply Secondary
         statement = select(Link) \
             .where(Link.origin_type == "post") \
             .where(Link.origin_id.in_(feed)) \
             .where(Link.target_type == "post") \
-            .where(Link.name == "replies")
+            .where(Link.name == "replies") \
+            .limit(1)
 
-        rows = session.scalars(statement).all()
-        for row in rows:
+        row = session.scalars(statement).first()
+        if row is not None:
             replies.append([row.origin_id, row.target_id])
             seen_posts.add(row.target_id)
 
 
-        # Get first order shares
+
+        # Share Secondary Posts
         statement = select(Link) \
             .where(Link.origin_type == "post") \
             .where(Link.origin_id.in_(list(seen_posts))) \
@@ -212,16 +245,18 @@ def view_post_graph(id):
             .where(Link.name == "shares")
 
         rows = session.scalars(statement).all()
-        ids = []
+        secondaries = set()
         for row in rows:
             shares.append([row.origin_id, row.target_id])
             seen_posts.add(row.target_id)
-            ids.append(row.target_id)
+            secondaries.add(row.target_id)
         
-        # Second order shares
+
+
+        # Share Tertiary Posts
         statement = select(Link) \
             .where(Link.origin_type == "post") \
-            .where(Link.origin_id.in_(ids)) \
+            .where(Link.origin_id.in_(list(secondaries))) \
             .where(Link.target_type == "post") \
             .where(Link.name == "shares")
         
@@ -231,7 +266,8 @@ def view_post_graph(id):
             seen_posts.add(row.target_id)
 
         
-        # Fetch all posts based on the IDs we've collected.
+
+        # Now we have all primary, secondary, and tertiary posts. Fetch all.
         statement = select(Post).where(Post.id.in_(list(seen_posts)))
         rows = session.scalars(statement).all()
         for row in rows:
@@ -239,7 +275,7 @@ def view_post_graph(id):
 
       
 
-        # And based on the source listed in each post, grab the source records.
+        # And with all full posts, we can see their source IDs. Pull all sources.
         for post in posts:
             seen_sources.add(post["source_id"])
 
@@ -252,6 +288,7 @@ def view_post_graph(id):
         # Collate it all for a response graph.
         return {
             "feed": feed,
+            "post_edges": post_edges,
             "posts": posts,
             "shares": shares,
             "replies": replies,
