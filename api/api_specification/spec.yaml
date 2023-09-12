@@ -521,9 +521,7 @@ resources:
     route: /people/<int:id>
     methods:
       get:
-        request:
-          authorization:
-            - person
+        request: {}
         response:
           type: application/json
           status: 200
@@ -531,8 +529,6 @@ resources:
 
       put:
         request:
-          authorization:
-            - person
           type: application/json
           schema: *person
         response:
@@ -870,6 +866,30 @@ resources:
 
       put:
         request:
+          type: application/json
+          schema: *person
+        response:
+          type: application/json
+          status: 200
+          schema: *person
+
+  person_profile:
+    template: /people/{person_id}/person
+    route: /people/<int:person_id>/person
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+        response:
+          type: application/json
+          status: 200
+          schema: *person
+
+      put:
+        request:
+          authorization:
+            - person
           type: application/json
           schema: *person
         response:
