@@ -521,7 +521,9 @@ resources:
     route: /people/<int:id>
     methods:
       get:
-        request: {}
+        request:
+          authorization:
+            - person
         response:
           type: application/json
           status: 200
@@ -529,6 +531,8 @@ resources:
 
       put:
         request:
+          authorization:
+            - person
           type: application/json
           schema: *person
         response:
