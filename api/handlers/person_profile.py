@@ -12,12 +12,19 @@ def person_profile_get(person_id):
     return person
 
 def person_profile_put(person_id):
-    if request.json["id"] is not None and person_id != request.json["id"]:
+    id = request.json.get("id", None)
+    if id is None or id != person_id:
         raise http_errors.unprocessable_content(
             f"person {person_id} does not match resource in body, rejecting"
         )
-
-    person = models.person.update(person_id, request.json)
+    
+    data = {
+        "id": person_id,
+        "name": request.json.get("name", None),
+        "authority_id": request.json.get("authority_id", None)
+    }
+   
+    person = models.person.update(person_id, data)
     if person == None:
         raise http_errors.unprocessable_content(
             f"person {person_id} is not found, create using people post"

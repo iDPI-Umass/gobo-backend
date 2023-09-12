@@ -73,6 +73,9 @@ shards:
 
 
   personCore: &personCore
+    person_id:
+      description: optional representation of the person id.
+      type: integer
     name:
       description: Chosen display name for this person.
       type: string
