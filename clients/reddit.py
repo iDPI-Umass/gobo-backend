@@ -338,7 +338,7 @@ class Reddit():
         return {"subreddits": subreddits} 
 
 
-    def get_post_graph(self, source):
+    def get_post_graph(self, source, is_shallow = False):
         submissions = []
         partials = []
         subreddits = []

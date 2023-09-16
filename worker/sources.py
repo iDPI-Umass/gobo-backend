@@ -25,9 +25,9 @@ def start_sources():
 
 
     # Handles follower-list (source) updates.
-    schedule.every(12).hours.do(
-        queues.bluesky.put_details, "identity follow fanout"
-    )
+    # schedule.every(12).hours.do(
+    #     queues.bluesky.put_details, "identity follow fanout"
+    # )
 
     schedule.every(12).hours.do(
         queues.reddit.put_details, "identity follow fanout"
@@ -40,9 +40,9 @@ def start_sources():
 
 
     # Pull the latest posts from the tracked sources.
-    schedule.every().hour.do(
-        queues.bluesky.put_details, "read sources"
-    )
+    # schedule.every().hour.do(
+    #     queues.bluesky.put_details, "read sources"
+    # )
 
     schedule.every().hour.do(
         queues.reddit.put_details, "read sources"

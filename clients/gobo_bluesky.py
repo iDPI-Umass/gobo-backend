@@ -4,6 +4,21 @@ import urllib
 import httpx
 import joy
 
+# Headers({
+#     'date': 'Sat, 16 Sep 2023 08:56:45 GMT', 
+#     'content-type': 'application/json; charset=utf-8', 
+#     'content-length': '61', 
+#     'connection': 'keep-alive', 
+#     'x-powered-by': 'Express', 
+#     'access-control-allow-origin': '*', 
+#     'ratelimit-limit': '30', 
+#     'ratelimit-remaining': '0', 
+#     'ratelimit-reset': '1694932911', 
+#     'ratelimit-policy': '30;w=300', 
+#     'etag': 'W/"3d-egyFOcXCrKQFzoI7522/4+PpxIk"', 
+#     'vary': 'Accept-Encoding'
+# })
+
 
 class GOBOBluesky():
     def __init__(self):
@@ -19,7 +34,8 @@ class GOBOBluesky():
                 else:
                     return r.json()
             else:
-                logging.warning(r.json())  
+                logging.warning(r.json())
+                logging.warning(r.headers)
                 raise Exception(f"Bluesky: responded with status {r.status_code}")
 
     def post(self, url, data = None, headers = None, skip_response = False):
@@ -31,7 +47,8 @@ class GOBOBluesky():
                 else:
                     return r.json()
             else:
-                logging.warning(r.json())  
+                logging.warning(r.json())
+                logging.warning(r.headers)
                 raise Exception(f"Bluesky: responded with status {r.status_code}")
 
 
