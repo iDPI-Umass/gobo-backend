@@ -43,3 +43,9 @@ def convert(start, end, value, optional = False):
     
 def hours_ago(hours):
     return datetime.now() - timedelta(hours = hours)
+
+def hours_from_now(hours):
+    return datetime.now() + timedelta(hours = hours)
+
+def remaining(d):
+    return d - datetime.utcnow()

@@ -2,6 +2,7 @@ import logging
 import threading
 import queues
 import jobs
+import joy
 
 
 class Thread():
@@ -12,6 +13,14 @@ class Thread():
                     task = queue.get()
                     dispatch(task)
                     queue.task_done()
+                except joy.error.RecoverableException as e:
+                    logging.warning(e, exc_info=True)
+                    task.tries = task.tries + 1
+                    if task.tries < 3:
+                        queue.put_task(task)
+                    else:
+                        # TODO: Create dead-letter queue.
+                        task.remove()
                 except Exception as e:
                     logging.error(e, exc_info=True)
                     if task != None:

@@ -55,21 +55,36 @@ def confirm_identity(registration, data):
         raise http_errors.unprocessable_content("unable to process provider credentials")
 
 
-    # Fetch profile data to associate with this identity.
+    # Establish a Bluesky session associated with this identity.
     try:
-        client = Bluesky({
+        session = Bluesky.login({
             "oauth_token": data["bluesky_login"],
             "oauth_token_secret": data["bluesky_secret"]
         })
-        profile = client.get_profile()
     except Exception as e:
         logging.warning(e)
         raise http_errors.unprocessable_content("unable to access profile from platform")
 
+    # Pull together data to build a session record. A session record must be
+    # available to support proper function of the client. Sessions are part of
+    # the client's internal interface to maintain authorization.
+    _session = Bluesky.map_session(registration, session)
+    session = models.bluesky_session.upsert(_session)
+
+
+    # Now it's safe to use the main class instantiation.
+    client = Bluesky({
+        "person_id": registration["person_id"],
+        "platform_id": session["did"],
+        "base_url": BASE_URL,
+        "oauth_token": data["bluesky_login"],
+        "oauth_token_secret": data["bluesky_secret"],
+    })
+    profile = client.get_profile()
+
 
     # Pull together data to build an identity record.
-    # TODO: atproto author warns they're swapping from camelCase to snake_case for attributes at some point.
-    profile_url = f"{BASE_URL}/profile/{profile['handle']}"
+    profile_url = f"{BASE_URL}/profile/{profile['handle']}"  
     _identity = {
         "person_id": registration["person_id"],
         "platform_id": profile["did"],
@@ -77,11 +92,7 @@ def confirm_identity(registration, data):
         "profile_url": profile_url,
         "profile_image": profile["avatar"],
         "username": profile["handle"],
-        "name": getattr(
-            profile, 
-            "displayName", 
-            getattr(profile, "display_name", None)
-        ),
+        "name": profile.get("displayName", None),
         "oauth_token": data["bluesky_login"],
         "oauth_token_secret": data["bluesky_secret"]
     }

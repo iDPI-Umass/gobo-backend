@@ -4,54 +4,13 @@ import urllib
 import httpx
 import joy
 
-# Headers({
-#     'date': 'Sat, 16 Sep 2023 08:56:45 GMT', 
-#     'content-type': 'application/json; charset=utf-8', 
-#     'content-length': '61', 
-#     'connection': 'keep-alive', 
-#     'x-powered-by': 'Express', 
-#     'access-control-allow-origin': '*', 
-#     'ratelimit-limit': '30', 
-#     'ratelimit-remaining': '0', 
-#     'ratelimit-reset': '1694932911', 
-#     'ratelimit-policy': '30;w=300', 
-#     'etag': 'W/"3d-egyFOcXCrKQFzoI7522/4+PpxIk"', 
-#     'vary': 'Accept-Encoding'
-# })
-
 
 class GOBOBluesky():
     def __init__(self):
         pass
 
-
-    def get(self, url, headers = None, skip_response = False):
-        with httpx.Client() as client:
-            r = client.get(url, headers=headers)
-            if r.status_code < 400:
-                if skip_response == True:
-                    return
-                else:
-                    return r.json()
-            else:
-                logging.warning(r.json())
-                logging.warning(r.headers)
-                raise Exception(f"Bluesky: responded with status {r.status_code}")
-
-    def post(self, url, data = None, headers = None, skip_response = False):
-        with httpx.Client() as client:
-            r = client.post(url, data=data, headers=headers)
-            if r.status_code < 400:
-                if skip_response == True:
-                    return
-                else:
-                    return r.json()
-            else:
-                logging.warning(r.json())
-                logging.warning(r.headers)
-                raise Exception(f"Bluesky: responded with status {r.status_code}")
-
-
+    # This method block encapsulates how Bluesky tunnels HTTP. It makes the
+    # RPC block methods easier to write after bootstrapping is complete.
     def build_url(self, base, query = None):
         url = f"https://bsky.social/xrpc/{base}"
         if query is not None:
@@ -61,12 +20,39 @@ class GOBOBluesky():
                     data[key] = value
             url += f"?{urllib.parse.urlencode(data)}"
         return url
+
+    def handle_response(self, r, skip_response = False):
+        content_type = r.headers.get("content-type", "")
+        body = {}
+        if content_type is not None:
+            if "application/json" in content_type:
+                body = r.json()
+
+        if r.status_code < 400:
+            if skip_response == True:
+                return
+            else:
+                return body
+        else:
+            logging.warning(body)
+            logging.warning(r.headers)
+            raise Exception(f"Bluesky: responded with status {r.status_code}")
+    
+    def get(self, url, headers = None, skip_response = False):
+        with httpx.Client() as client:
+            r = client.get(url, headers=headers)
+            return self.handle_response(r, skip_response)
+
+    def post(self, url, data = None, headers = None, skip_response = False):
+        with httpx.Client() as client:
+            r = client.post(url, data=data, headers=headers)
+            return self.handle_response(r, skip_response)
             
     def add_token(self, headers):
         if headers is None:
-            headers = {"Authorization": f"Bearer {self.token}"}
+            headers = {"Authorization": f"Bearer {self.access_token}"}
         else:
-            headers["Authorization"] = f"Bearer {self.token}"
+            headers["Authorization"] = f"Bearer {self.access_token}"
         return headers
     
     def handle_data(self, data, headers):
@@ -86,33 +72,51 @@ class GOBOBluesky():
         return self.post(url, data = data, headers = headers, skip_response=skip_response)
 
 
+
+    # This method block deals with the bootstrapping procedure.
+    # We also use this block when cycling stale access and refresh tokens.
     def resolve_handle(self, handle):
         url = self.build_url("com.atproto.identity.resolveHandle", {
             "handle": handle
         })
-     
+
         return self.get(url)
 
-    def create_session(self, password):
+    def create_session(self, did, password):
         url = self.build_url("com.atproto.server.createSession")
+        headers = {"Content-Type": "application/json"}
+        data = json.dumps({
+            "identifier": did,
+            "password": password
+        })
 
-        return self.post(url, 
-            data = json.dumps({
-                "identifier": self.did,
-                "password": password
-            }),
-            headers = {
-                "Content-Type": "application/json"
-            }
-        )
+        return self.post(url, headers = headers, data = data)
 
     def login(self, login, password):
         data = self.resolve_handle(login)
-        self.did = data["did"]
-        data = self.create_session(password)
-        self.token = data["accessJwt"]
+        did = data["did"]
+        logging.info(f"bluesky: createSession for {login}")
+        return self.create_session(did, password)
+        
+    def load_session(self, session):
+        self.session = session
+        self.did = session["did"]
+        self.handle = session["handle"]
+        self.access_token = session["access_token"]
+        self.refresh_token = session["refresh_token"]
+
+    def refresh_session(self, session):
+        url = self.build_url("com.atproto.server.refreshSession")
+        refresh_token = session["refresh_token"]
+        handle = session["handle"]
+        headers = {"Authorization": f"Bearer {refresh_token}"}
+
+        logging.info(f"bluesky: refreshSession for {handle}")
+        return self.post(url, headers = headers)
 
 
+    # Once onboarding is complete, this method block maps GOBO worker actions
+    # to the RPC methods specified in the Bluesky lexicon.
     def get_profile(self, actor):
         url = self.build_url("app.bsky.actor.getProfile", {"actor": actor})
         return self.bluesky_get(url)

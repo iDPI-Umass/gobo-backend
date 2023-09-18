@@ -40,4 +40,5 @@ class GOBOReddit():
                 else:
                     logging.warning(f"Reddit: fetching posts for {subreddit} responded with status {r.status_code}")
                     logging.warning(r.json())
+                    logging.warning(r.headers)
                     return output

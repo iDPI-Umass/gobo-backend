@@ -1,8 +1,10 @@
 import logging
 import json
+from jose import jwt
 import re
-from .gobo_bluesky import GOBOBluesky
 import joy
+import models
+from .gobo_bluesky import GOBOBluesky
 from .helpers import guess_mime
 
 
@@ -288,50 +290,70 @@ class Actor():
         return f'<a href={url} target="_blank" rel="noopener noreferrer nofollow">@{handle}</a>'
 
 
+class Session():
+    @staticmethod
+    def create(identity, session):
+        if identity is None:
+            raise Exception("raw dictionary passed to Session constructor is None")
+        if session is None:
+            raise Exception("raw dictionary passed to Session constructor is None")
+
+        access_token = session["accessJwt"]
+        expires = jwt.get_unverified_claims(access_token)["exp"]
+        access_expires = joy.time.convert("unix", "iso", expires)     
+        refresh_token = session["refreshJwt"]
+        expires = jwt.get_unverified_claims(refresh_token)["exp"]
+        refresh_expires = joy.time.convert("unix", "iso", expires)
+        return {
+            "person_id": identity["person_id"],
+            "base_url": Bluesky.BASE_URL,
+            "handle": session["handle"],
+            "did": session["did"],
+            "access_token": access_token,
+            "access_expires": access_expires,
+            "refresh_token": refresh_token,
+            "refresh_expires": refresh_expires
+        }
+
+
 class Bluesky():
     BASE_URL = "https://bsky.app"
 
-    def __init__(self, identity = None):
-        self.seen_types = set()
-        self.seen_type_examples = {}
+    def __init__(self, identity):
+        self.identity = identity
+        self.me = self.identity["oauth_token"]
+        self.client = GOBOBluesky()
 
-        if identity is not None:
-            self.identity = identity
-            self.me = self.identity["oauth_token"]
-            self.client = GOBOBluesky()
-            self.client.login(
-                login = identity.get("oauth_token", None),
-                password = identity.get("oauth_token_secret", None)
-            )
+        session = models.bluesky_session.find({
+            "person_id": identity["person_id"],
+            "base_url": identity["base_url"],
+            "did": identity["platform_id"]
+        })
+        if session is None:
+            raise Exception("bluesky client: no matching session for this identity")
+
+        self.client.load_session(session)
+
+    @staticmethod
+    def login(identity):
+        client = GOBOBluesky()
+        return client.login(
+            login = identity.get("oauth_token", None),
+            password = identity.get("oauth_token_secret", None)
+        )
+    
+    @staticmethod
+    def refresh_session(session):
+        client = GOBOBluesky()
+        return client.refresh_session(session)
+    
+    @staticmethod
+    def map_session(identity, session):
+        return Session.create(identity, session)
 
     def get_profile(self):
         return self.client.get_profile(self.me)
-    
-    def parse_types(self, input):
-        if isinstance(input, primitive):
-            return
-        elif isinstance(input, list):
-            for item in input:
-                self.parse_types(item)
-            return
-        elif isinstance(input, dict):
-            _type = input.get("$type", None)
-            if _type is not None:
-                self.seen_types.add(_type)
-                if self.seen_type_examples.get(_type, None) is None:
-                    self.seen_type_examples[_type] = []
-                self.seen_type_examples[_type].append(input)
 
-            for key, value in input.items():
-                self.parse_types(value)
-            return
-        else:
-            raise Exception("this is supposed to be JSON")
-        
-    @staticmethod
-    def build_post(post):
-        return build_post(post)
-    
     def create_post(self, post, metadata):
         embed = {
             "images": None,

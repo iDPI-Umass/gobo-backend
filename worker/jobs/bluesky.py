@@ -1,5 +1,6 @@
 import logging
 import os
+import joy
 import models
 import queues
 from clients import Bluesky
@@ -41,6 +42,14 @@ def dispatch(task):
         add_post_edge(task)
     elif task.name == "remove post edge":
         remove_post_edge(task)
+    elif task.name == "refresh sessions":
+        refresh_sessions(task)
+    elif task.name == "refresh refresh token":
+        refresh_refresh_token(task)
+    elif task.name == "refresh access token":
+        refresh_access_token(task)
+    elif task.name == "bootstrap sessions":
+        bootstrap_sessions(task)
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -229,22 +238,110 @@ def remove_post_edge(task):
         raise logging.warning(
             f"bluesky does not have post edge action defined for {name}"
         )
+    
+def refresh_sessions(task):
+    per_page = 100
+    access_limit = joy.time.to_iso_string(joy.time.hours_from_now(0.5))
+    refresh_limit = joy.time.to_iso_string(joy.time.hours_from_now(24))
+
+    query = {
+        "page": 1,
+        "per_page": per_page,
+        "where": [
+            where("refresh_expires", refresh_limit, "lt"),
+        ]
+    }
+    while True:
+        sessions = models.bluesky_session.query(query)
+        for session in sessions:
+            queues.bluesky.put_details("refresh refresh token", {"session": session})
+        
+        if len(sessions) == per_page:
+            query["page"] += 1
+        else:
+            break
+
+
+    query = {
+        "page": 1,
+        "per_page": per_page,
+        "where": [
+            where("access_expires", access_limit, "lt"),
+        ]
+    }
+    while True:
+      sessions = models.bluesky_session.query(query)
+      for session in sessions:
+          queues.bluesky.put_details("refresh access token", {"session": session})
+      
+      if len(sessions) == per_page:
+          query["page"] += 1
+      else:
+          break
+    
+
+
+def refresh_refresh_token(task):
+    session = task.details.get("session", None)
+    if session is None:
+        raise Exception("bluesky: refresh refresh token requires session")
+    
+    identity = models.identity.find({
+        "person_id": session["person_id"],
+        "base_url": session["base_url"],
+        "platform_id": session["did"]
+    })
+
+    if identity is None:
+        raise Exception("bluesky: refresh refresh token - no identity found matching this session. unable to continue")
+    
+    _session = Bluesky.login(identity)
+    _session = Bluesky.map_session(identity, _session)
+    models.bluesky_session.update(session["id"], _session)
+
+
+
+def refresh_access_token(task):
+    session = task.details.get("session", None)
+    if session is None:
+        raise Exception("bluesky: refresh refresh token requires session")
+
+    identity = models.identity.find({
+        "person_id": session["person_id"],
+        "base_url": session["base_url"],
+        "platform_id": session["did"]
+    })
+
+    if identity is None:
+        raise Exception("bluesky: refresh access token - no identity found matching this session. unable to continue")
+
+    _session = Bluesky.refresh_session(session)
+    _session = Bluesky.map_session(identity, _session)
+    models.bluesky_session.update(session["id"], _session)
+
+
+def bootstrap_sessions(task):
+    per_page = 100
+    query = {
+        "page": 1,
+        "per_page": per_page,
+        "where": [
+            where("base_url", Bluesky.BASE_URL),
+        ]
+    }
+
+    while True:
+      identities = models.identity.query(query)
+      for identity in identities:
+          session = Bluesky.login(identity)
+          session = Bluesky.map_session(identity, session)
+          models.bluesky_session.upsert(session)
+      
+      if len(identities) == per_page:
+          query["page"] += 1
+      else:
+          break
 
 
 def workbench(task):
-    identity = models.identity.find({
-        "profile_url": "https://bsky.app/profile/freeformflow.bsky.social"
-    })
-
-    source = models.source.find({
-        "url": task.details.get("url")
-    })
-    
-    client = Bluesky(identity)
-    result = client.client.get_author_feed(source["username"], None)
-    feed = result["feed"]
-    results = []
-    for post in feed:
-        p = Bluesky.build_post(post)
-        logging.info(str(p))
-        logging.info("\n\n")
+    pass

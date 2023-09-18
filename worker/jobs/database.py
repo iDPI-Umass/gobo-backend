@@ -309,7 +309,7 @@ def add_post_to_source(task):
 def add_partial_post(task):
     post = task.details.get("post")
     if post is None:
-        raise Exception("add post to source: needs post")
+        raise Exception("add partial post: needs post")
 
     post = models.post.safe_add(post)
     models.link.upsert({
@@ -326,9 +326,9 @@ def add_interpost_edge(task):
     base_url = task.details.get("base_url")
     data = task.details.get("edge_reference")
     if base_url is None:
-        raise Exception("add shares to post: need to specify base_url both posts belong to.")
+        raise Exception("add interpost edge: need to specify base_url both posts belong to.")
     if data is None:
-        raise Exception("add shares to post: needs edge primitive")
+        raise Exception("add interpost edge: needs edge primitive")
 
 
     origin = models.post.find({
@@ -336,7 +336,7 @@ def add_interpost_edge(task):
         "platform_id": data["origin_reference"]
     })
     if origin is None:
-        raise Exception("origin post is not available in post table")
+        raise Exception("add interpost edge: origin post is not available in post table")
 
     target = models.post.find({
         "base_url": base_url,

@@ -44,7 +44,7 @@ def person_identity_post(person_id, id):
 
 def person_identity_delete(person_id, id):
     person = get_viewer(person_id)
-    check_claim(person_id, id)
+    identity = check_claim(person_id, id)
 
     models.link.find_and_remove({
       "origin_type": "person",
@@ -53,7 +53,17 @@ def person_identity_delete(person_id, id):
       "target_id": id,
       "name": "has-identity"
     })
-    
+
+    if identity is not None:
+        session = models.bluesky_session.find({
+            "person_id": identity["person_id"],
+            "base_url": identity["base_url"],
+            "did": identity["platform_id"]
+        })
+        if session is not None:
+            models.bluesky_session.remove(session["id"])
+
+
     models.identity.remove(id)
 
     models.task.add({
