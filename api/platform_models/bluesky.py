@@ -90,7 +90,7 @@ def confirm_identity(registration, data):
         "platform_id": profile["did"],
         "base_url": BASE_URL,
         "profile_url": profile_url,
-        "profile_image": profile["avatar"],
+        "profile_image": profile.get("avatar", None),
         "username": profile["handle"],
         "name": profile.get("displayName", None),
         "oauth_token": data["bluesky_login"],
