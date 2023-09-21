@@ -8,6 +8,7 @@ from .helpers import read_optional, write_optional
 
 optional = [
     "base_url",
+    "platform",
     "platform_id",
     "title",
     "content",
@@ -22,6 +23,7 @@ class Post(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     source_id: Mapped[int]
     base_url: Mapped[Optional[str]]
+    platform: Mapped[Optional[str]]
     platform_id: Mapped[Optional[str]]
     title: Mapped[Optional[str]]
     content: Mapped[Optional[str]]

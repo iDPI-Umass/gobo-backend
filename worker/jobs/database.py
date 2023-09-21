@@ -34,8 +34,8 @@ def dispatch(task):
         clean_follows(task)
     elif task.name == "escape titles":
         escape_titles(task)
-    elif task.name == "clear image cache":
-        clear_image_cache(task)  
+    elif task.name == "prune image cache":
+        prune_image_cache(task)  
     elif task.name == "workbench":
         workbench(task)
     else:
@@ -420,7 +420,7 @@ def clean_follows(task):
 
 
 
-def clear_image_cache(task):
+def prune_image_cache(task):
     per_page = 1000
     time_limit = joy.time.to_iso_string(joy.time.hours_ago(12))
     query = {
@@ -447,4 +447,4 @@ def clear_image_cache(task):
 
 
 def workbench(task):
-    clear_image_cache(task)
+    prune_image_cache(task)

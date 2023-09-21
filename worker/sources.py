@@ -20,40 +20,40 @@ def start_sources():
     queues.api.put_details("poll", {})
 
     schedule.every(12).hours.do(
-        queues.database.put_details, "clear image cache"
+        queues.default.put_details, "prune image cache"
     )
 
 
-    # Handles follower-list (source) updates.
-    schedule.every(12).hours.do(
-        queues.bluesky.put_details, "identity follow fanout"
-    )
+    # # Handles follower-list (source) updates.
+    # schedule.every(12).hours.do(
+    #     queues.bluesky.put_details, "identity follow fanout"
+    # )
 
-    schedule.every(12).hours.do(
-        queues.reddit.put_details, "identity follow fanout"
-    )
+    # schedule.every(12).hours.do(
+    #     queues.reddit.put_details, "identity follow fanout"
+    # )
 
-    schedule.every(12).hours.do(
-        queues.mastodon.put_details, "identity follow fanout"
-    )
-
-
-
-    # Pull the latest posts from the tracked sources.
-    schedule.every().hour.do(
-        queues.bluesky.put_details, "read sources"
-    )
-
-    schedule.every().hour.do(
-        queues.reddit.put_details, "read sources"
-    )
-
-    schedule.every().hour.do(
-        queues.mastodon.put_details, "read sources"
-    )
+    # schedule.every(12).hours.do(
+    #     queues.mastodon.put_details, "identity follow fanout"
+    # )
 
 
-    # Standalone task for Bluesky
-    schedule.every(20).minutes.do(
-        queues.bluesky.put_details, "refresh sessions"
-    )
+
+    # # Pull the latest posts from the tracked sources.
+    # schedule.every().hour.do(
+    #     queues.bluesky.put_details, "read sources"
+    # )
+
+    # schedule.every().hour.do(
+    #     queues.reddit.put_details, "read sources"
+    # )
+
+    # schedule.every().hour.do(
+    #     queues.mastodon.put_details, "read sources"
+    # )
+
+
+    # # Standalone task for Bluesky
+    # schedule.every(20).minutes.do(
+    #     queues.bluesky.put_details, "refresh sessions"
+    # )

@@ -6,6 +6,7 @@ from ..base import Base
 from .helpers import read_optional, write_optional
 
 optional = [
+    "platform",
     "platform_id",
     "base_url",
     "profile_url",
@@ -21,6 +22,7 @@ class Identity(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     person_id: Mapped[int]
+    platform: Mapped[Optional[str]]
     platform_id: Mapped[Optional[str]]
     base_url: Mapped[Optional[str]]
     profile_url: Mapped[Optional[str]]

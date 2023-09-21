@@ -7,6 +7,7 @@ from .helpers import read_optional, write_optional
 
 optional = [
     "base_url",
+    "platform",
     "oauth_token",
     "oauth_token_secret",
     "state"
@@ -19,6 +20,7 @@ class Registration(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     person_id: Mapped[int]
     base_url: Mapped[Optional[str]]
+    platform: Mapped[Optional[str]]
     oauth_token: Mapped[Optional[str]]
     oauth_token_secret: Mapped[Optional[str]]
     state: Mapped[Optional[str]]

@@ -7,6 +7,7 @@ from .helpers import read_optional, write_optional
 
 optional = [
     "base_url",
+    "platform",
     "url",
     "username",
     "name",
@@ -18,6 +19,7 @@ class Source(Base):
     __tablename__ = "source"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    platform: Mapped[Optional[str]]
     platform_id: Mapped[str]
     base_url: Mapped[Optional[str]]
     url: Mapped[Optional[str]]

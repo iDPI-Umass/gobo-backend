@@ -11,6 +11,47 @@ def where(key, value, operator = "eq"):
         "operator": operator
     }
 
+def build_query(per_page, wheres):
+    return {
+        "page": 1,
+        "per_page": per_page,
+        "where": wheres
+    }
+
+class QueryIterator:
+    def __init__(self, model, per_page = 1000, wheres = [], query = None):
+        self.model = model
+        self.feed = []
+        self.state = "active"
+        
+        if query is not None:
+            self.per_page = query["per_page"]
+            self.query = query
+        else:
+            self.per_page = per_page
+            self.query = build_query(per_page, wheres)
+
+    def __iter__(self):
+        return self
+    
+    def pull(self):
+        if self.state == "done":
+            return
+        
+        items = self.model.query(self.query)
+        self.feed.extend(items)
+        if len(items) != self.per_page:
+            self.state = "done"
+    
+    def __next__(self):
+        if len(self.feed) == 0:
+            self.pull()
+            if len(self.feed) == 0:
+                raise StopIteration
+        
+        return self.feed.pop(0)
+
+
 
 def define_crud(Table):
     def add(data):

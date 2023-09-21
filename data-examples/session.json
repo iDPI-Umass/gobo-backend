@@ -1,0 +1,7 @@
+{
+  "did": "did:plc:dwwqhkndlvabhskr6flmlld7",
+  "handle": "freeformflow.com",
+  "email": "real.david.harper@gmail.com",
+  "accessJwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6ImNvbS5hdHByb3RvLmFwcFBhc3MiLCJzdWIiOiJkaWQ6cGxjOmR3d3Foa25kbHZhYmhza3I2ZmxtbGxkNyIsImlhdCI6MTY5NTAyNjMxMywiZXhwIjoxNjk1MDMzNTEzfQ.tQcL4lRHTj0iN_0NyPq9h3wZl4sig2Lrbrz9H49oANY",
+  "refreshJwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6ImNvbS5hdHByb3RvLnJlZnJlc2giLCJzdWIiOiJkaWQ6cGxjOmR3d3Foa25kbHZhYmhza3I2ZmxtbGxkNyIsImp0aSI6IkwxVUlwZFRxSTZMUFpYN3EvZlpGaHJFWjQ4OGlneUxaNHN3Ump6TVdIWTAiLCJpYXQiOjE2OTUwMjYzMTMsImV4cCI6MTcwMjgwMjMxM30.BCKVcRtqYjgXJfMm1IXFdNbshgT_PlNtP8E7mDw9dBg"
+}

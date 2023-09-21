@@ -49,9 +49,9 @@ def start_test(count):
         thread = Thread(queues.test, jobs.test.dispatch)
         thread.start()
 
-def start_database(count):
+def start_default(count):
     for i in range(count):
-        thread = Thread(queues.database, jobs.database.dispatch)
+        thread = Thread(queues.default, jobs.default.dispatch)
         thread.start()
 
 def start_bluesky(count):

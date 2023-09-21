@@ -47,7 +47,7 @@ import threads
 
 threads.start_api()
 threads.start_test(1)
-threads.start_database(4)
+threads.start_default(4)
 threads.start_bluesky(1)
 threads.start_reddit(1)
 threads.start_mastodon(1)
