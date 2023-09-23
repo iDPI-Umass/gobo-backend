@@ -9,8 +9,8 @@ QueryIterator = models.helpers.QueryIterator
 
 
 def hard_reset(task):
-    queues.default.put_details("remove posts", task.details)
-    queues.default.put_details("reset last retrieved", task.details)
+    queues.default.put_details("clear posts", task.details)
+    queues.default.put_details("clear last retrieved", task.details)
 
 
 def clear_posts(task):

@@ -4,17 +4,14 @@ import queue
 
 
 class Task():
-    def __init__(self, queue, name, details = None, id = None, tries = 0):
+    def __init__(self, queue, name, details = None, id = None, tries = 0, flow = []):
         self.id = id or joy.crypto.random({"encoding": "safe-base64"})
         self.queue = queue
-        self.handler = None
         self.name = name
-        self.tries = tries
+        self.reset_tracking()
         self.details = details or {}
-        
-        now = joy.time.now()
-        self.created = now
-        self.updated = now
+
+        self.flow = flow
 
     def __repr__(self): 
         details = {}
@@ -26,7 +23,6 @@ class Task():
           "queue": self.queue,
           "name": self.name,
           "tries": self.tries,
-          "handler": self.handler,
           "created": self.created,
           "updated": self.updated,
         })
@@ -43,6 +39,38 @@ class Task():
     def remove(self):
         if type(self.id) == int:
             models.task.remove(self.id)
+
+    def reset_tracking(self):
+        now = joy.time.now()
+        self.created = now
+        self.updated = now
+        self.tries = 0
+
+    def halt(self):
+        self.is_halted = True
+
+    def progress(self, queues, response = {}):
+        if self.is_halted == True:
+            return
+
+        next = None
+        if len(self.flow) > 0:
+            next = self.flow.pop(0)
+        
+        if next is not None:
+            queue = getattr(queues, next["queue"])
+            self.queue = queue.name
+            self.name = next["name"]
+            self.reset_tracking()
+            
+            for key, value in response.items():
+                self.details[key] = value
+
+            next_details = next.get("details", {})
+            for key, value in next_details.items():
+                self.details[key] = value
+
+            queue.put_task(self)
 
 
 class Queue():
@@ -71,6 +99,13 @@ class Queue():
         )
 
         self.queue.put(task)
+
+    def put_flow(self, flow):
+        self.put_task(Task(
+            queue = self.name,
+            name = "start flow",
+            flow = flow
+        ))
 
     def get(self):
         return self.queue.get()

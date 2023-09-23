@@ -4,16 +4,24 @@ import queues
 import jobs
 import joy
 
-
 class Thread():
     def __init__(self, queue, dispatch):
         def main():
             while True:
                 try:
                     task = queue.get()
-                    dispatch(task)
+                    created = joy.time.convert("iso", "date", task.created)
+                    logging.info(f"starting {queue.name} {task.name} {task.id} latency: {joy.time.latency(created)}")
+                    
+                    stop_timer = joy.time.timer()
+                    response = dispatch(task)
+                    logging.info(f"finished {queue.name} {task.name} {task.id} duration: {stop_timer()}")
+                    
+                    task.progress(queues, response)
                     queue.task_done()
+                
                 except joy.error.RecoverableException as e:
+                    logging.error(f"trying to recover from failure in {queue.name} {task.name}")
                     logging.warning(e, exc_info=True)
                     task.tries = task.tries + 1
                     if task.tries < 3:
@@ -21,7 +29,9 @@ class Thread():
                     else:
                         # TODO: Create dead-letter queue.
                         task.remove()
+                
                 except Exception as e:
+                    logging.error(f"failure in {queue.name} {task.name}")
                     logging.error(e, exc_info=True)
                     if task != None:
                         queue.task_done()

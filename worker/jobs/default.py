@@ -7,8 +7,17 @@ QueryIterator = models.helpers.QueryIterator
 
 
 def dispatch(task):
-    task.handler = "database"
-    logging.info("dispatching: %s", task)
+    if task.name == "start flow":
+        tasks.start_flow(task)
+    if task.name == "flow pull sources":
+        tasks.flow_pull_sources(task)
+    if task.name == "flow pull posts":
+        tasks.flow_pull_posts(task)
+    if task.name == "flow onboard sources":
+        tasks.flow_onboard_sources(task)
+    if task.name == "flow onboard source posts":
+        tasks.flow_onboard_source_posts(task)
+
 
     if task.name == "follow":
         tasks.follow(task)
@@ -18,12 +27,6 @@ def dispatch(task):
         tasks.remove_identity(task)
 
 
-    elif task.name == "add post to source":
-        tasks.add_post_to_source(task)
-    elif task.name == "add partial post":
-        tasks.add_partial_post(task)
-    elif task.name == "add interpost edge":
-        tasks.add_interpost_edge(task)
     elif task.name == "add post to followers":
         tasks.add_post_to_followers(task)
     elif task.name == "remove post":
@@ -34,10 +37,10 @@ def dispatch(task):
 
     elif task.name == "hard reset":
         tasks.hard_reset(task)
-    elif task.name == "remove posts":
-        tasks.remove_posts(task)
-    elif task.name == "remove last retrieved":
-        tasks.remove_last_retrieved(task)
+    elif task.name == "clear posts":
+        tasks.clear_posts(task)
+    elif task.name == "clear last retrieved":
+        tasks.clear_last_retrieved(task)
 
 
     elif task.name == "prune image cache":

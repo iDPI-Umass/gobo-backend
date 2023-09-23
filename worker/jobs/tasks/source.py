@@ -3,7 +3,7 @@ import models
 import joy
 from clients import Bluesky, Reddit, Mastodon
 import queues
-from .helpers import is_valid_platform
+import helpers as h
 
 where = models.helpers.where
 build_query = models.helpers.build_query
@@ -12,7 +12,7 @@ QueryIterator = models.helpers.QueryIterator
 
 def follow_fanout(task):
     platform = task.details.get("platform", None)
-    if not is_valid_platform(platform):
+    if not h.is_valid_platform(platform):
         raise Exception(f"clear posts does not support platform {platform}")
   
     if platform == "all":
@@ -25,232 +25,133 @@ def follow_fanout(task):
         wheres = wheres
     )
     for identity in identities:
-        queues.default.put_details("pull sources", {"identity": identity})
-
-
-def reconcile_sources(identity, sources):
-    desired_sources = []
-    for source in sources:
-        desired_sources.append(source["id"])
-    
-    results = models.link.pull([
-        where("origin_type", "identity"),
-        where("origin_id", identity["id"]),
-        where("target_type", "source"),
-        where("name", "follows")
-    ])
-   
-    current_sources = []
-    source_ids = [ result["target_id"] for result in results ]
-    for source in models.source.pluck(source_ids):
-        if source["base_url"] == identity["base_url"]:
-            current_sources.append(source["id"])
-
-
-    difference = list(set(desired_sources) - set(current_sources))
-    for source_id in difference:
-        logging.info(f"For identity {identity['id']}, adding source {source_id}")
-        queues.default.put_details("follow", {
-            "identity_id": identity["id"],
-            "source_id": source_id
-        })
-
-    difference = list(set(current_sources) - set(desired_sources))
-    for source_id in difference:
-        logging.info(f"For identity {identity['id']}, removing source {source_id}")
-        queues.default.put_details("unfollow", {
-            "identity_id": identity["id"],
-            "source_id": source_id
-        })
+        queues.default.put_details("flow pull sources", {"identity": identity})
 
 
 def pull_sources(task):
-    identity = task.details.get("identity")
-    if identity == None:
-        raise Exception("pull posts task requires an identity to run")
-    platform = identity["platform"]
-    if not is_valid_platform(platform):
-        raise Exception(f"pull sources does not support platform {platform}")
+    identity = h.enforce("identity", task)
+    client = h.get_client(identity)
+    client.login()
+    return {"graph": client.list_sources()}
 
-    if platform == "bluesky":
-        client = Bluesky(identity)
-    elif platform == "mastodon":
-        base_url = identity["base_url"]
-        mastodon_client = models.mastodon_client.find({"base_url": base_url})
-        if mastodon_client == None:
-            logging.warning(f"no mastodon client found for {base_url}")
-            return
-        client = Mastodon(mastodon_client, identity)
-    elif platform == "reddit":
-        client = Reddit(identity)
-    else:
-        raise Exception("unknown platform")
 
-    data = client.list_sources()
-    _sources = client.map_sources(data)
+def map_sources(task):
+    identity = h.enforce("identity", task)
+    graph = h.enforce("graph", task)
+    client = h.get_client(identity)
+    sources = client.map_sources(graph)
+    return {"sources": sources}
 
+
+def upsert_sources(task):
+    _sources = h.enforce("sources", task)
     sources = []
     for _source in _sources:
         source = models.source.upsert(_source)
         sources.append(source)
+    return {"sources": sources}
 
-    reconcile_sources(identity, sources)
-    return sources
+
+def reconcile_sources(task):
+    identity = h.enforce("identity", task)
+    sources = h.enforce("sources", task)
+    h.reconcile_sources(identity, sources)
+    return {"sources": sources}
+
+
+def get_last_retrieved(task):
+    source = h.enforce("source", task)
     
+    should_fetch = False
+    loop = models.source.get_last_retrieved(source["id"])
+    last_retrieved = loop.get("secondary", None)
+    if last_retrieved is None:
+        should_fetch = True
+    else:
+        date = joy.time.convert("iso", "date", last_retrieved)
+        if joy.time.latency(date).seconds > 300:
+            should_fetch = True
+            new_last_retrieved = joy.time.now()
+
+    if should_fetch == False:
+        return task.halt()
+
+    return {
+        "last_retrieved_loop": loop,
+        "last_retrieved": last_retrieved,
+        "new_last_retrieved": new_last_retrieved
+    }
 
 
+def set_last_retrieved(task):
+    link = h.enforce("last_retrieved_loop", task)
+    value = h.enforce("new_last_retrieved", task)
+    link["secondary"] = value
+    models.link.update(link["id"], link)
 
 
-def set_onboard_sources(Client, queue):
-    def onboard_sources(task):
-        identity = task.details.get("identity")
-        if identity == None:
-            raise Exception("pull posts task requires an identity to run")
+def pull_posts(task):
+    identity = h.enforce("identity", task)
+    source = h.enforce("source", task)
+    last_retrieved = task.details.get("last_retrieved", None)
+    is_shallow = task.details.get("is_shallow", False)
+    client = h.get_client(identity)
+    client.login()
+    graph = client.get_post_graph(
+        source = source, 
+        last_retrieved = last_retrieved, 
+        is_shallow = is_shallow
+    )
+    return {"graph": graph}
+
+
+def map_posts(task):
+    identity = h.enforce("identity", task)
+    graph = h.enforce("graph", task)
+    sources = h.enforce("sources", task)
+    graph["sources"] = sources
+    client = h.get_client(identity)
+    post_data = client.map_posts(graph)
+    return {"post_data": post_data}
+
+
+# Careful here: There is order dependency on getting full and partial posts
+# in the database and associated with IDs. That way we guarantee integrity
+# of the graph we build out of the edges. Afterward, the followers can be
+# full throttle without order considerations.
+def upsert_posts(task):
+    post_data = h.enforce("post_data", task)
+    full_posts = []
+    references = {}      
+
+    for _post in post_data["posts"]:
+        post = models.post.upsert(_post)
+        full_posts.append(post)
+        references[post["platform_id"]] = post
+        h.attach_post(post)     
+    for _post in post_data["partials"]:
+        post = models.post.safe_add(_post)
+        references[post["platform_id"]] = post
+        h.attach_post(post)
+    for edge in post_data["edges"]:
+        origin = references.get(edge["origin_reference"], None)
+        target = references.get(edge["target_reference"], None)
         
-        base_url = identity["base_url"]
+        if origin is None:
+            logging.warning("upsert posts: origin post is not available")
+            continue
+        if target is None:
+            logging.warning(f"upsert posts: target post is not available")
+            continue
 
-        if Client.__name__ == "Mastodon":
-            mastodon_client = models.mastodon_client.find({"base_url": base_url})
-            if mastodon_client == None:
-                logging.warning(f"no mastodon client found for {base_url}")
-                return
-            client = Client(mastodon_client, identity)
-        else:
-            client = Client(identity)
-            
-
-        data = client.list_sources()
-        _sources = client.map_sources(data)
-
-        sources = []
-        for _source in _sources:
-            source = models.source.upsert(_source)
-            sources.append(source)
-      
-        reconcile_sources(identity, sources)
-        sources
-
-        for source in sources:
-            queue.put_details("pull posts", {
-                "client": client,
-                "source": source,
-                "shallow": True
-            })
-
-    return onboard_sources
-
-
-# TODO: Can we refactor the platform clients so we are not required to look up
-#    an identity? Probably not as we move into more private posts. In that case
-#    we should refactor some of the primitives here to make this less error-prone
-#    to write.
-def set_read_sources(where_statements, queue):
-    def read_sources(task):
-        page = task.details.get("page") or 1
-        per_page = 500
-        query = {
-            "per_page": per_page,
-            "page": page,
-            "where": where_statements
-        }
-
-        sources = models.source.query(query)
-        for source in sources:
-            queue.put_details( "read source", {"source": source})
-
-        if len(sources) == per_page:
-            task.update({"page": page + 1})
-            queue.put_task(task)
-
-    return read_sources
-
-
-
-def set_read_source(Client, queue):
-    def read_source(task):
-        source = task.details.get("source")
-        if source is None:
-            raise Exception("read source: needs source to be specified")
-
-        link = models.link.random([
-            where("origin_type", "identity"),
-            where("target_type", "source"),
-            where("target_id", source["id"]),
-            where("name", "follows")
-        ])
-
-        # If there is no link, this source is incidential on someone's feed,
-        # so it is not directly watched for posts here.
-        if link is None:
-            return
-
-        identity = models.identity.get(link["origin_id"])
-        if identity is None:
-            raise Exception(f"no identity found with id {link['origin_id']}")
-
-        base_url = identity["base_url"]
-
-        if Client.__name__ == "Mastodon":
-            mastodon_client = models.mastodon_client.find({"base_url": base_url})
-            if mastodon_client == None:
-                logging.warning(f"no mastodon client found for {base_url}")
-                return
-            client = Client(mastodon_client, identity)
-        else:
-            client = Client(identity)
-
-        queue.put_details("pull posts", {
-            "client": client,
-            "source": source
+        models.link.upsert({
+            "origin_type": "post",
+            "origin_id": origin["id"],
+            "target_type": "post",
+            "target_id": target["id"],
+            "name": edge["name"],
+            "secondary": f"{target['published']}::{target['id']}"
         })
 
-    return read_source
-
-
-
-def set_pull_posts(queue):
-    def pull_posts(task):
-        client = task.details.get("client")
-        source = task.details.get("source")
-        is_shallow = task.details.get("shallow", False)
-        base_url = source["base_url"]
-        if client == None or source == None:
-            raise Exception("pull posts task lacks needed inputs")
-
-        link = models.source.get_last_retrieved(source["id"])
-        source["last_retrieved"] = link.get("secondary")
-
-
-        last_retrieved = joy.time.now()
-        data = client.get_post_graph(source, is_shallow=is_shallow)
-        
-        sources = []
-        _sources = client.map_sources(data)
-        for _source in _sources:
-            source = models.source.upsert(_source)
-            sources.append(source)
-        data["sources"] = sources
-
-
-        post_data = client.map_posts(data)
-        if is_shallow != True:
-            link["secondary"] = last_retrieved
-            models.link.update(link["id"], link)
-
-        for post in post_data["posts"]:
-            queues.default.put_details("add post to source", {
-                "post": post
-            })
-        for post in post_data["partials"]:
-            queues.default.put_details("add partial post", {
-                "post": post
-            })
-        for edge in post_data["edges"]:
-            queues.default.put_details("add interpost edge", {
-                "base_url": base_url,
-                "edge_reference": edge
-            })           
-
-
-    return pull_posts
-
+    for post in full_posts:
+        queues.default.put_details("add post to followers", {"post": post})

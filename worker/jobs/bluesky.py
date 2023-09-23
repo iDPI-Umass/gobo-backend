@@ -15,9 +15,6 @@ where = models.helpers.where
 
 
 def dispatch(task):
-    task.handler = "bluesky"
-    logging.info("dispatching: %s", task)
-
     if task.name == "identity follow fanout":
         identity_follow_fanout(task)
     elif task.name == "pull sources":

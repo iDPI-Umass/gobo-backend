@@ -5,7 +5,6 @@ import queues
 
 
 def dispatch(task):
-    task.handler = "api"
     if task.name != "poll":
         logging.info("dispatching: %s", task)
 

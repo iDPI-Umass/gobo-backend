@@ -49,3 +49,12 @@ def hours_from_now(hours):
 
 def remaining(d):
     return d - datetime.utcnow()
+
+def latency(d):
+    return datetime.utcnow() - d
+
+def timer():
+    start = datetime.utcnow()
+    def _timer():
+        return datetime.utcnow() - start
+    return _timer
