@@ -22,8 +22,9 @@ def get_mastodon_credentials(base_url):
     return client
 
 def get_redirect_url(person, base_url):
-    _client = get_mastodon_credentials(base_url)    
-    client = Mastodon(_client)
+    get_mastodon_credentials(base_url)
+    client = Mastodon({"base_url": base_url})
+    client.login()
     state = joy.crypto.random({"encoding": "safe-base64"})
     url = client.get_redirect_url(state)
 
@@ -76,6 +77,7 @@ def confirm_identity(registration, data):
     # Convert the code into a durable OAuth token
     try:
         client = Mastodon(_client)
+        client.login()
         oauth_token = client.convert_code(data["code"])
     except Exception as e:
         logging.warning(e)
@@ -84,7 +86,11 @@ def confirm_identity(registration, data):
 
     # Fetch profile data to associate with this identity.
     try:
-        client = Mastodon(_client, {"oauth_token": oauth_token})
+        client = Mastodon({
+            "base_url": base_url,
+            "oauth_token": oauth_token
+        })
+        client.login()
         profile = client.get_profile()
     except Exception as e:
         logging.warning(e)

@@ -22,6 +22,16 @@ shards:
       description: The ISO 8601 timestamp this resource was updated.
       type: string
 
+  platform: &platform
+    platform:
+      description: The name of the host provider associated with this resource
+      type: string
+      enum:
+        - bluesky
+        - mastodon
+        - reddit
+        - smalltown
+
   linkCore: &linkCore
     origin_type:
       description: The type of resource that represents the origin of this edge.
@@ -109,6 +119,7 @@ shards:
 
   identityCore: &identityCore
     <<: *person_id
+    <<: *platform
     platform_id:
       description: The unique ID for this identity on the host provider.
       type: string
@@ -148,6 +159,7 @@ shards:
 
   registrationCore: &registrationCore
     <<: *person_id
+    <<: *platform
     base_url:
       description: The base URL of the service provider of this registration.
       type: string
@@ -213,6 +225,7 @@ shards:
       <<: *timestamp
 
   sourceCore: &sourceCore
+    <<: *platform
     platform_id:
       description: The ID of this entity within the given platform.
       type: string
@@ -245,6 +258,7 @@ shards:
 
 
   postCore: &postCore
+    <<: *platform
     source_id:
       description: The unique ID of the source for this post.
       type: integer

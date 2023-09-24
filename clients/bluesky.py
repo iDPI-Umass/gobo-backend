@@ -324,18 +324,9 @@ class Bluesky():
         self.me = self.identity["oauth_token"]
         self.client = GOBOBluesky()
 
-        session = models.bluesky_session.find({
-            "person_id": identity["person_id"],
-            "base_url": identity["base_url"],
-            "did": identity["platform_id"]
-        })
-        if session is None:
-            raise Exception("bluesky client: no matching session for this identity")
-
-        self.client.load_session(session)
 
     @staticmethod
-    def login(identity):
+    def create_session(identity):
         client = GOBOBluesky()
         return client.login(
             login = identity.get("oauth_token", None),
@@ -350,6 +341,19 @@ class Bluesky():
     @staticmethod
     def map_session(identity, session):
         return Session.create(identity, session)
+    
+    
+    def login(self):
+        session = models.bluesky_session.find({
+            "person_id": self.identity["person_id"],
+            "base_url": self.identity["base_url"],
+            "did": self.identity["platform_id"]
+        })
+        if session is None:
+            raise Exception("bluesky client: no matching session for this identity")
+
+        self.client.load_session(session)
+
 
     def get_profile(self):
         return self.client.get_profile(self.me)

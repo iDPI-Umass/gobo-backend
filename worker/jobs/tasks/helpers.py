@@ -1,4 +1,5 @@
 import logging
+import os
 import models
 import joy
 from clients import Bluesky, Reddit, Mastodon
@@ -20,9 +21,17 @@ supported_platforms = [
 def is_valid_platform(platform):
   return platform in supported_platforms
 
+def generic_parameter(field, input):
+    if isinstance(input, str):
+        result = input
+    elif isinstance(input, dict):
+        result = input.get(field, None)
+    else:
+        result = getattr(input, field, None)
 
-def get_platform(identity):
-    platform = identity.get("platform", None)
+
+def get_platform(input):
+    platform = generic_parameter(input)
     if not is_valid_platform(platform):
         raise Exception(f"{platform} is an invalid platform")
     return platform
@@ -36,23 +45,26 @@ def enforce(name, task):
 
 
 def get_client(identity):
-    platform = identity["platform"]
+    platform = get_platform(identity)
 
     if platform == "bluesky":
         client = Bluesky(identity)
     elif platform == "mastodon":
-        base_url = identity["base_url"]
-        mastodon_client = models.mastodon_client.find({"base_url": base_url})
-        if mastodon_client == None:
-            logging.warning(f"no mastodon client found for {base_url}")
-            return
-        client = Mastodon(mastodon_client, identity)
+        client = Mastodon(identity)
     elif platform == "reddit":
         client = Reddit(identity)
     else:
         raise Exception("unknown platform")
     
     return client
+
+
+def read_draft_file(draft):
+    filename = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), draft["id"])
+    if os.path.exists(filename):
+        with open(filename, "rb") as f:
+            return f.read()
+
 
 def reconcile_sources(identity, sources):
     desired_sources = []

@@ -63,6 +63,7 @@ def confirm_identity(registration, data):
     # Fetch profile data to associate with this identity.
     try:
         client = Reddit({"oauth_token": oauth_token})
+        client.login()
         profile = client.get_profile()
     except Exception as e:
         logging.warning(e)

@@ -100,15 +100,8 @@ class Poll():
 
 
 class Mastodon():
-    def __init__(self, mastodon_client, identity = None):
-        self.identity = identity or {}
-        self.base_url = mastodon_client["base_url"]
-        self.client = mastodon.Mastodon(
-            client_id = mastodon_client["client_id"],
-            client_secret = mastodon_client["client_secret"],
-            api_base_url = mastodon_client["base_url"],
-            access_token = self.identity.get("oauth_token")
-        )
+    def __init__(self, identity = None):
+        self.identity = identity
 
     @staticmethod
     def register_client(base_url):
@@ -125,9 +118,21 @@ class Mastodon():
           "client_id": client_id,
           "client_secret": client_secret
         }
+    
 
+    def login(self):
+        base_url = self.identity["base_url"]
+        mastodon_client = models.mastodon_client.find({"base_url": base_url})
+        if mastodon_client == None:
+            raise Exception(f"no mastodon client found for {base_url}")
 
-
+        self.base_url = base_url
+        self.client = mastodon.Mastodon(
+            client_id = mastodon_client["client_id"],
+            client_secret = mastodon_client["client_secret"],
+            api_base_url = mastodon_client["base_url"],
+            access_token = self.identity.get("oauth_token")
+        )
 
     def get_redirect_url(self, state):
         return self.client.auth_request_url(

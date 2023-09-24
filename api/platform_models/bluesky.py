@@ -80,6 +80,7 @@ def confirm_identity(registration, data):
         "oauth_token": data["bluesky_login"],
         "oauth_token_secret": data["bluesky_secret"],
     })
+    client.login()
     profile = client.get_profile()
 
 

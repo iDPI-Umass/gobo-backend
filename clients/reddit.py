@@ -157,21 +157,40 @@ class Reddit():
     BASE_URL = "https://www.reddit.com"
 
     def __init__(self, identity = None):
-        self.identity = identity or {}
-        self.client = praw.Reddit(
-            refresh_token = self.identity.get("oauth_token"),
+        self.identity = identity
+
+    @staticmethod
+    def get_redirect_url(self, state):
+        client = praw.Reddit(
             client_id = environ.get("REDDIT_CLIENT_ID"),
             client_secret = environ.get("REDDIT_CLIENT_SECRET"),
             user_agent = environ.get("REDDIT_USER_AGENT"),
             redirect_uri = environ.get("OAUTH_CALLBACK_URL")
         )
 
-
-    def get_redirect_url(self, state):
-        return self.client.auth.url(
+        return client.auth.url(
             scopes = ["identity", "mysubreddits", "read", "submit", "vote"],
             state=state,
             duration = "permanent"
+        )
+    
+    @staticmethod
+    def convert_code(code):
+        client = praw.Reddit(
+            client_id = environ.get("REDDIT_CLIENT_ID"),
+            client_secret = environ.get("REDDIT_CLIENT_SECRET"),
+            user_agent = environ.get("REDDIT_USER_AGENT"),
+            redirect_uri = environ.get("OAUTH_CALLBACK_URL")
+        )
+        return client.auth.authorize(code)
+
+    def login(self):
+        self.client = praw.Reddit(
+            refresh_token = self.identity.get("oauth_token"),
+            client_id = environ.get("REDDIT_CLIENT_ID"),
+            client_secret = environ.get("REDDIT_CLIENT_SECRET"),
+            user_agent = environ.get("REDDIT_USER_AGENT"),
+            redirect_uri = environ.get("OAUTH_CALLBACK_URL")
         )
 
     def convert_code(self, code):

@@ -5,13 +5,13 @@ from platform_models import bluesky, reddit
 import http_errors
 import models
 
-def resolve_platform(url):
-    if url == bluesky.BASE_URL:
-        return "bluesky"
-    elif url == reddit.BASE_URL:
-        return "reddit"
-    else:
-        return "mastodon"
+
+def enforce(name, data, exception):
+    value = data.get(name, None)
+    if value is None:
+        raise exception
+    return value
+
 
 def parse_page_query(data):
     try:

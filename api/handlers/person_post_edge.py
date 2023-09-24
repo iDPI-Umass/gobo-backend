@@ -2,7 +2,6 @@ import logging
 from flask import request
 import http_errors
 import models
-from .helpers import resolve_platform
 
 
 def check_identity(person_id, id):
@@ -55,7 +54,7 @@ def person_post_edge_put(person_id, identity_id, post_id, name):
     })
 
     models.task.add({
-        "queue": resolve_platform(identity["base_url"]),
+        "queue": identity["platform"],
         "name": "add post edge",
         "details": {
             "identity": identity,
@@ -91,7 +90,7 @@ def person_post_edge_delete(person_id, identity_id, post_id, name):
 
     models.post_edge.remove(edge["id"])
     models.task.add({
-        "queue": resolve_platform(identity["base_url"]),
+        "queue": identity["platform"],
         "name": "remove post edge",
         "details": {
             "identity": identity,

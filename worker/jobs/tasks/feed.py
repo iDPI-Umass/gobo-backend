@@ -2,6 +2,7 @@ import logging
 import joy
 import models
 import queues
+import helpers as h
 
 where = models.helpers.where
 QueryIterator = models.helpers.QueryIterator
@@ -10,9 +11,7 @@ QueryIterator = models.helpers.QueryIterator
 def add_post_to_followers(task):
     page = task.details.get("page") or 1
     per_page = task.details.get("per_page") or 1000
-    post = task.details.get("post")
-    if post is None:
-        raise Exception("add posts to followers must have post defined")
+    post = h.enforce("post", task)
 
     followers = models.link.query({
         "page": page,
@@ -41,9 +40,7 @@ def add_post_to_followers(task):
 
 
 def remove_post(task):
-    post = task.details.get("post")
-    if post is None:
-        raise Exception("remove post requires post")
+    post = h.enforce("post", task)
 
     links = QueryIterator(
         model = models.link,
@@ -70,9 +67,7 @@ def remove_post(task):
     
 
 def rebuild_feed(task):
-    person_id = task.details.get("person_id")
-    if person_id is None:
-        raise Exception("rebuild feed requires person_id")
+    person_id = h.enforce("person_id", task)
 
     identities = QueryIterator(
         model = models.link,

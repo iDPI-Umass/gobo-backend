@@ -2,16 +2,15 @@ import logging
 import joy
 import models
 import queues
+import helpers as h
 
 where = models.helpers.where
 QueryIterator = models.helpers.QueryIterator
 
 
 def follow(task):
-    identity_id = task.details.get("identity_id")
-    source_id = task.details["source_id"]
-    if identity_id is None or source_id is None:
-        raise Exception("follow requires source and identity IDs")
+    identity_id = h.enforce("identity_id", task)
+    source_id = h.enforce("source_id", task)
 
     models.link.upsert({
         "origin_type": "identity",
@@ -43,11 +42,9 @@ def follow(task):
         })
 
 def unfollow(task):
-    identity_id = task.details.get("identity_id")
-    source_id = task.details.get("source_id")
-    if identity_id is None or source_id is None:
-        raise Exception("unfollow requires source and identity IDs")
-
+    identity_id = h.enforce("identity_id", task)
+    source_id = h.enforce("source_id", task)
+    
     models.link.find_and_remove({
         "origin_type": "identity",
         "origin_id": identity_id,
@@ -73,9 +70,7 @@ def unfollow(task):
 
 
 def remove_identity(task):
-    identity_id = task.details.get("identity_id")
-    if identity_id is None:
-        raise Exception("remove identity requires identity_id")
+    identity_id = h.enforce("identity_id", task)
 
     links = QueryIterator(
         model = models.link,
