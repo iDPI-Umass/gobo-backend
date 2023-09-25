@@ -151,7 +151,7 @@ shards:
   identity: &identity
     type: object
     additionalProperties: false
-    required: [id, person_id, base_url, profile_url, username]
+    required: [id, person_id, platform, base_url, profile_url, username]
     properties:
       <<: *id
       <<: *identityCore
@@ -177,7 +177,7 @@ shards:
   registration: &registration
     type: object
     additionalProperties: false
-    required: [id, person_id, base_url]
+    required: [id, person_id, platform, base_url]
     properties:
       <<: *id
       <<: *registrationCore
@@ -250,7 +250,7 @@ shards:
   source: &source
     type: object
     additionalProperties: false
-    required: [id]
+    required: [ id, platform ]
     properties:
       <<: *id
       <<: *sourceCore
@@ -293,7 +293,7 @@ shards:
   post: &post
     type: object
     additionalProperties: false
-    required: [id]
+    required: [ id, platform ]
     properties:
       <<: *id
       <<: *postCore
@@ -1218,8 +1218,9 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            required: [ base_url ]
+            required: [ platform, base_url ]
             properties:
+              <<: *platform
               base_url:
                 description: The base URL that identifies the target social media provider.
                 type: string
@@ -1273,37 +1274,3 @@ resources:
           status: 200
           type: application/json
           schema: *identity
-
-  action_pull_identity_sources:
-    template: /actions/pull-identity-sources
-    route: /actions/pull-identity-sources
-    methods:
-      post:
-        request:
-          type: application/json
-          schema:
-            type: object
-            additionalProperties: false
-            required: [ profile_url ]
-            properties:
-              profile_url:
-                description: The unique URL of this identity with the host provider.
-                type: string
-        response:
-          status: 200
-          type: application/json
-          schema: *task
-
-  action_workbench:
-    template: /actions/workbench
-    route: /actions/workbench
-    methods:
-      post:
-        request:
-          type: application/json
-          schema:
-            type: object
-        response:
-          status: 200
-          type: application/json
-          schema: *task

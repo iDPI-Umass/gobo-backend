@@ -41,16 +41,14 @@ def poll_database(task):
     for _task in tasks:
         queue = _task["queue"]
 
-        if queue == "test":
-            queues.test.put_dict(_task)
+        if queue == "default":
+            queues.default.put_dict(_task)
         elif queue == "bluesky":
             queues.bluesky.put_dict(_task)
         elif queue == "reddit":
             queues.reddit.put_dict(_task)
         elif queue == "mastodon":
             queues.mastodon.put_dict(_task)
-        elif queue == "database":
-            queues.database.put_dict(_task)
         else:
             logging.warning("No matching queue for task: %s", _task)
 
@@ -59,5 +57,11 @@ def poll_database(task):
         time.sleep(10)
     else:
         task.update({"last": tasks[-1]})
+
+    new_task = queues.Task(
+        name = "poll",
+        details = task.details
+    )
     
-    queues.api.put_task(task)
+    new_task.quiet()
+    queues.api.put_task(new_task)

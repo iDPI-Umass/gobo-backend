@@ -71,8 +71,22 @@ def dispatch(task):
 
     elif task.name == "workbench":
         tasks.workbench(task)
+    
+    
+    elif task.name == "bootstrap platform labels":
+        tasks.boostrap_platform_labels(task)
+    elif task.name == "label identity platform":
+        tasks.label_identity_platform(task)
+    elif task.name == "label post platform":
+        tasks.label_post_platform(task)
+    elif task.name == "label registration platform":
+        tasks.label_registration_platform(task)
+    elif task.name == "label source platform":
+        tasks.label_source_platform(task)
 
 
+    elif task.name == "test":
+        tasks.test(task)
     else:
         logging.warning("No matching job for task: %s", task)
     

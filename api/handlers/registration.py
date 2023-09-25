@@ -11,7 +11,9 @@ def registrations_post():
 def registrations_get():
     views = ["created", "base_url"]
     parameters = parse_query(views, request.args)
-    return models.registration.query(parameters)
+    result = models.registration.query(parameters)
+    logging.info(result)
+    return result
 
 def registration_get(id):
     registration = models.registration.get(id)

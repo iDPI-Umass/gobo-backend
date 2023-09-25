@@ -2,7 +2,7 @@ import logging
 import joy
 import models
 import queues
-from .helpers import is_valid_platform
+from . import helpers as h
 
 where = models.helpers.where
 QueryIterator = models.helpers.QueryIterator
@@ -17,7 +17,7 @@ def clear_posts(task):
     page = task.details.get("page") or 1
     per_page = 1000
     platform = task.details.get("platform", None)
-    if not is_valid_platform(platform):
+    if not h.is_valid_platform(platform):
         raise Exception(f"clear posts does not support platform {platform}")
   
     if platform == "all":
@@ -68,7 +68,7 @@ def clear_last_retrieved(task):
     page = task.details.get("page") or 1
     per_page = 1000
     platform = task.details.get("platform", None)
-    if not is_valid_platform(platform):
+    if not h.is_valid_platform(platform):
         raise Exception(f"clear posts does not support platform {platform}")
   
     if platform == "all":

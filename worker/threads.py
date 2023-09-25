@@ -10,13 +10,9 @@ class Thread():
             while True:
                 try:
                     task = queue.get()
-                    created = joy.time.convert("iso", "date", task.created)
-                    logging.info(f"starting {queue.name} {task.name} {task.id} latency: {joy.time.latency(created)}")
-                    
-                    stop_timer = joy.time.timer()
+                    task.start(queue)
                     response = dispatch(task)
-                    logging.info(f"finished {queue.name} {task.name} {task.id} duration: {stop_timer()}")
-                    
+                    task.finish(queue)
                     task.progress(queues, response)
                     queue.task_done()
                 
@@ -54,11 +50,6 @@ def start_api():
     thread = Thread(queues.api, jobs.api.dispatch)
     thread.start()
 
-def start_test(count):
-    for i in range(count):
-        thread = Thread(queues.test, jobs.test.dispatch)
-        thread.start()
-
 def start_default(count):
     for i in range(count):
         thread = Thread(queues.default, jobs.default.dispatch)
@@ -69,12 +60,12 @@ def start_bluesky(count):
         thread = Thread(queues.bluesky, jobs.bluesky.dispatch)
         thread.start()
 
-def start_reddit(count):
-    for i in range(count):
-        thread = Thread(queues.reddit, jobs.reddit.dispatch)
-        thread.start()
-
 def start_mastodon(count):
     for i in range(count):
         thread = Thread(queues.mastodon, jobs.mastodon.dispatch)
+        thread.start()
+
+def start_reddit(count):
+    for i in range(count):
+        thread = Thread(queues.reddit, jobs.reddit.dispatch)
         thread.start()

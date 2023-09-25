@@ -1,8 +1,11 @@
-from datetime import datetime, timedelta
+import logging
+from datetime import datetime, timezone, timedelta
+
+def nowdate():
+    return datetime.now(timezone.utc)
 
 def now():
-    timestamp = datetime.utcnow().isoformat(timespec="milliseconds")
-    return f"{timestamp}Z"
+    return nowdate().isoformat(timespec="milliseconds")
 
 def to_iso_string(d):
     timestamp = d.isoformat(timespec="milliseconds")
@@ -42,19 +45,19 @@ def convert(start, end, value, optional = False):
         raise Exception(f"unsupported end encoding {end}")
     
 def hours_ago(hours):
-    return datetime.now() - timedelta(hours = hours)
+    return nowdate() - timedelta(hours = hours)
 
 def hours_from_now(hours):
-    return datetime.now() + timedelta(hours = hours)
+    return nowdate() + timedelta(hours = hours)
 
 def remaining(d):
-    return d - datetime.utcnow()
+    return d - nowdate()
 
 def latency(d):
-    return datetime.utcnow() - d
+    return nowdate() - d
 
 def timer():
-    start = datetime.utcnow()
+    start = nowdate()
     def _timer():
-        return datetime.utcnow() - start
+        return nowdate() - start
     return _timer

@@ -8,5 +8,6 @@ from .feed import *
 from .reset import *
 from .image import *
 from .workbench import *
+from .platform import *
 
 from .bluesky import *

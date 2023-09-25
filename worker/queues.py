@@ -1,17 +1,19 @@
+import logging
 import joy
 import models
 import queue
 
 
 class Task():
-    def __init__(self, queue, name, details = None, id = None, tries = 0, flow = []):
+    def __init__(self, name, details = None, id = None, tries = 0, flow = []):
         self.id = id or joy.crypto.random({"encoding": "safe-base64"})
-        self.queue = queue
         self.name = name
         self.reset_tracking()
         self.details = details or {}
-
         self.flow = flow
+
+        self.is_quiet = False
+        self.is_halted = False
 
     def __repr__(self): 
         details = {}
@@ -20,7 +22,6 @@ class Task():
 
         return str({
           "id": self.id,
-          "queue": self.queue,
           "name": self.name,
           "tries": self.tries,
           "created": self.created,
@@ -29,7 +30,19 @@ class Task():
     
     def __str__(self): 
         return self.__repr__()
+    
 
+    def start(self, queue):
+        created = joy.time.convert("iso", "date", self.created)
+        if self.is_quiet != True:
+            logging.info(f"starting {queue.name} {self.name} {self.id} latency: {joy.time.latency(created)}")
+        
+        self.start_time = joy.time.nowdate()
+
+    def finish(self, queue):
+        duration = joy.time.nowdate() - self.start_time
+        if self.is_quiet != True:
+            logging.info(f"finished {queue.name} {self.name} {self.id} duration: {duration}")
 
     def update(self, data):
         for key, value in data.items():
@@ -49,6 +62,9 @@ class Task():
     def halt(self):
         self.is_halted = True
 
+    def quiet(self):
+        self.is_quiet = True
+
     def progress(self, queues, response = {}):
         if self.is_halted == True:
             return
@@ -59,7 +75,6 @@ class Task():
         
         if next is not None:
             queue = getattr(queues, next["queue"])
-            self.queue = queue.name
             self.name = next["name"]
             self.reset_tracking()
             
@@ -83,7 +98,6 @@ class Queue():
 
     def put_details(self, name, details = None):
         task = Task(
-            queue = self.name,
             name = name,
             details = details
         )
@@ -93,7 +107,6 @@ class Queue():
     def put_dict(self, task):
         task = Task(
           id = task["id"],
-          queue = task["queue"],
           name = task["name"],
           details = task["details"]
         )
@@ -102,7 +115,6 @@ class Queue():
 
     def put_flow(self, flow):
         self.put_task(Task(
-            queue = self.name,
             name = "start flow",
             flow = flow
         ))
@@ -115,8 +127,7 @@ class Queue():
 
 
 api = Queue("api")
-test = Queue("test")
 default = Queue("default")
 bluesky = Queue("bluesky")
-reddit = Queue("reddit")
 mastodon = Queue("mastodon")
+reddit = Queue("reddit")

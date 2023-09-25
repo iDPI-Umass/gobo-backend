@@ -41,16 +41,16 @@ config.dictConfig({
 
 
 # Establish worker threads that drive its work.
+from os import environ
 import time
 from sources import schedule, start_sources
 import threads
 
 threads.start_api()
-threads.start_test(1)
-threads.start_default(4)
-threads.start_bluesky(1)
-threads.start_reddit(1)
-threads.start_mastodon(1)
+threads.start_default(int(environ.get("DEFAULT_THREAD_COUNT", 2)))
+threads.start_bluesky(int(environ.get("BLUESKY_THREAD_COUNT", 1)))
+threads.start_mastodon(int(environ.get("MASTODON_THREAD_COUNT", 1)))
+threads.start_reddit(int(environ.get("REDDIT_THREAD_COUNT", 1)))
 start_sources()
 
 

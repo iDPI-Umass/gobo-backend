@@ -30,6 +30,7 @@ def get_redirect_url(person, base_url):
 
     _registration = {
         "person_id": person["id"],
+        "platform": "mastodon",
         "base_url": base_url,
         "state": state
     }
@@ -101,6 +102,7 @@ def confirm_identity(registration, data):
     profile_url = profile.url
     _identity = {
         "person_id": registration["person_id"],
+        "platform": "mastodon",
         "platform_id": str(profile.id),
         "base_url": base_url,
         "profile_url": profile_url,
@@ -123,8 +125,8 @@ def confirm_identity(registration, data):
     })
 
     models.task.add({
-        "queue": "mastodon",
-        "name": "onboard sources",
+        "queue": "default",
+        "name": "flow - onboard sources",
         "details": {
             "identity": identity
         }

@@ -160,7 +160,7 @@ class Reddit():
         self.identity = identity
 
     @staticmethod
-    def get_redirect_url(self, state):
+    def get_redirect_url(state):
         client = praw.Reddit(
             client_id = environ.get("REDDIT_CLIENT_ID"),
             client_secret = environ.get("REDDIT_CLIENT_SECRET"),

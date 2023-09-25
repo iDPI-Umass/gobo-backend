@@ -42,6 +42,8 @@ class QueryIterator:
         self.feed.extend(items)
         if len(items) != self.per_page:
             self.state = "done"
+        else:
+            self.query["page"] += 1
     
     def __next__(self):
         if len(self.feed) == 0:

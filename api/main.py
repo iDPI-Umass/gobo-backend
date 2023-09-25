@@ -72,6 +72,7 @@ def wrap_handler(alias, configuration, handler):
         try:            
             authorize_request(configuration)
             validate_request(configuration)
+            logging.info(handler)
             result = handler(*args, **kwargs)
             status = configuration["response"]["status"]
             response = make_response(result, status)

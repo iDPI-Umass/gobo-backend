@@ -2,7 +2,7 @@ import logging
 import joy
 import models
 import queues
-import helpers as h
+from . import helpers as h
 
 where = models.helpers.where
 QueryIterator = models.helpers.QueryIterator

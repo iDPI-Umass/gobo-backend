@@ -14,7 +14,7 @@ def action_onboard_identity_start_post():
     if platform == "bluesky":
         response = bluesky.get_redirect_url(person)
     elif platform == "mastodon":
-        base_url = h.parse_base_url(request.json["base_url"])
+        base_url = h.parse_base_url(request.json)
         response = mastodon.get_redirect_url(person, base_url)
     elif platform == "reddit":
         response = reddit.get_redirect_url(person)
@@ -50,29 +50,3 @@ def action_onboard_identity_callback_post():
         identity = reddit.confirm_identity(registration, data)
 
     return identity
-
-
-def action_pull_identity_sources_post():
-    authority_id = g.claims["sub"]
-    person = models.person.lookup(authority_id)
-    
-    identity = models.identity.find({
-        "person_id": person["id"],
-        "profile_url": request.json["profile_url"]
-    })
-
-    if identity == None:
-        raise http_errors.unprocessable_content(
-            "this person has no identity with this provider"
-        )
-
-    platform = identity["platform"]
-    task = models.task.add({
-      "queue": platform,
-      "name": "pull sources after onboarding",
-      "details": {
-        "identity": identity
-      }
-    })
-
-    return task

@@ -14,6 +14,7 @@ def get_redirect_url(person):
 
     _registration = {
         "person_id": person["id"],
+        "platform": "reddit",
         "base_url": BASE_URL,
         "state": state
     }
@@ -74,6 +75,7 @@ def confirm_identity(registration, data):
     profile_url = f"{BASE_URL}/user/{profile.name}"
     _identity = {
         "person_id": registration["person_id"],
+        "platform": "reddit",
         "platform_id": str(profile.id),
         "base_url": BASE_URL,
         "profile_url": profile_url,
@@ -96,8 +98,8 @@ def confirm_identity(registration, data):
     })
 
     models.task.add({
-        "queue": "reddit",
-        "name": "onboard sources",
+        "queue": "default",
+        "name": "flow - onboard sources",
         "details": {
             "identity": identity
         }

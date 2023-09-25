@@ -2,7 +2,7 @@ import logging
 import models
 import joy
 import queues
-import helpers as h
+from . import helpers as h
 
 where = models.helpers.where
 build_query = models.helpers.build_query
