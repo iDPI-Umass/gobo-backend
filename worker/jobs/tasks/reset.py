@@ -57,7 +57,6 @@ def clear_post_targets(task):
 
     links = QueryIterator(
         model = models.link,
-        for_removal = True,
         wheres = [
             where("target_type", "post")
         ]
