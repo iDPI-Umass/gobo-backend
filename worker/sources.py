@@ -25,17 +25,17 @@ def start_sources():
         queues.default.put_details, "bluesky cycle sessions"
     )
 
-    # # Handles follower-list (source) updates.
-    # schedule.every(12).hours.do(
-    #     queues.default.put_details, "pull sources fanout"
-    # )
+    # Handles follower-list (source) updates.
+    schedule.every(12).hours.do(
+        queues.default.put_details, "pull sources fanout"
+    )
 
-    # # Pull the latest posts from the tracked sources.
-    # schedule.every().hour.do(
-    #     queues.default.put_details, "pull posts fanout"
-    # )
+    # Pull the latest posts from the tracked sources.
+    schedule.every().hour.do(
+        queues.default.put_details, "pull posts fanout"
+    )
 
-    # # Prune sources older than our maximum retention timelimit.
-    # schedule.every(12).hours.do(
-    #     queues.default.put_details, "prune resources"
-    # )
+    # Prune sources older than our maximum retention timelimit.
+    schedule.every(12).hours.do(
+        queues.default.put_details, "prune resources"
+    )
