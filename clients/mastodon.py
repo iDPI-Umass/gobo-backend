@@ -1,6 +1,7 @@
 import logging
 import time
 from os import environ
+from datetime import timedelta
 import re
 import mastodon
 import joy
@@ -311,10 +312,13 @@ class Mastodon():
 
     def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
         isDone = False
+        oldest_limit = joy.time.convert("date", "iso", 
+            joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
+        )
         if is_shallow == True:
             default_limit = 40
         else:
-            default_limit = 400
+            default_limit = 200
         max_id = None
 
         statuses = []
@@ -345,9 +349,13 @@ class Mastodon():
                     if status is None:
                         continue
                     
-                    statuses.append(status)
                     count += 1
-                    if count >= default_limit:
+                    if status.published < oldest_limit:
+                        isDone = True
+                        break
+                    if count < default_limit:
+                        statuses.append(status)
+                    else:
                         isDone = True
                         break
             else:
@@ -356,6 +364,9 @@ class Mastodon():
                     if status is None:
                         continue
                     
+                    if status.published < oldest_limit:
+                        isDone = True
+                        break
                     if status.published > last_retrieved:
                         statuses.append(status)
                     else:

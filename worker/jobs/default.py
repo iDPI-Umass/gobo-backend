@@ -69,8 +69,16 @@ def dispatch(task):
         return tasks.cycle_blusky_sessions(task)
 
 
-    elif task.name == "prune image cache":
-        return tasks.prune_image_cache(task)  
+    elif task.name == "prune resources":
+        return tasks.prune_resources(task)
+    elif task.name == "prune draft images":
+        return tasks.prune_draft_images(task)  
+    elif task.name == "prune posts":
+        return tasks.prune_posts(task)
+    elif task.name == "prune registrations":
+        return tasks.prune_registrations(task)
+    elif task.name == "prune sources":
+        return tasks.prune_sources(task)
 
 
     elif task.name == "workbench":

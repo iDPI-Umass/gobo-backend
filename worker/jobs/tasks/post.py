@@ -177,27 +177,4 @@ def add_post_to_followers(task):
 
 def remove_post(task):
     post = h.enforce("post", task)
-
-    links = QueryIterator(
-        model = models.link,
-        for_removal = True,
-        wheres = [
-            where("origin_type", "post"),
-            where("origin_id", post["id"])
-        ]
-    )
-    for link in links:
-        models.link.remove(link["id"])
-
-    links = QueryIterator(
-        model = models.link,
-        for_removal = True,
-        wheres = [
-            where("target_type", "post"),
-            where("target_id", post["id"])
-        ]
-    )
-    for link in links:
-        models.link.remove(link["id"])
-
-    models.post.remove(post["id"])
+    h.remove_post(post)

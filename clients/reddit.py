@@ -1,5 +1,7 @@
 import logging
 import time
+from os import environ
+from datetime import timedelta
 import json
 from os import environ
 import html
@@ -371,6 +373,10 @@ class Reddit():
         partials = []
         subreddits = []
 
+        oldest_limit = joy.time.convert("date", "iso", 
+            joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
+        )
+
         name = source["name"]
         _submissions = []
         for item in gobo_reddit.get_new_ids(name):
@@ -381,9 +387,14 @@ class Reddit():
         time.sleep(0.5)
 
         if last_retrieved is None:
-            submissions.extend(_submissions)
+            for submission in _submissions:
+                if submission.published < oldest_limit:
+                    continue
+                submissions.append(submission)
         else:
             for submission in _submissions:
+                if submission.published < oldest_limit:
+                    continue
                 if submission.published > last_retrieved:
                     submissions.append(submission)
 

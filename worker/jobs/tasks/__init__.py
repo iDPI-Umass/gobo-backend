@@ -5,7 +5,7 @@ from .follow import *
 from .source import *
 from .post import *
 from .reset import *
-from .image import *
+from .prune import *
 from .workbench import *
 from .platform import *
 

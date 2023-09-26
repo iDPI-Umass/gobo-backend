@@ -111,3 +111,66 @@ def attach_post(post):
         "name": "has-post",
         "secondary": f"{post['published']}::{post['id']}"
     })
+
+
+def remove_post(post):
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("origin_type", "post"),
+            where("origin_id", post["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("target_type", "post"),
+            where("target_id", post["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    edges = QueryIterator(
+        model = models.post_edge,
+        for_removal = True,
+        wheres = [
+            where("post_id", post["id"])
+        ]
+    )
+    for edge in edges:
+        models.post_edge.remove(edge["id"])
+
+    models.post.remove(post["id"])
+
+
+
+def remove_source(source):
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("origin_type", "source"),
+            where("origin_id", source["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("target_type", "source"),
+            where("target_id", source["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    models.source.remove(source["id"])

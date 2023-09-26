@@ -1,4 +1,6 @@
 import logging
+from os import environ
+from datetime import timedelta
 import json
 from jose import jwt
 import re
@@ -555,10 +557,14 @@ class Bluesky():
         partials = []
         actors = []
         cursor = None
+        oldest_limit = joy.time.convert("date", "iso", 
+            joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
+        )
         if is_shallow == True:
             default_limit = 100
         else:
-            default_limit = 1000
+            default_limit = 400
+        
         isDone = False
         count = 1
         while True:
@@ -574,6 +580,9 @@ class Bluesky():
                         continue
 
                     count += 1
+                    if post.published < oldest_limit:
+                        isDone = True
+                        break
                     if count < default_limit:
                         posts.append(post)
                     else:
@@ -585,6 +594,9 @@ class Bluesky():
                     if post is None:
                         continue
 
+                    if post.published < oldest_limit:
+                        isDone = True
+                        break
                     if post.published > last_retrieved:
                         posts.append(post)
                     else:

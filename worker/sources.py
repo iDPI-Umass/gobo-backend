@@ -31,20 +31,17 @@ def start_sources():
         queues.default.put_details, "prune image cache"
     )
 
-    # # Handles follower-list (source) updates.
-    # schedule.every(12).hours.do(
-    #     queues.default.put_details, "pull sources fanout"
-    # )
+    # Handles follower-list (source) updates.
+    schedule.every(12).hours.do(
+        queues.default.put_details, "pull sources fanout"
+    )
 
-    # # Pull the latest posts from the tracked sources.
-    # schedule.every().hour.do(
-    #     queues.bluesky.put_details, "read sources"
-    # )
+    # Pull the latest posts from the tracked sources.
+    schedule.every().hour.do(
+        queues.default.put_details, "pull posts fanout"
+    )
 
-    # schedule.every().hour.do(
-    #     queues.reddit.put_details, "read sources"
-    # )
-
-    # schedule.every().hour.do(
-    #     queues.mastodon.put_details, "read sources"
-    # )
+    # Prune sources older than our maximum retention timelimit.
+    schedule.every(12).hours.do(
+        queues.default.put_details, "prune resources"
+    )
