@@ -65,8 +65,6 @@ def dispatch(task):
         return tasks.clear_post_origins(task)
     elif task.name == "clear post targets":
         return tasks.clear_post_targets(task)
-    elif task.name == "clear post target":
-        return tasks.clear_post_target(task)
     elif task.name == "clear last retrieved":
         return tasks.clear_last_retrieved(task)
 
