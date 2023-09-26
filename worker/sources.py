@@ -24,24 +24,18 @@ def start_sources():
     schedule.every(20).minutes.do(
         queues.default.put_details, "bluesky cycle sessions"
     )
-    
-    # Manage image upload cache
-    queues.default.put_details("bluesky cycle sessions")
-    schedule.every(12).hours.do(
-        queues.default.put_details, "prune image cache"
-    )
 
-    # Handles follower-list (source) updates.
-    schedule.every(12).hours.do(
-        queues.default.put_details, "pull sources fanout"
-    )
+    # # Handles follower-list (source) updates.
+    # schedule.every(12).hours.do(
+    #     queues.default.put_details, "pull sources fanout"
+    # )
 
-    # Pull the latest posts from the tracked sources.
-    schedule.every().hour.do(
-        queues.default.put_details, "pull posts fanout"
-    )
+    # # Pull the latest posts from the tracked sources.
+    # schedule.every().hour.do(
+    #     queues.default.put_details, "pull posts fanout"
+    # )
 
-    # Prune sources older than our maximum retention timelimit.
-    schedule.every(12).hours.do(
-        queues.default.put_details, "prune resources"
-    )
+    # # Prune sources older than our maximum retention timelimit.
+    # schedule.every(12).hours.do(
+    #     queues.default.put_details, "prune resources"
+    # )
