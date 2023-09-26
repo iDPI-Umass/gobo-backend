@@ -63,10 +63,48 @@ def unfollow(task):
         ]
     )
    
+    removals = []
     for link in links:
         post = models.post.get(link["target_id"])
         if post is not None and post["source_id"] == source_id:
-            models.link.remove(link["id"])
+            removals.append(link["id"])
+    
+    for id in removals:
+        models.link.remove(id)
+
+
+def rebuild_feed(task):
+    person_id = h.enforce("person_id", task)
+
+    identities = QueryIterator(
+        model = models.link,
+        wheres = [
+            where("origin_type", "person"),
+            where("origin_id", person_id),
+            where("target_type", "identity"),
+            where("name", "has-identity")
+        ]
+    )
+
+    for identity in identities:
+        identity_id = identity["target_id"]
+            
+        sources = QueryIterator(
+            model = models.link,
+            wheres = [
+                where("origin_type", "identity"),
+                where("origin_id", identity_id),
+                where("target_type", "source"),
+                where("name", "follows")
+            ]
+        )
+
+        for source in sources:
+            source_id = source["target_id"]
+            queues.default.put_details("follow", {
+                "identity_id": identity_id,
+                "source_id": source_id
+            })
 
 
 def remove_identity(task):
@@ -74,6 +112,7 @@ def remove_identity(task):
 
     links = QueryIterator(
         model = models.link,
+        for_removal = True,
         wheres = [
             where("origin_type", "identity"),
             where("origin_id", identity_id),
@@ -87,6 +126,7 @@ def remove_identity(task):
     
     links = QueryIterator(
         model = models.link,
+        for_removal = True,
         wheres = [
             where("origin_type", "identity"),
             where("origin_id", identity_id),

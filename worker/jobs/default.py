@@ -8,86 +8,88 @@ QueryIterator = models.helpers.QueryIterator
 
 def dispatch(task):
     if task.name == "start flow":
-        tasks.start_flow(task)
+        return tasks.start_flow(task)
     elif task.name == "flow - pull sources":
-        tasks.flow_pull_sources(task)
+        return tasks.flow_pull_sources(task)
     elif task.name == "flow - pull posts":
-        tasks.flow_pull_posts(task)
+        return tasks.flow_pull_posts(task)
     elif task.name == "flow - onboard sources":
-        tasks.flow_onboard_sources(task)
+        return tasks.flow_onboard_sources(task)
     elif task.name == "flow - onboard source posts":
-        tasks.flow_onboard_source_posts(task)
+        return tasks.flow_onboard_source_posts(task)
 
 
     elif task.name == "follow":
-        tasks.follow(task)
+        return tasks.follow(task)
     elif task.name == "unfollow":
-        tasks.unfollow(task)
+        return tasks.unfollow(task)
     elif task.name == "remove identity":
-        tasks.remove_identity(task)
+        return tasks.remove_identity(task)
 
 
-    elif task.name == "pull sources":
-        tasks.pull_sources(task)
+    elif task.name == "pull sources fanout":
+        return tasks.pull_sources_fanout(task)
     elif task.name == "map sources":
-        tasks.map_sources(task)
+        return tasks.map_sources(task)
     elif task.name == "upsert sources":
-        tasks.upsert_sources(task)
+        return tasks.upsert_sources(task)
+    elif task.name == "reconcile sources":
+        return tasks.reconcile_sources(task)
 
     
+    elif task.name == "pull posts fanout":
+        return tasks.pull_posts_fanout(task)
     elif task.name == "get last retrieved":
-        tasks.get_last_retrieved(task)
+        return tasks.get_last_retrieved(task)
     elif task.name == "set last retrieved":
-        tasks.set_last_retrieved(task)
+        return tasks.set_last_retrieved(task)
     elif task.name == "map posts":
-        tasks.map_posts(task)
+        return tasks.map_posts(task)
     elif task.name == "upsert posts":
-        tasks.upsert_posts(task)
+        return tasks.upsert_posts(task)
 
 
     elif task.name == "add post to followers":
-        tasks.add_post_to_followers(task)
+        return tasks.add_post_to_followers(task)
     elif task.name == "remove post":
-        tasks.remove_post(task)
+        return tasks.remove_post(task)
     elif task.name == "rebuild feed":
-        tasks.rebuild_feed(task)
+        return tasks.rebuild_feed(task)
 
 
     elif task.name == "hard reset":
-        tasks.hard_reset(task)
+        return tasks.hard_reset(task)
     elif task.name == "clear posts":
-        tasks.clear_posts(task)
+        return tasks.clear_posts(task)
     elif task.name == "clear last retrieved":
-        tasks.clear_last_retrieved(task)
+        return tasks.clear_last_retrieved(task)
 
 
     elif task.name == "bluesky cycle sessions":
-        tasks.cycle_blusky_sessions(task)
+        return tasks.cycle_blusky_sessions(task)
 
 
     elif task.name == "prune image cache":
-        tasks.prune_image_cache(task)  
+        return tasks.prune_image_cache(task)  
 
 
     elif task.name == "workbench":
-        tasks.workbench(task)
+        return tasks.workbench(task)
     
     
     elif task.name == "bootstrap platform labels":
-        tasks.boostrap_platform_labels(task)
+        return tasks.boostrap_platform_labels(task)
     elif task.name == "label identity platform":
-        tasks.label_identity_platform(task)
+        return tasks.label_identity_platform(task)
     elif task.name == "label post platform":
-        tasks.label_post_platform(task)
+        return tasks.label_post_platform(task)
     elif task.name == "label registration platform":
-        tasks.label_registration_platform(task)
+        return tasks.label_registration_platform(task)
     elif task.name == "label source platform":
-        tasks.label_source_platform(task)
+        return tasks.label_source_platform(task)
 
 
     elif task.name == "test":
-        tasks.test(task)
+        return tasks.test(task)
     else:
         logging.warning("No matching job for task: %s", task)
-    
-    task.remove()

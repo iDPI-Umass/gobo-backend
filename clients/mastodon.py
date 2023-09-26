@@ -1,4 +1,5 @@
 import logging
+import time
 from os import environ
 import re
 import mastodon
@@ -102,6 +103,8 @@ class Poll():
 class Mastodon():
     def __init__(self, identity = None):
         self.identity = identity
+        if identity is not None:
+            self.base_url = identity.get("base_url", None)
 
     @staticmethod
     def register_client(base_url):
@@ -165,7 +168,9 @@ class Mastodon():
         
         reply = None
         if metadata.get("reply", None) is not None:
-            reply = metadata["reply"]["platform_id"]           
+            reply = metadata["reply"]["platform_id"]
+
+        time.sleep(1)          
 
         return self.client.status_post(
             status = post.get("content", ""),
@@ -182,6 +187,7 @@ class Mastodon():
         )
     
     def upload_media(self, draft):
+        time.sleep(1)
         return self.client.media_post(
             media_file = draft["data"],
             mime_type = draft["mime_type"],
@@ -190,15 +196,19 @@ class Mastodon():
         )
     
     def favourite_post(self, post):
+        time.sleep(1)
         return self.client.status_favourite(post["platform_id"])
     
     def undo_favourite_post(self, post):
+        time.sleep(1)
         return self.client.status_unfavourite(post["platform_id"])
     
     def boost_post(self, post):
+        time.sleep(1)
         return self.client.status_reblog(post["platform_id"])
     
     def undo_boost_post(self, post):
+        time.sleep(1)
         return self.client.status_unreblog(post["platform_id"])
 
 
@@ -207,6 +217,7 @@ class Mastodon():
         sources = []
         for account in data["accounts"]:
             sources.append({
+                "platform": "mastodon",
                 "platform_id": account.id,
                 "base_url": base_url,
                 "url": account.url,
@@ -233,6 +244,7 @@ class Mastodon():
             return {
                 "source_id": source["id"],
                 "base_url": self.base_url,
+                "platform": "mastodon",
                 "platform_id": status.id,
                 "title": None,
                 "content": status.content,
@@ -287,6 +299,7 @@ class Mastodon():
     def list_sources(self):
         id = self.identity["platform_id"]
         items = self.client.account_following(id, limit=None)
+        time.sleep(1)
         
         accounts = []
         accounts.append(Account(self.get_profile()))
@@ -296,9 +309,8 @@ class Mastodon():
         return {"accounts": accounts}
 
 
-    def get_post_graph(self, source, is_shallow = False):
+    def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
         isDone = False
-        last_retrieved = source.get("last_retrieved", None)
         if is_shallow == True:
             default_limit = 40
         else:
@@ -320,6 +332,7 @@ class Mastodon():
                 max_id = max_id,
                 limit=40
             )
+            time.sleep(1)
 
             if len(items) == 0:
                 break
@@ -387,6 +400,7 @@ class Mastodon():
                 partials.append(status)
             except Exception as e:
                 logging.warning(f"failed to fetch status {id} {e}")
+            time.sleep(1)
 
 
 

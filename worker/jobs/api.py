@@ -9,12 +9,14 @@ def dispatch(task):
         logging.info("dispatching: %s", task)
 
     if task.name == "poll":
-        poll_database(task)
+        return poll_database(task)
     else:
         logging.warning("No matching job for task: %s", task)
 
 
 def poll_database(task):
+    task.quiet()
+
     query = {
         "per_page": 50,
         "page": 1,

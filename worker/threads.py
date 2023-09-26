@@ -11,9 +11,10 @@ class Thread():
                 try:
                     task = queue.get()
                     task.start(queue)
-                    response = dispatch(task)
+                    result = dispatch(task)
                     task.finish(queue)
-                    task.progress(queues, response)
+                    task.progress(queues, result)
+                    task.remove()
                     queue.task_done()
                 
                 except joy.error.RecoverableException as e:

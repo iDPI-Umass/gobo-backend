@@ -468,6 +468,7 @@ class Bluesky():
         sources = []
         for actor in data["actors"]:
             sources.append({
+                "platform": "bluesky",
                 "platform_id": actor.id,
                 "base_url": self.BASE_URL,
                 "url": actor.url,
@@ -494,6 +495,7 @@ class Bluesky():
             return {
                 "source_id": source["id"],
                 "base_url": Bluesky.BASE_URL,
+                "platform": "bluesky",
                 "platform_id": post.id,
                 "title": None,
                 "content": post.content,
@@ -548,12 +550,11 @@ class Bluesky():
 
 
 
-    def get_post_graph(self, source, is_shallow = False):
+    def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
         posts = []
         partials = []
         actors = []
         cursor = None
-        last_retrieved = source.get("last_retrieved", None)
         if is_shallow == True:
             default_limit = 100
         else:

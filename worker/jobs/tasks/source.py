@@ -9,7 +9,7 @@ build_query = models.helpers.build_query
 QueryIterator = models.helpers.QueryIterator
 
 
-def follow_fanout(task):
+def pull_sources_fanout(task):
     platform = h.get_platform(task.details)
   
     if platform == "all":
@@ -22,7 +22,9 @@ def follow_fanout(task):
         wheres = wheres
     )
     for identity in identities:
-        queues.default.put_details("flow pull sources", {"identity": identity})
+        queues.default.put_details("flow - pull sources", {
+            "identity": identity
+        })
 
 
 def pull_sources(task):

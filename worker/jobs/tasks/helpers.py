@@ -23,15 +23,15 @@ def is_valid_platform(platform):
 
 def generic_parameter(field, input):
     if isinstance(input, str):
-        result = input
+        return input
     elif isinstance(input, dict):
-        result = input.get(field, None)
+        return input.get(field, None)
     else:
-        result = getattr(input, field, None)
+        return getattr(input, field, None)
 
 
 def get_platform(input):
-    platform = generic_parameter(input)
+    platform = generic_parameter("platform", input)
     if not is_valid_platform(platform):
         raise Exception(f"{platform} is an invalid platform")
     return platform

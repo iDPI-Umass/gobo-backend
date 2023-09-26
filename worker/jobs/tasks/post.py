@@ -9,6 +9,40 @@ build_query = models.helpers.build_query
 QueryIterator = models.helpers.QueryIterator
 
 
+def pull_posts_fanout(task):
+    platform = h.get_platform(task.details)
+  
+    if platform == "all":
+        wheres = []
+    else:
+        wheres = [where("platform", platform)]
+
+    identities = QueryIterator(
+        model = models.identity,
+        wheres = wheres
+    )
+    for identity in identities:
+        links = QueryIterator(
+            model = models.link,
+            wheres = [
+                where("origin_type", "identity"),
+                where("origin_id", identity["id"]),
+                where("target_type", "source"),
+                where("name", "follows")
+            ]
+        )
+        for link in links:
+            source = models.source.get(link["target_id"])
+            if source is None:
+                logging.warning(f"identity {identity['id']} follows source {link['target_id']}, but that source does not exist")
+                continue
+            else:
+                queues.default.put_details("flow - pull posts", {
+                    "identity": identity,
+                    "source": source
+                })
+
+
 def get_last_retrieved(task):
     source = h.enforce("source", task)
     
@@ -17,9 +51,10 @@ def get_last_retrieved(task):
     last_retrieved = loop.get("secondary", None)
     if last_retrieved is None:
         should_fetch = True
+        new_last_retrieved = joy.time.now()
     else:
         date = joy.time.convert("iso", "date", last_retrieved)
-        if joy.time.latency(date).seconds > 300:
+        if joy.time.latency(date).seconds > 600:
             should_fetch = True
             new_last_retrieved = joy.time.now()
 
@@ -104,4 +139,65 @@ def upsert_posts(task):
         })
 
     for post in full_posts:
-        queues.default.put_details("add post to followers", {"post": post})
+        queues.default.put_details("add post to followers", {"post": post})\
+
+
+
+def add_post_to_followers(task):
+    page = task.details.get("page") or 1
+    per_page = task.details.get("per_page") or 1000
+    post = h.enforce("post", task)
+
+    followers = models.link.query({
+        "page": page,
+        "per_page": per_page,
+        "where": [
+            where("origin_type", "identity"),
+            where("target_type", "source"),
+            where("target_id", post["source_id"]),
+            where("name", "follows")
+        ]
+    })
+
+    if len(followers) == per_page:
+        task.update({"page": page + 1})
+        queues.default.put_task(task)
+
+    for follower in followers:
+        models.link.upsert({
+            "origin_type": "identity",
+            "origin_id": follower["origin_id"],
+            "target_type": "post",
+            "target_id": post["id"],
+            "name": "identity-feed",
+            "secondary": f"{post['published']}::{post['id']}"
+        })
+
+
+
+def remove_post(task):
+    post = h.enforce("post", task)
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("origin_type", "post"),
+            where("origin_id", post["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("target_type", "post"),
+            where("target_id", post["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    models.post.remove(post["id"])

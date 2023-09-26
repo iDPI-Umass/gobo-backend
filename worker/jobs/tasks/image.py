@@ -12,6 +12,7 @@ def prune_image_cache(task):
 
     drafts = QueryIterator(
         model = models.draft_image,
+        for_removal = True,
         wheres = [
             where("created", time_limit , "lt")
         ]

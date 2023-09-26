@@ -58,7 +58,7 @@ def confirm_identity(registration, data):
 
     # Establish a Bluesky session associated with this identity.
     try:
-        session = Bluesky.login({
+        session = Bluesky.create_session({
             "oauth_token": data["bluesky_login"],
             "oauth_token_secret": data["bluesky_secret"]
         })

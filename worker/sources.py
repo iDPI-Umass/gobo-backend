@@ -19,25 +19,22 @@ def start_sources():
     safe_start()
     queues.api.put_details("poll", {})
 
+    # Standalone tasks for Bluesky
+    queues.default.put_details("bluesky cycle sessions")
+    schedule.every(20).minutes.do(
+        queues.default.put_details, "bluesky cycle sessions"
+    )
+    
+    # Manage image upload cache
+    queues.default.put_details("bluesky cycle sessions")
     schedule.every(12).hours.do(
         queues.default.put_details, "prune image cache"
     )
 
-
     # # Handles follower-list (source) updates.
     # schedule.every(12).hours.do(
-    #     queues.bluesky.put_details, "identity follow fanout"
+    #     queues.default.put_details, "pull sources fanout"
     # )
-
-    # schedule.every(12).hours.do(
-    #     queues.reddit.put_details, "identity follow fanout"
-    # )
-
-    # schedule.every(12).hours.do(
-    #     queues.mastodon.put_details, "identity follow fanout"
-    # )
-
-
 
     # # Pull the latest posts from the tracked sources.
     # schedule.every().hour.do(
@@ -50,10 +47,4 @@ def start_sources():
 
     # schedule.every().hour.do(
     #     queues.mastodon.put_details, "read sources"
-    # )
-
-
-    # # Standalone task for Bluesky
-    # schedule.every(20).minutes.do(
-    #     queues.bluesky.put_details, "refresh sessions"
     # )

@@ -14,11 +14,7 @@ def hard_reset(task):
 
 
 def clear_posts(task):
-    page = task.details.get("page") or 1
-    per_page = 1000
-    platform = task.details.get("platform", None)
-    if not h.is_valid_platform(platform):
-        raise Exception(f"clear posts does not support platform {platform}")
+    platform = h.get_platform(task.details)
   
     if platform == "all":
         wheres = []
@@ -26,71 +22,63 @@ def clear_posts(task):
         wheres = [where("platform", platform)]
         
    
-    posts = models.post.query({
-        "page": page,
-        "per_page": per_page,
-        "where": wheres
-    })
-
-    if len(posts) == per_page:
-        task.update({"page": page + 1})
-        queues.default.put_task(task)
-
+    posts = QueryIterator(
+        model = models.post,
+        for_removal = True,
+        wheres = wheres
+    )
     for post in posts:
-        id = post["id"]
+        models.post.remove(post["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("origin_type", "post")
+        ]
+    ) 
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("target_type", "post")
+        ]
+    ) 
+    for link in links:
+        models.link.remove(link["id"])
 
         
-        links = QueryIterator(
-            model = models.link,
-            wheres = [
-                where("origin_type", "post"),
-                where("origin_id", id)
-            ]
-        )
-        for link in links:
-            models.link.remove(link["id"])
-
-        
-        links = QueryIterator(
-            model = models.link,
-            wheres = [
-                where("target_type", "post"),
-                where("target_id", id)
-            ]
-        )
-        for link in links:
-            models.link.remove(link["id"])
-
-        models.post.remove(id)
 
 
 def clear_last_retrieved(task):
-    page = task.details.get("page") or 1
-    per_page = 1000
-    platform = task.details.get("platform", None)
-    if not h.is_valid_platform(platform):
-        raise Exception(f"clear posts does not support platform {platform}")
-  
+    platform = h.get_platform(task.details)
+    wheres = [
+        where("origin_type", "source"),
+        where("name", "last-retrieved"),
+    ]
+    
     if platform == "all":
-        wheres = []
-    else:
-        wheres = [where("platform", platform)]
-
-    sources = models.source.query({
-        "page": page,
-        "per_page": per_page,
-        "where": wheres
-    })
-
-    for source in sources:
-        link = models.link.find({
-            "origin_type": "source",
-            "origin_id": source["id"],
-            "name": "last-retrieved"
-        })
-        if link is not None:
+        links = QueryIterator(
+            model = models.link,
+            for_removal = True,
+            wheres = wheres
+        ) 
+        for link in links:
             models.link.remove(link["id"])
+    else:
+        links = QueryIterator(
+            model = models.link,
+            wheres = wheres
+        ) 
+        removals = []
+        for link in links:
+            source = models.source.get(link["origin_id"])
+            if source is not None and source.get("platform") == platform:
+                removals.append(link["id"])
 
-    if len(sources) == per_page:
-        task.update({"page": page + 1})
-        queues.default.put_task(task)
+
+        for id in removals:
+            models.link.remove(id)

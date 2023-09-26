@@ -12,31 +12,27 @@ QueryIterator = models.helpers.QueryIterator
 
 def dispatch(task):
     if task.name == "pull sources":
-        tasks.pull_sources(task)
+        return tasks.pull_sources(task)
     elif task.name == "pull posts":
-        tasks.pull_posts(task)
+        return tasks.pull_posts(task)
     
     
     elif task.name == "create post":
-        create_post(task)
+        return create_post(task)
     elif task.name == "add post edge":
-        add_post_edge(task)
+        return add_post_edge(task)
     elif task.name == "remove post edge":
-        remove_post_edge(task)
+        return remove_post_edge(task)
     elif task.name == "cycle refresh token":
-        cycle_refresh_token(task)
+        return cycle_refresh_token(task)
     elif task.name == "cycle access token":
-        cycle_access_token(task)
+        return cycle_access_token(task)
     
     
     elif task.name == "bootstrap sessions":
-        bootstrap_sessions(task)
+        return bootstrap_sessions(task)
     else:
         logging.warning("No matching job for task: %s", task)
-    
-    task.remove()
-
-
 
 
 

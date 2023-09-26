@@ -65,7 +65,8 @@ class Task():
     def quiet(self):
         self.is_quiet = True
 
-    def progress(self, queues, response = {}):
+    def progress(self, queues, result = {}):
+        result = result or {}
         if self.is_halted == True:
             return
 
@@ -78,7 +79,7 @@ class Task():
             self.name = next["name"]
             self.reset_tracking()
             
-            for key, value in response.items():
+            for key, value in result.items():
                 self.details[key] = value
 
             next_details = next.get("details", {})

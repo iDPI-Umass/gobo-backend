@@ -1,4 +1,5 @@
 import logging
+import time
 import json
 from os import environ
 import html
@@ -250,6 +251,7 @@ class Reddit():
                 nsfw = metadata.get("nsfw", False),
                 spoiler = metadata.get("spoiler", False)
             )
+        time.sleep(1)
 
     def create_reply(self, post, metadata):
         reply = metadata["reply"]
@@ -261,12 +263,15 @@ class Reddit():
 
     def upvote_post(self, post):
         self.client.submission(post["platform_id"]).upvote()
+        time.sleep(1)
 
     def downvote_post(self, post):
         self.client.submission(post["platform_id"]).downvote()
+        time.sleep(1)
 
     def undo_vote_post(self, post):
         self.client.submission(post["platform_id"]).clear_vote()
+        time.sleep(1)
 
 
 
@@ -276,6 +281,7 @@ class Reddit():
         sources = []
         for subreddit in subreddits:
             sources.append({
+                "platform": "reddit",
                 "platform_id": subreddit.id,
                 "base_url": Reddit.BASE_URL,
                 "url": subreddit.url,
@@ -305,6 +311,7 @@ class Reddit():
             posts.append({
                 "source_id": source["id"],
                 "base_url": Reddit.BASE_URL,
+                "platform": "reddit",
                 "platform_id": submission.id,
                 "title": submission.title,
                 "content": submission.content,
@@ -332,6 +339,7 @@ class Reddit():
             partials.append({
                 "source_id": source["id"],
                 "base_url": Reddit.BASE_URL,
+                "platform": "reddit",
                 "platform_id": submission.id,
                 "title": submission.title,
                 "content": submission.content,
@@ -351,27 +359,26 @@ class Reddit():
 
     def list_sources(self):
         generator = self.client.user.subreddits(limit=None)
+        time.sleep(1)
         subreddits = []
         for item in generator:
             subreddits.append(Subreddit(item))
         return {"subreddits": subreddits} 
 
 
-    def get_post_graph(self, source, is_shallow = False):
+    def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
         submissions = []
         partials = []
         subreddits = []
 
         name = source["name"]
-        last_retrieved = source.get("last_retrieved", None)
-
-
-
         _submissions = []
         for item in gobo_reddit.get_new_ids(name):
             submission = build_submission(item)
             if submission is not None:
                 _submissions.append(submission)
+
+        time.sleep(0.5)
 
         if last_retrieved is None:
             submissions.extend(_submissions)
@@ -398,6 +405,7 @@ class Reddit():
         if len(secondary) > 0:
             for sublist in list(partition(list(secondary), 100)):
                 generator = self.client.info(fullnames = sublist)
+                time.sleep(1)
                 for item in generator:
                     partials.append(Submission(vars(item)))
 
@@ -413,6 +421,7 @@ class Reddit():
                 seen_subreddits.add(submission.subreddit)
 
         generator = self.client.info(subreddits = list(seen_subreddits))
+        time.sleep(1)
         for item in generator:
             subreddit = Subreddit(item)
             subreddits.append(subreddit)

@@ -1250,8 +1250,9 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            required: [ base_url ]
+            required: [ platform, base_url ]
             properties:
+              <<: *platform
               base_url:
                 description: The base URL that identifies the target social media provider.
                 type: string

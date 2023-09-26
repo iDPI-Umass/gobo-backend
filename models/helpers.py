@@ -19,8 +19,9 @@ def build_query(per_page, wheres):
     }
 
 class QueryIterator:
-    def __init__(self, model, per_page = 1000, wheres = [], query = None):
+    def __init__(self, model, per_page = 1000, wheres = [], query = None, for_removal = False):
         self.model = model
+        self.for_removal = for_removal
         self.feed = []
         self.state = "active"
         
@@ -42,7 +43,7 @@ class QueryIterator:
         self.feed.extend(items)
         if len(items) != self.per_page:
             self.state = "done"
-        else:
+        elif self.for_removal == False:
             self.query["page"] += 1
     
     def __next__(self):
