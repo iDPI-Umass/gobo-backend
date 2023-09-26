@@ -11,6 +11,9 @@ QueryIterator = models.helpers.QueryIterator
 def hard_reset(task):
     queues.default.put_details("clear posts", task.details)
     queues.default.put_details("clear last retrieved", task.details)
+    queues.default.put_details("clear post origins", task.details)
+    queues.default.put_details("clear post targets", task.details)
+
 
 
 def clear_posts(task):
@@ -30,6 +33,7 @@ def clear_posts(task):
     for post in posts:
         models.post.remove(post["id"])
 
+def clear_post_origins(task):
     links = QueryIterator(
         model = models.link,
         for_removal = True,
@@ -40,6 +44,7 @@ def clear_posts(task):
     for link in links:
         models.link.remove(link["id"])
 
+def clear_post_targets(task):
     links = QueryIterator(
         model = models.link,
         for_removal = True,
