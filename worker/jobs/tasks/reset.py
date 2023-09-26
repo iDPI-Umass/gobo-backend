@@ -45,15 +45,34 @@ def clear_post_origins(task):
         models.link.remove(link["id"])
 
 def clear_post_targets(task):
+    # links = QueryIterator(
+    #     model = models.link,
+    #     for_removal = True,
+    #     wheres = [
+    #         where("target_type", "post")
+    #     ]
+    # ) 
+    # for link in links:
+    #     models.link.remove(link["id"])
+
     links = QueryIterator(
         model = models.link,
         for_removal = True,
         wheres = [
             where("target_type", "post")
         ]
-    ) 
+    )
+    ids = []
     for link in links:
-        models.link.remove(link["id"])
+        ids.append(link["id"])
+
+    for id in ids:
+        queues.default.put_details("clear post target", {"id": id})
+        
+
+def clear_post_target(task):
+    id = task.details["id"]
+    models.link.remove(id)    
 
         
 
