@@ -27,12 +27,12 @@ def start_sources():
 
     # Handles follower-list (source) updates.
     schedule.every(12).hours.do(
-        queues.default.put_details, "pull sources fanout"
+        queues.default.put_details, "pull sources fanout", {"platform": "all"}
     )
 
     # Pull the latest posts from the tracked sources.
     schedule.every().hour.do(
-        queues.default.put_details, "pull posts fanout"
+        queues.default.put_details, "pull posts fanout", {"platform": "all"}
     )
 
     # Prune sources older than our maximum retention timelimit.
