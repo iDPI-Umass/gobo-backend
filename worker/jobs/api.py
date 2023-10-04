@@ -51,6 +51,8 @@ def poll_database(task):
             queues.reddit.put_dict(_task)
         elif queue == "mastodon":
             queues.mastodon.put_dict(_task)
+        elif queue == "smalltown":
+            queues.smalltown.put_dict(_task)
         else:
             logging.warning("No matching queue for task: %s", _task)
 

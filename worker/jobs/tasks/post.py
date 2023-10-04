@@ -97,7 +97,11 @@ def map_posts(task):
     graph["sources"] = sources
     client = h.get_client(identity)
     post_data = client.map_posts(graph)
-    return {"post_data": post_data}
+    is_list = graph.get("is_list", False)
+    return {
+        "post_data": post_data,
+        "is_list": is_list
+    }
 
 
 # Careful here: There is order dependency on getting full and partial posts
@@ -106,6 +110,8 @@ def map_posts(task):
 # full throttle without order considerations.
 def upsert_posts(task):
     post_data = h.enforce("post_data", task)
+    source = h.enforce("source", task)
+    is_list = h.enforce("is_list", task)
     full_posts = []
     references = {}      
 
@@ -138,8 +144,15 @@ def upsert_posts(task):
             "secondary": f"{target['published']}::{target['id']}"
         })
 
-    for post in full_posts:
-        queues.default.put_details("add post to followers", {"post": post})\
+    if is_list == True:
+        for post in full_posts:
+            queues.default.put_details("add post to list followers", {
+                "source": source,
+                "post": post
+            })
+    else:
+        for post in full_posts:
+            queues.default.put_details("add post to followers", {"post": post})
 
 
 
@@ -155,6 +168,38 @@ def add_post_to_followers(task):
             where("origin_type", "identity"),
             where("target_type", "source"),
             where("target_id", post["source_id"]),
+            where("name", "follows")
+        ]
+    })
+
+    if len(followers) == per_page:
+        task.update({"page": page + 1})
+        queues.default.put_task(task)
+
+    for follower in followers:
+        models.link.upsert({
+            "origin_type": "identity",
+            "origin_id": follower["origin_id"],
+            "target_type": "post",
+            "target_id": post["id"],
+            "name": "identity-feed",
+            "secondary": f"{post['published']}::{post['id']}"
+        })
+
+
+def add_post_to_list_followers(task):
+    page = task.details.get("page") or 1
+    per_page = task.details.get("per_page") or 1000
+    source = h.enforce("source", task)
+    post = h.enforce("post", task)
+
+    followers = models.link.query({
+        "page": page,
+        "per_page": per_page,
+        "where": [
+            where("origin_type", "identity"),
+            where("target_type", "source"),
+            where("target_id", source["id"]),
             where("name", "follows")
         ]
     })

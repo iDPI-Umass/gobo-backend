@@ -2,7 +2,7 @@ import logging
 import os
 import models
 import joy
-from clients import Bluesky, Reddit, Mastodon
+from clients import Bluesky, Reddit, Mastodon, Smalltown
 import queues
 
 where = models.helpers.where
@@ -53,6 +53,8 @@ def get_client(identity):
         client = Mastodon(identity)
     elif platform == "reddit":
         client = Reddit(identity)
+    elif platform == "smalltown":
+        client = Smalltown(identity)
     else:
         raise Exception("unknown platform")
     

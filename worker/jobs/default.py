@@ -51,6 +51,8 @@ def dispatch(task):
 
     elif task.name == "add post to followers":
         return tasks.add_post_to_followers(task)
+    elif task.name == "add post to list followers":
+        return tasks.add_post_to_list_followers(task)
     elif task.name == "remove post":
         return tasks.remove_post(task)
     elif task.name == "rebuild feed":

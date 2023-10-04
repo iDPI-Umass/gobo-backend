@@ -70,3 +70,8 @@ def start_reddit(count):
     for i in range(count):
         thread = Thread(queues.reddit, jobs.reddit.dispatch)
         thread.start()
+
+def start_smalltown(count):
+    for i in range(count):
+        thread = Thread(queues.smalltown, jobs.smalltown.dispatch)
+        thread.start()

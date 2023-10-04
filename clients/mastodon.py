@@ -106,6 +106,7 @@ class Mastodon():
         self.identity = identity
         if identity is not None:
             self.base_url = identity.get("base_url", None)
+            self.platform = identity.get("platform", None)
 
     @staticmethod
     def register_client(base_url):
@@ -218,7 +219,7 @@ class Mastodon():
         sources = []
         for account in data["accounts"]:
             sources.append({
-                "platform": "mastodon",
+                "platform": self.platform,
                 "platform_id": account.id,
                 "base_url": base_url,
                 "url": account.url,
@@ -245,7 +246,7 @@ class Mastodon():
             return {
                 "source_id": source["id"],
                 "base_url": self.base_url,
-                "platform": "mastodon",
+                "platform": self.platform,
                 "platform_id": status.id,
                 "title": None,
                 "content": status.content,

@@ -51,6 +51,7 @@ threads.start_default(int(environ.get("DEFAULT_THREAD_COUNT", 2)))
 threads.start_bluesky(int(environ.get("BLUESKY_THREAD_COUNT", 1)))
 threads.start_mastodon(int(environ.get("MASTODON_THREAD_COUNT", 1)))
 threads.start_reddit(int(environ.get("REDDIT_THREAD_COUNT", 1)))
+threads.start_smalltown(int(environ.get("SMALLTOWN_THREAD_COUNT", 1)))
 start_sources()
 
 

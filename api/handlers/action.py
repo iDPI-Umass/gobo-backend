@@ -2,7 +2,7 @@ import logging
 from flask import request, g
 import http_errors
 import models
-from platform_models import bluesky, reddit, mastodon
+from platform_models import bluesky, reddit, mastodon, smalltown
 from . import helpers as h
 
 
@@ -18,6 +18,9 @@ def action_onboard_identity_start_post():
         response = mastodon.get_redirect_url(person, base_url)
     elif platform == "reddit":
         response = reddit.get_redirect_url(person)
+    elif platform == "smalltown":
+        base_url = h.parse_base_url(request.json)
+        response = smalltown.get_redirect_url(person, base_url)
 
     return response
   
@@ -48,5 +51,8 @@ def action_onboard_identity_callback_post():
     elif platform == "reddit":
         data = reddit.validate_callback(request.json)
         identity = reddit.confirm_identity(registration, data)
+    elif platform == "smalltown":
+        data = smalltown.validate_callback(request.json, base_url)
+        identity = smalltown.confirm_identity(registration, data)
 
     return identity
