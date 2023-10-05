@@ -2,6 +2,7 @@ import logging
 import time
 from os import environ
 from datetime import timedelta
+from urllib.parse import urlparse
 import re
 import mastodon
 import joy
@@ -94,6 +95,14 @@ class Account():
         self.username = _.acct
         self.name = _.display_name
         self.icon_url = _.avatar
+
+def map_username(hostname, username):
+    if username is None:
+        return username
+    if "@" in username:
+        return username
+    else:
+        return username + "@" + hostname
 
 class Poll():
     def __init(self, _):
@@ -216,6 +225,7 @@ class Mastodon():
 
     def map_sources(self, data):
         base_url = self.base_url
+        hostname = urlparse(base_url).hostname
         sources = []
         for account in data["accounts"]:
             sources.append({
@@ -223,7 +233,7 @@ class Mastodon():
                 "platform_id": account.id,
                 "base_url": base_url,
                 "url": account.url,
-                "username": account.username,
+                "username": map_username(hostname, account.username),
                 "name": account.name,
                 "icon_url": account.icon_url,
                 "active": True
