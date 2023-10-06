@@ -1,0 +1,134 @@
+{
+  "post": {
+    "uri": "at://did:plc:7vj2towokzui3hgna5u5u46f/app.bsky.feed.post/3kb2g7yc7x62d",
+    "cid": "bafyreiffbpfzkde7jqm2kybqkikvwiycpm2o2p4c3s3m6eisgm2eo76s2i",
+    "author": {
+      "did": "did:plc:7vj2towokzui3hgna5u5u46f",
+      "handle": "taniel.bsky.social",
+      "displayName": "Taniel ",
+      "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:7vj2towokzui3hgna5u5u46f/bafkreieybjgzkpx5ckc7bnizpkfwcn42whwfnzwz3xwsfahw4hs4pgbvca@jpeg",
+      "viewer": {
+        "muted": false,
+        "blockedBy": false,
+        "following": "at://did:plc:dwwqhkndlvabhskr6flmlld7/app.bsky.graph.follow/3k2tdh4rbvo2r"
+      },
+      "labels": []
+    },
+    "record": {
+      "text": "Local media has not yet declared a winner, but Bonner conceded to Paul Young (who's in the lead so far), the president of the Downtown Memphis Commission & raised the most funds. This was a 17-candidate race.",
+      "$type": "app.bsky.feed.post",
+      "langs": [
+        "en"
+      ],
+      "reply": {
+        "root": {
+          "cid": "bafyreibuogsjyk635ebkckuwu5lh26fnnkqmbosqb2ckchnjq2jamyasae",
+          "uri": "at://did:plc:7vj2towokzui3hgna5u5u46f/app.bsky.feed.post/3kb2g6sng7z24"
+        },
+        "parent": {
+          "cid": "bafyreibuogsjyk635ebkckuwu5lh26fnnkqmbosqb2ckchnjq2jamyasae",
+          "uri": "at://did:plc:7vj2towokzui3hgna5u5u46f/app.bsky.feed.post/3kb2g6sng7z24"
+        }
+      },
+      "createdAt": "2023-10-06T02:32:05.993Z"
+    },
+    "replyCount": 1,
+    "repostCount": 1,
+    "likeCount": 9,
+    "indexedAt": "2023-10-06T02:32:05.993Z",
+    "viewer": {},
+    "labels": []
+  },
+  "reply": {
+    "root": {
+      "$type": "app.bsky.feed.defs#postView",
+      "uri": "at://did:plc:7vj2towokzui3hgna5u5u46f/app.bsky.feed.post/3kb2g6sng7z24",
+      "cid": "bafyreibuogsjyk635ebkckuwu5lh26fnnkqmbosqb2ckchnjq2jamyasae",
+      "author": {
+        "did": "did:plc:7vj2towokzui3hgna5u5u46f",
+        "handle": "taniel.bsky.social",
+        "displayName": "Taniel ",
+        "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:7vj2towokzui3hgna5u5u46f/bafkreieybjgzkpx5ckc7bnizpkfwcn42whwfnzwz3xwsfahw4hs4pgbvca@jpeg",
+        "viewer": {
+          "muted": false,
+          "blockedBy": false,
+          "following": "at://did:plc:dwwqhkndlvabhskr6flmlld7/app.bsky.graph.follow/3k2tdh4rbvo2r"
+        },
+        "labels": []
+      },
+      "record": {
+        "text": "JUST NOW: Floyd Bonner, the sheriff of Shelby County (Tennessee), has conceded the mayoral race in Memphis. \n\nFloyd has faced criticism for the many jail deaths he's overseen in the Memphis jail (www.localmemphis.com/article/news...), and he ran with the endorsements from law enforcement unions.",
+        "$type": "app.bsky.feed.post",
+        "langs": [
+          "en"
+        ],
+        "facets": [
+          {
+            "index": {
+              "byteEnd": 232,
+              "byteStart": 196
+            },
+            "features": [
+              {
+                "uri": "https://www.localmemphis.com/article/news/local/inmate-deaths-sheriff-bonner-campaign-mayor-memphis/522-3ac9bdb9-349b-43e0-8eed-136c1dfb5245",
+                "$type": "app.bsky.richtext.facet#link"
+              }
+            ]
+          }
+        ],
+        "createdAt": "2023-10-06T02:31:26.514Z"
+      },
+      "replyCount": 2,
+      "repostCount": 6,
+      "likeCount": 32,
+      "indexedAt": "2023-10-06T02:31:26.514Z",
+      "viewer": {},
+      "labels": []
+    },
+    "parent": {
+      "$type": "app.bsky.feed.defs#postView",
+      "uri": "at://did:plc:7vj2towokzui3hgna5u5u46f/app.bsky.feed.post/3kb2g6sng7z24",
+      "cid": "bafyreibuogsjyk635ebkckuwu5lh26fnnkqmbosqb2ckchnjq2jamyasae",
+      "author": {
+        "did": "did:plc:7vj2towokzui3hgna5u5u46f",
+        "handle": "taniel.bsky.social",
+        "displayName": "Taniel ",
+        "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:7vj2towokzui3hgna5u5u46f/bafkreieybjgzkpx5ckc7bnizpkfwcn42whwfnzwz3xwsfahw4hs4pgbvca@jpeg",
+        "viewer": {
+          "muted": false,
+          "blockedBy": false,
+          "following": "at://did:plc:dwwqhkndlvabhskr6flmlld7/app.bsky.graph.follow/3k2tdh4rbvo2r"
+        },
+        "labels": []
+      },
+      "record": {
+        "text": "JUST NOW: Floyd Bonner, the sheriff of Shelby County (Tennessee), has conceded the mayoral race in Memphis. \n\nFloyd has faced criticism for the many jail deaths he's overseen in the Memphis jail (www.localmemphis.com/article/news...), and he ran with the endorsements from law enforcement unions.",
+        "$type": "app.bsky.feed.post",
+        "langs": [
+          "en"
+        ],
+        "facets": [
+          {
+            "index": {
+              "byteEnd": 232,
+              "byteStart": 196
+            },
+            "features": [
+              {
+                "uri": "https://www.localmemphis.com/article/news/local/inmate-deaths-sheriff-bonner-campaign-mayor-memphis/522-3ac9bdb9-349b-43e0-8eed-136c1dfb5245",
+                "$type": "app.bsky.richtext.facet#link"
+              }
+            ]
+          }
+        ],
+        "createdAt": "2023-10-06T02:31:26.514Z"
+      },
+      "replyCount": 2,
+      "repostCount": 6,
+      "likeCount": 32,
+      "indexedAt": "2023-10-06T02:31:26.514Z",
+      "viewer": {},
+      "labels": []
+    }
+  }
+}

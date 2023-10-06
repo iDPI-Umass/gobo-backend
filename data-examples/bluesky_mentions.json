@@ -1,0 +1,142 @@
+{
+  "post": {
+    "uri": "at://did:plc:7vj2towokzui3hgna5u5u46f/app.bsky.feed.post/3kazxnoh4vo2x",
+    "cid": "bafyreid3kelxfm77yvh4e3qprvryr3l2riuxvvadjaml5ixxmnjh4n4opy",
+    "author": {
+      "did": "did:plc:7vj2towokzui3hgna5u5u46f",
+      "handle": "taniel.bsky.social",
+      "displayName": "Taniel ",
+      "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:7vj2towokzui3hgna5u5u46f/bafkreieybjgzkpx5ckc7bnizpkfwcn42whwfnzwz3xwsfahw4hs4pgbvca@jpeg",
+      "viewer": {
+        "muted": false,
+        "blockedBy": false,
+        "following": "at://did:plc:dwwqhkndlvabhskr6flmlld7/app.bsky.graph.follow/3k2tdh4rbvo2r"
+      },
+      "labels": []
+    },
+    "record": {
+      "text": "I shouldn\u2019t have three times the following of @bolts.bsky.social \u2026 it makes me think I\u2019m not doing my job right \ud83d\ude02. So help me out here!",
+      "$type": "app.bsky.feed.post",
+      "reply": {
+        "root": {
+          "cid": "bafyreigrwwrlyj66kvwlxbku4dt4xmh7dt4hod66ebe6cbp5gdj3mcwlaq",
+          "uri": "at://did:plc:7vj2towokzui3hgna5u5u46f/app.bsky.feed.post/3kazx4qfcxk22"
+        },
+        "parent": {
+          "cid": "bafyreigrwwrlyj66kvwlxbku4dt4xmh7dt4hod66ebe6cbp5gdj3mcwlaq",
+          "uri": "at://did:plc:7vj2towokzui3hgna5u5u46f/app.bsky.feed.post/3kazx4qfcxk22"
+        }
+      },
+      "facets": [
+        {
+          "$type": "app.bsky.richtext.facet",
+          "index": {
+            "byteEnd": 66,
+            "byteStart": 48
+          },
+          "features": [
+            {
+              "did": "did:plc:sr3cp7q3p7zrnb6r276syycf",
+              "$type": "app.bsky.richtext.facet#mention"
+            }
+          ]
+        }
+      ],
+      "createdAt": "2023-10-05T22:11:19.298Z"
+    },
+    "replyCount": 1,
+    "repostCount": 0,
+    "likeCount": 8,
+    "indexedAt": "2023-10-05T22:11:19.298Z",
+    "viewer": {},
+    "labels": []
+  },
+  "reply": {
+    "root": {
+      "$type": "app.bsky.feed.defs#postView",
+      "uri": "at://did:plc:7vj2towokzui3hgna5u5u46f/app.bsky.feed.post/3kazx4qfcxk22",
+      "cid": "bafyreigrwwrlyj66kvwlxbku4dt4xmh7dt4hod66ebe6cbp5gdj3mcwlaq",
+      "author": {
+        "did": "did:plc:7vj2towokzui3hgna5u5u46f",
+        "handle": "taniel.bsky.social",
+        "displayName": "Taniel ",
+        "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:7vj2towokzui3hgna5u5u46f/bafkreieybjgzkpx5ckc7bnizpkfwcn42whwfnzwz3xwsfahw4hs4pgbvca@jpeg",
+        "viewer": {
+          "muted": false,
+          "blockedBy": false,
+          "following": "at://did:plc:dwwqhkndlvabhskr6flmlld7/app.bsky.graph.follow/3k2tdh4rbvo2r"
+        },
+        "labels": []
+      },
+      "record": {
+        "text": "As the other site does its thing, we\u2019ve decided at Bolts to step up our presence on this platform \u2014 it\u2019s game on to bring you news on local and state politics, voting rights, & criminal justice. But we need you for that! \n\nSo follow @bolts.bsky.social now!",
+        "$type": "app.bsky.feed.post",
+        "facets": [
+          {
+            "$type": "app.bsky.richtext.facet",
+            "index": {
+              "byteEnd": 257,
+              "byteStart": 239
+            },
+            "features": [
+              {
+                "did": "did:plc:sr3cp7q3p7zrnb6r276syycf",
+                "$type": "app.bsky.richtext.facet#mention"
+              }
+            ]
+          }
+        ],
+        "createdAt": "2023-10-05T22:01:50.910Z"
+      },
+      "replyCount": 1,
+      "repostCount": 24,
+      "likeCount": 96,
+      "indexedAt": "2023-10-05T22:01:50.910Z",
+      "viewer": {},
+      "labels": []
+    },
+    "parent": {
+      "$type": "app.bsky.feed.defs#postView",
+      "uri": "at://did:plc:7vj2towokzui3hgna5u5u46f/app.bsky.feed.post/3kazx4qfcxk22",
+      "cid": "bafyreigrwwrlyj66kvwlxbku4dt4xmh7dt4hod66ebe6cbp5gdj3mcwlaq",
+      "author": {
+        "did": "did:plc:7vj2towokzui3hgna5u5u46f",
+        "handle": "taniel.bsky.social",
+        "displayName": "Taniel ",
+        "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:7vj2towokzui3hgna5u5u46f/bafkreieybjgzkpx5ckc7bnizpkfwcn42whwfnzwz3xwsfahw4hs4pgbvca@jpeg",
+        "viewer": {
+          "muted": false,
+          "blockedBy": false,
+          "following": "at://did:plc:dwwqhkndlvabhskr6flmlld7/app.bsky.graph.follow/3k2tdh4rbvo2r"
+        },
+        "labels": []
+      },
+      "record": {
+        "text": "As the other site does its thing, we\u2019ve decided at Bolts to step up our presence on this platform \u2014 it\u2019s game on to bring you news on local and state politics, voting rights, & criminal justice. But we need you for that! \n\nSo follow @bolts.bsky.social now!",
+        "$type": "app.bsky.feed.post",
+        "facets": [
+          {
+            "$type": "app.bsky.richtext.facet",
+            "index": {
+              "byteEnd": 257,
+              "byteStart": 239
+            },
+            "features": [
+              {
+                "did": "did:plc:sr3cp7q3p7zrnb6r276syycf",
+                "$type": "app.bsky.richtext.facet#mention"
+              }
+            ]
+          }
+        ],
+        "createdAt": "2023-10-05T22:01:50.910Z"
+      },
+      "replyCount": 1,
+      "repostCount": 24,
+      "likeCount": 96,
+      "indexedAt": "2023-10-05T22:01:50.910Z",
+      "viewer": {},
+      "labels": []
+    }
+  }
+}

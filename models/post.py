@@ -104,20 +104,7 @@ def view_identity_feed(data):
 
 
 
-        # All the posts in "feed" constitute graph centers that we're
-        # considering in the HX. From these centers we want to lookup social
-        # edges, but we don't need this for the other posts in the graph.
-        statement = select(PostEdge) \
-            .where(PostEdge.identity_id == data["identity_id"]) \
-            .where(PostEdge.post_id.in_(feed)) \
-            
-        rows = session.scalars(statement).all()
-        for row in rows:
-            post_edges.append([ row.post_id, row.name ])
-
-
-
-        # Reply secondary posts go first because they might have share edges.
+        # Reply secondary posts go next because they might have share edges.
         statement = select(Link) \
             .where(Link.origin_type == "post") \
             .where(Link.origin_id.in_(feed)) \
@@ -144,6 +131,19 @@ def view_identity_feed(data):
             shares.append([row.origin_id, row.target_id])
             seen_posts.add(row.target_id)
             secondaries.add(row.target_id)
+
+
+
+        # For all the posts we've seen so far, they're eligible for social
+        # graph operations in the HX. Lookup their relevant edges.
+        statement = select(PostEdge) \
+            .where(PostEdge.identity_id == data["identity_id"]) \
+            .where(PostEdge.post_id.in_(list(seen_posts))) \
+            
+        rows = session.scalars(statement).all()
+        for row in rows:
+            post_edges.append([ row.post_id, row.name ])
+
 
         # Share Tertiary Posts
         statement = select(Link) \
@@ -209,19 +209,6 @@ def view_post_graph(data):
         seen_posts.add(data["id"])
 
 
-        # All the posts in "feed" constitute graph centers that we're
-        # considering in the HX. From these centers we want to lookup social
-        # edges, but we don't need this for the other posts in the graph.
-        statement = select(PostEdge) \
-            .where(PostEdge.identity_id == data["identity_id"]) \
-            .where(PostEdge.post_id.in_(feed)) \
-            
-        rows = session.scalars(statement).all()
-        for row in rows:
-            post_edges.append([ row.post_id, row.name ])
-
-
-
         # Possible Reply Secondary
         statement = select(Link) \
             .where(Link.origin_type == "post") \
@@ -250,6 +237,18 @@ def view_post_graph(data):
             shares.append([row.origin_id, row.target_id])
             seen_posts.add(row.target_id)
             secondaries.add(row.target_id)
+
+
+          
+        # For all the posts we've seen so far, they're eligible for social
+        # graph operations in the HX. Lookup their relevant edges.
+        statement = select(PostEdge) \
+            .where(PostEdge.identity_id == data["identity_id"]) \
+            .where(PostEdge.post_id.in_(list(seen_posts))) \
+            
+        rows = session.scalars(statement).all()
+        for row in rows:
+            post_edges.append([ row.post_id, row.name ])
         
 
 

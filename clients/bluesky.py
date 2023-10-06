@@ -10,6 +10,38 @@ from .gobo_bluesky import GOBOBluesky
 from .helpers import guess_mime
 
 
+# NOTE: These are taken from the atproto documentation: https://atproto.com/blog/create-post
+def parse_mentions(text):
+    spans = []
+    # regex based on: https://atproto.com/specs/handle#handle-identifier-syntax
+    mention_regex = rb"[$|\W](@([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)"
+    text_bytes = text.encode("UTF-8")
+    for m in re.finditer(mention_regex, text_bytes):
+        spans.append({
+            "start": m.start(1),
+            "end": m.end(1),
+            "handle": m.group(1)[1:].decode("UTF-8")
+        })
+    return spans
+
+def parse_links(text):
+    spans = []
+    # partial/naive URL regex based on: https://stackoverflow.com/a/3809435
+    # tweaked to disallow some training punctuation
+    url_regex = rb"[$|\W](https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*[-a-zA-Z0-9@%_\+~#//=])?)"
+    text_bytes = text.encode("UTF-8")
+    for m in re.finditer(url_regex, text_bytes):
+        spans.append({
+            "start": m.start(1),
+            "end": m.end(1),
+            "uri": m.group(1).decode("UTF-8"),
+        })
+    return spans
+
+
+
+
+
 def isRepost(data):
     reason = data.get("reason", None)
 
@@ -89,6 +121,10 @@ def get_external(embed):
     }
 
 
+def sort_facets(facet):
+    return facet["index"]["byteStart"]
+
+
 def get_record_view(data):
     record = data.get("record")
     author = record.get("author")
@@ -118,6 +154,7 @@ def get_record_view(data):
     self.content = value.get("text", "")
     self.url = Post.get_url(self)
     self.published = value.get("createdAt", None)
+    self.facets = value.get("facets", None)
 
     self.attachments = []
     self.share = None
@@ -136,6 +173,7 @@ def get_record_view(data):
         elif embed["$type"] == "app.bsky.embed.external#view":
             self.attachments.append(get_external(embed))
 
+    self.apply_facets()
     return self
 
 
@@ -187,6 +225,7 @@ class Post():
         self.content = record.get("text", None)
         self.url = Post.get_url(self)
         self.published = record.get("createdAt", None)
+        self.facets = record.get("facets", None)
           
         self.attachments = []
         self.is_repost = False
@@ -205,6 +244,7 @@ class Post():
         elif embed["$type"] == "app.bsky.embed.external#view":
             self.attachments.append(get_external(embed))
 
+        self.apply_facets()
         return self
     
 
@@ -246,6 +286,45 @@ class Post():
 
         self.id = f"gobo:{self.author.id}:{self.published}:{post['cid']}"
         return self
+    
+
+
+    # facets are Bluesky's approach to expressing hypertext linkages in post
+    # content. This applies facet data we pull from each post graph and renders
+    # it as something more Web-friendly for GOBO.
+
+    # NOTE: Be careful to use binary strings so the byte index values are accurate.
+    def apply_facets(self):
+        if self.facets is None:
+            return
+        
+        self.facets.sort(key = sort_facets)
+        
+        original = self.content.encode()
+        text = ""
+        offset = 0
+        for facet in self.facets:
+            start = facet["index"]["byteStart"] - offset
+            end = facet["index"]["byteEnd"] - offset
+          
+            if facet["features"][0]["$type"] == "app.bsky.richtext.facet#mention":
+                did = facet["features"][0]["did"]
+                text += original[:start].decode()
+                target = original[start:end].decode()
+                text += f"<a rel='nofollow noopener noreferrer' target='_blank' href='https://bsky.app/profile/{did}'>{target}</a>"
+                original = original[end:]
+                offset = end
+
+            if facet["features"][0]["$type"] == "app.bsky.richtext.facet#link":
+                uri = facet["features"][0]["uri"]
+                text += original[:start].decode()
+                target = original[start:end].decode()
+                text += f"<a rel='nofollow noopener noreferrer' target='_blank' href='{uri}'>{target}</a>"
+                original = original[end:]
+                offset = end
+
+        text += original.decode()
+        self.content = text
 
 
 
@@ -359,6 +438,43 @@ class Bluesky():
 
     def get_profile(self):
         return self.client.get_profile(self.me)
+    
+    
+    # facets are Bluesky's approach to expressing hypertext linkages in post
+    # content. We need to parse the post content and format data for Bluesky.
+    def parse_facets(self, data):
+        text = data["text"]
+        facets = []
+
+        for match in parse_mentions(text):
+            logging.info(match)
+            did = self.client.resolve_handle(match["handle"])["did"]
+            facets.append({
+                "index": {
+                    "byteStart": match["start"],
+                    "byteEnd": match["end"],
+                },
+                "features": [{
+                    "$type": "app.bsky.richtext.facet#mention", 
+                    "did": did
+                }],
+            })
+
+        for match in parse_links(text):
+            logging.info(match)
+            facets.append({
+                "index": {
+                    "byteStart": match["start"],
+                    "byteEnd": match["end"],
+                },
+                "features": [{
+                    "$type": "app.bsky.richtext.facet#link", 
+                    "uri": match["uri"]
+                }],
+            })
+
+        data["facets"] = facets 
+
 
     def create_post(self, post, metadata):
         embed = {
@@ -420,7 +536,8 @@ class Bluesky():
         if reply is not None:
             post_data["reply"] = reply
 
-        logging.info(post_data)
+        self.parse_facets(post_data)
+        # logging.info(post_data)
         return self.client.create_post(post_data)
 
 
