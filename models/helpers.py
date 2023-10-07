@@ -53,6 +53,43 @@ class QueryIterator:
                 raise StopIteration
         
         return self.feed.pop(0)
+    
+
+class ViewIterator:
+    def __init__(self, model, view, direction = "descending", per_page = 1000, wheres = []):
+        self.model = model
+        self.view = view
+        self.feed = []
+        self.state = "active"
+        self.per_page = per_page
+        self.wheres = wheres
+        self.query = build_query(per_page, wheres)
+        self.query["view"] = view
+        self.query["direction"] = direction
+
+    def __iter__(self):
+        return self
+    
+    def pull(self):
+        if self.state == "done":
+            return
+        
+        items = self.model.query(self.query)
+        self.feed.extend(items)
+        if len(items) != self.per_page:
+            self.state = "done"
+        else:
+            self.query["where"] = self.wheres
+            value = items[-1].get(self.view, None)
+            self.query["where"].append(where(self.view, value))
+    
+    def __next__(self):
+        if len(self.feed) == 0:
+            self.pull()
+            if len(self.feed) == 0:
+                raise StopIteration
+        
+        return self.feed.pop(0)
 
 
 

@@ -379,6 +379,7 @@ class Reddit():
 
         name = source["name"]
         _submissions = []
+        logging.info(f"Reddit Fetch r/{source['name']}")
         for item in gobo_reddit.get_new_ids(name):
             submission = build_submission(item)
             if submission is not None:

@@ -11,36 +11,38 @@ QueryIterator = models.helpers.QueryIterator
 
 def pull_posts_fanout(task):
     platform = h.get_platform(task.details)
-  
     if platform == "all":
         wheres = []
     else:
         wheres = [where("platform", platform)]
 
-    identities = QueryIterator(
-        model = models.identity,
+    sources = QueryIterator(
+        model = models.source,
         wheres = wheres
     )
-    for identity in identities:
-        links = QueryIterator(
-            model = models.link,
-            wheres = [
-                where("origin_type", "identity"),
-                where("origin_id", identity["id"]),
-                where("target_type", "source"),
-                where("name", "follows")
-            ]
-        )
-        for link in links:
-            source = models.source.get(link["target_id"])
-            if source is None:
-                logging.warning(f"identity {identity['id']} follows source {link['target_id']}, but that source does not exist")
-                continue
-            else:
-                queues.default.put_details("flow - pull posts", {
-                    "identity": identity,
-                    "source": source
-                })
+    for source in sources:
+        queues.default.put_details("pull posts from source", {"source": source})
+
+def pull_posts_from_source(task):
+    source = h.enforce("source", task)
+    
+    link = models.link.random([
+        where("origin_type", "identity"),
+        where("target_type", "source"),
+        where("target_id", source["id"]),
+        where("name", "follows")
+    ])
+    if link is None:
+        return task.halt()
+    
+    identity = models.identity.get(link["origin_id"])
+    if identity is None:
+        raise Exception(f"source is followed by identity that doesn't exist {source}")
+
+    queues.default.put_details("flow - pull posts", {
+        "identity": identity,
+        "source": source
+    })
 
 
 def get_last_retrieved(task):

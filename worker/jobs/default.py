@@ -39,6 +39,8 @@ def dispatch(task):
     
     elif task.name == "pull posts fanout":
         return tasks.pull_posts_fanout(task)
+    elif task.name == "pull posts from source":
+        return tasks.pull_posts_from_source(task)
     elif task.name == "get last retrieved":
         return tasks.get_last_retrieved(task)
     elif task.name == "set last retrieved":

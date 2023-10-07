@@ -688,6 +688,7 @@ class Bluesky():
             if isDone == True:
                 break
 
+            logging.info(f"Bluesky Fetch {source['username']} {cursor}")
             result = self.client.get_author_feed(source["username"], cursor)
 
             if last_retrieved is None:
