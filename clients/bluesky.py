@@ -14,13 +14,13 @@ from .helpers import guess_mime
 def parse_mentions(text):
     spans = []
     # regex based on: https://atproto.com/specs/handle#handle-identifier-syntax
-    mention_regex = rb"[$|\W](@([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)"
+    mention_regex = rb"(^|\W)(@([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)"
     text_bytes = text.encode("UTF-8")
     for m in re.finditer(mention_regex, text_bytes):
         spans.append({
-            "start": m.start(1),
-            "end": m.end(1),
-            "handle": m.group(1)[1:].decode("UTF-8")
+            "start": m.start(2),
+            "end": m.end(2),
+            "handle": m.group(2)[1:].decode("UTF-8")
         })
     return spans
 
@@ -28,13 +28,13 @@ def parse_links(text):
     spans = []
     # partial/naive URL regex based on: https://stackoverflow.com/a/3809435
     # tweaked to disallow some training punctuation
-    url_regex = rb"[$|\W](https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*[-a-zA-Z0-9@%_\+~#//=])?)"
+    url_regex = rb"(^|\W)((https?:\/\/)?(\w+\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*[-a-zA-Z0-9@%_\+~#//=])?)"
     text_bytes = text.encode("UTF-8")
     for m in re.finditer(url_regex, text_bytes):
         spans.append({
-            "start": m.start(1),
-            "end": m.end(1),
-            "uri": m.group(1).decode("UTF-8"),
+            "start": m.start(2),
+            "end": m.end(2),
+            "uri": m.group(2).decode("UTF-8"),
         })
     return spans
 
