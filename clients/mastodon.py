@@ -7,13 +7,17 @@ import re
 import mastodon
 import joy
 import models
-from .helpers import guess_mime
+from .helpers import guess_mime, get_base_url
 
 # TODO: Do we want this to be moved into GOBO configuration?
 redirect_uris = [
     "http://localhost:5117/add-identity-callback",
     "http://gobo.social/add-identity-callback",
     "https://gobo.social/add-identity-callback"
+]
+
+smalltown_urls = [
+    "https://community.publicinfrastructure.org"
 ]
 
 def build_status(item):
@@ -92,17 +96,29 @@ class Account():
     def __init__(self, _):
         self.id = str(_.id)
         self.url = _.url
-        self.username = _.acct
+        self.username = Account.get_username(_)
         self.name = _.display_name
         self.icon_url = _.avatar
+        self.platform = Account.get_platform(self)
 
-def map_username(hostname, username):
-    if username is None:
-        return username
-    if "@" in username:
-        return username
-    else:
-        return username + "@" + hostname
+    @staticmethod
+    def get_username(_):
+        username = _.acct
+        hostname = urlparse(_.url).hostname
+        if username is None:
+            return username
+        if "@" in username:
+            return username
+        else:
+            return username + "@" + hostname
+        
+    @staticmethod
+    def get_platform(account):
+        base_url = get_base_url(account.url)
+        if base_url in smalltown_urls:
+            return "smalltown"
+        else:
+            return "mastodon"
 
 class Poll():
     def __init(self, _):
@@ -113,9 +129,6 @@ class Poll():
 class Mastodon():
     def __init__(self, identity = None):
         self.identity = identity
-        if identity is not None:
-            self.base_url = identity.get("base_url", None)
-            self.platform = identity.get("platform", None)
 
     @staticmethod
     def register_client(base_url):
@@ -140,7 +153,6 @@ class Mastodon():
         if mastodon_client == None:
             raise Exception(f"no mastodon client found for {base_url}")
 
-        self.base_url = base_url
         self.client = mastodon.Mastodon(
             client_id = mastodon_client["client_id"],
             client_secret = mastodon_client["client_secret"],
@@ -224,16 +236,14 @@ class Mastodon():
 
 
     def map_sources(self, data):
-        base_url = self.base_url
-        hostname = urlparse(base_url).hostname
         sources = []
         for account in data["accounts"]:
             sources.append({
-                "platform": self.platform,
+                "platform": account.platform,
                 "platform_id": account.id,
-                "base_url": base_url,
+                "base_url": get_base_url(account.url),
                 "url": account.url,
-                "username": map_username(hostname, account.username),
+                "username": account.username,
                 "name": account.name,
                 "icon_url": account.icon_url,
                 "active": True
@@ -255,8 +265,8 @@ class Mastodon():
         def map_post(source, status):
             return {
                 "source_id": source["id"],
-                "base_url": self.base_url,
-                "platform": self.platform,
+                "base_url": source["base_url"],
+                "platform": source["platform"],
                 "platform_id": status.id,
                 "title": None,
                 "content": status.content,
@@ -329,7 +339,7 @@ class Mastodon():
         if is_shallow == True:
             default_limit = 40
         else:
-            default_limit = 200
+            default_limit = 100
         max_id = None
 
         statuses = []

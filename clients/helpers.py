@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 import markdown
 import mimetypes
 
@@ -14,3 +15,7 @@ def guess_mime(url):
 def partition(items, size):
     for i in range(0, len(items), size):
         yield items[i : i+size]
+
+def get_base_url(url):
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.hostname}"

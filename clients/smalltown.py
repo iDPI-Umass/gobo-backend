@@ -14,6 +14,7 @@ class LocalTimelineAccount():
         self.username = None
         self.name = None
         self.icon_url = None
+        self.platform = "smalltown"
 
 
 class Smalltown(Mastodon):
