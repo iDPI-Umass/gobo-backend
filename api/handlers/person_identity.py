@@ -33,6 +33,9 @@ def person_identities_get(person_id):
     
     return identities
 
+# NOTE: Conveninece endpoint for now. If there is more stuff associated with the
+# identity that we need to model, we should probably establish some subsidary
+# resources to model it more independently.
 def person_identity_post(person_id, id):
     person = get_viewer(person_id)
     identity = check_claim(person_id, id)
