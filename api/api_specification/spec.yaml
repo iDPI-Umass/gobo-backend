@@ -246,6 +246,9 @@ shards:
     active:
       description: Flag to control whether this source is actively used to build feeds.
       type: boolean
+    stash:
+      description: Stores extra-dimensional data for convenience.
+      type: object
 
   source: &source
     type: object

@@ -1,3 +1,5 @@
+import logging
+import json
 from typing import Optional
 from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column
@@ -26,6 +28,7 @@ class Source(Base):
     username: Mapped[Optional[str]]
     name: Mapped[Optional[str]]
     icon_url: Mapped[Optional[str]]
+    stash: Mapped[Optional[str]]
     active: Mapped[bool] = mapped_column(insert_default=False)
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
@@ -33,7 +36,13 @@ class Source(Base):
 
     @staticmethod
     def write(data):
-        return Source(**data)
+        _data = data.copy()
+
+        stash = _data.get("stash", None)
+        if stash is not None:
+            _data["stash"] = json.dumps(stash)
+
+        return Source(**_data)
     
     def to_dict(self):
         data = {
@@ -43,11 +52,19 @@ class Source(Base):
             "updated": self.updated
         }
 
+        stash = getattr(self, "stash", None)
+        if stash is not None:
+            data["stash"] = json.loads(stash)
+
         read_optional(self, data, optional)
         return data
 
 
     def update(self, data):
+        stash = data.get("stash", None)
+        if stash is not None:
+            self.stash = json.dumps(stash)
+
         self.platform_id = data["platform_id"]
         write_optional(self, data, optional)
         self.updated = joy.time.now()

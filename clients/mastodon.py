@@ -246,7 +246,10 @@ class Mastodon():
                 "username": account.username,
                 "name": account.name,
                 "icon_url": account.icon_url,
-                "active": True
+                "active": True,
+                "stash": {
+                    "platform_id": account.id
+                }
             })
   
         return sources
@@ -280,14 +283,14 @@ class Mastodon():
         for status in data["statuses"]:
             if status.id is None:
                 continue
-            source = sources[status.account.id]
+            source = sources[status.account.username]
             posts.append(map_post(source, status))
 
 
         for status in data["partials"]:
             if status.id is None:
                 continue
-            source = sources[status.account.id]
+            source = sources[status.account.username]
             partials.append(map_post(source, status))
 
         
@@ -363,6 +366,7 @@ class Mastodon():
         else:
             default_limit = 100
         max_id = None
+        platform_id = source["stash"]["platform_id"]
 
         statuses = []
         partials = []
@@ -373,9 +377,9 @@ class Mastodon():
             if isDone == True:
                 break
 
-            logging.info(f"Mastdon Fetch {source['username']}: {source['platform_id']} {max_id}")
+            logging.info(f"Mastdon Fetch {source['username']}: {platform_id} {max_id}")
             items = self.client.account_statuses(
-                source["platform_id"],
+                id = platform_id,
                 max_id = max_id,
                 limit=40
             )
@@ -461,13 +465,13 @@ class Mastodon():
         seen_accounts = set()
         for status in statuses:
             account = status.account
-            if account.id not in seen_accounts:
-                seen_accounts.add(account.id)
+            if account.username not in seen_accounts:
+                seen_accounts.add(account.username)
                 accounts.append(account)
         for status in partials:
             account = status.account
-            if account.id not in seen_accounts:
-                seen_accounts.add(account.id)
+            if account.username not in seen_accounts:
+                seen_accounts.add(account.username)
                 accounts.append(account)
 
 
