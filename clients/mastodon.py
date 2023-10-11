@@ -319,14 +319,36 @@ class Mastodon():
 
 
     def list_sources(self):
-        id = self.identity["platform_id"]
-        items = self.client.account_following(id, limit=None)
-        time.sleep(1)
-        
         accounts = []
+        logging.info("Mastodon: Fetching self profile data")
         accounts.append(Account(self.get_profile()))
-        for item in items:
-            accounts.append(Account(item))
+        time.sleep(1)
+
+        id = self.identity["platform_id"]
+        max_id = None
+        while True:
+            logging.info(f"Mastodon: Fetching following page {max_id}")
+            items = self.client.account_following(
+                id = id,
+                max_id = max_id, 
+                limit = 80
+            )
+            
+            time.sleep(1)
+
+            if len(items) == 0:
+                break
+              
+            for item in items:
+                accounts.append(Account(item))
+
+            page_data = getattr(items[-1], "_pagination_next", None)
+            if page_data is None:
+                break
+            for key, value in page_data.items():
+                if key == "max_id":
+                    max_id = str(value)
+                    break
 
         return {"accounts": accounts}
 
