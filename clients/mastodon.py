@@ -257,6 +257,7 @@ class Mastodon():
 
     def map_posts(self, data):        
         sources = {}
+        root_source = data["source"]
         for item in data["sources"]:
             sources[item["platform_id"]] = item
         
@@ -268,7 +269,7 @@ class Mastodon():
         def map_post(source, status):
             return {
                 "source_id": source["id"],
-                "base_url": source["base_url"],
+                "base_url": root_source["base_url"],
                 "platform": source["platform"],
                 "platform_id": status.id,
                 "title": None,

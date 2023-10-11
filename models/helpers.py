@@ -253,6 +253,50 @@ def define_crud(Table):
                 return None
             else:
                 return row.to_dict()
+    
+    def scan(data):
+        with Session() as session:
+            direction = data.get("direction") or "descending"
+            per_page = data.get("per_page") or 1000
+
+            if direction == "descending":
+                attribute = Table.id.desc()
+            else:
+                attribute = Table.id
+
+
+            statement = select(Table)
+
+            for expression in data["where"]:
+                key = expression["key"]
+                value = expression["value"]
+                if expression["operator"] == "eq":
+                    statement = statement.where(getattr(Table, key) == value)
+                if expression["operator"] == "neq":
+                    statement = statement.where(getattr(Table, key) != value)
+                elif expression["operator"] == "gte":
+                    statement = statement.where(getattr(Table, key) >= value)
+                elif expression["operator"] == "gt":
+                    statement = statement.where(getattr(Table, key) > value)
+                elif expression["operator"] == "lte":
+                    statement = statement.where(getattr(Table, key) <= value)
+                elif expression["operator"] == "lt":
+                    statement = statement.where(getattr(Table, key) < value)
+                elif expression["operator"] == "in":
+                    statement = statement.where(getattr(Table, key).in_(value))
+                elif expression["operator"] == "not in":
+                    statement = statement.where(~getattr(Table, key).in_(value))
+
+            statement = statement.order_by(attribute) \
+                .limit(per_page)
+
+
+            rows = session.scalars(statement).all()
+
+            results = []
+            for row in rows:
+                results.append(row.to_dict())
+            return results
 
     return {
       "add": add,
@@ -263,5 +307,6 @@ def define_crud(Table):
       "find": find,
       "pull": pull,
       "pluck": pluck,
-      "random": random
+      "random": random,
+      "scan": scan
     }

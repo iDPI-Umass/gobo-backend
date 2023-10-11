@@ -11,8 +11,6 @@ QueryIterator = models.helpers.QueryIterator
 def hard_reset(task):
     queues.default.put_details("clear posts", task.details)
     queues.default.put_details("clear last retrieved", task.details)
-    queues.default.put_details("clear post origins", task.details)
-    queues.default.put_details("clear post targets", task.details)
 
 
 
@@ -23,39 +21,24 @@ def clear_posts(task):
         wheres = []
     else:
         wheres = [where("platform", platform)]
+    
+    max_id = None
+    while True:
+        _wheres = wheres.copy()
+        if max_id is not None:
+            _wheres.append(where("id", max_id, "gt"))
         
-   
-    posts = QueryIterator(
-        model = models.post,
-        for_removal = True,
-        wheres = wheres
-    )
-    for post in posts:
-        models.post.remove(post["id"])
+        posts = models.post.scan({
+            "direction": "ascending",
+            "where": _wheres
+        })
 
-def clear_post_origins(task):
-    links = QueryIterator(
-        model = models.link,
-        for_removal = True,
-        wheres = [
-            where("origin_type", "post")
-        ]
-    ) 
-    for link in links:
-        models.link.remove(link["id"])
-
-def clear_post_targets(task):
-    links = QueryIterator(
-        model = models.link,
-        for_removal = True,
-        wheres = [
-            where("target_type", "post")
-        ]
-    ) 
-    for link in links:
-        models.link.remove(link["id"])
-
+        if len(posts) == 0:
+            break
         
+        max_id = posts[-1]["id"]
+        for post in posts:
+            queues.default.put_details("remove post", {"post": post})
 
 
 def clear_last_retrieved(task):

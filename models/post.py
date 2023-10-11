@@ -11,8 +11,8 @@ Source = tables.Source
 PostEdge = tables.PostEdge
 
 
-add, get, update, remove, query, find, pull = itemgetter(
-    "add", "get", "update", "remove", "query", "find", "pull"
+add, get, update, remove, query, find, pull, scan = itemgetter(
+    "add", "get", "update", "remove", "query", "find", "pull", "scan"
 )(define_crud(Post))
 
 
