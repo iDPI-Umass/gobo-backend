@@ -9,9 +9,9 @@ from .mastodon import Mastodon, Status, build_status
 
 class LocalTimelineAccount():
     def __init__(self):
-        self.id = "local timeline"
-        self.url = None
-        self.username = None
+        self.id = "local-timeline"
+        self.url = "https://community.publicinfrastructure.org"
+        self.username = "gobo:local-timeline"
         self.name = None
         self.icon_url = None
         self.platform = "smalltown"

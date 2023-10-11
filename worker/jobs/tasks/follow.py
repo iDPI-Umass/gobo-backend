@@ -56,21 +56,22 @@ def unfollow(task):
     links = QueryIterator(
         model = models.link,
         wheres = [
-            where("origin_type", "identity"),
-            where("origin_id", identity_id),
+            where("origin_type", "source"),
+            where("origin_id", source_id),
             where("target_type", "post"),
-            where("name", "identity-feed")
+            where("name", "has-post")
         ]
     )
    
-    removals = []
     for link in links:
-        post = models.post.get(link["target_id"])
-        if post is not None and post["source_id"] == source_id:
-            removals.append(link["id"])
-    
-    for id in removals:
-        models.link.remove(id)
+        models.link.find_and_remove({
+            "origin_type": "identity",
+            "origin_id": identity_id,
+            "target_type": "post",
+            "target_id": link["target_id"],
+            "name": "identity-feed",
+            "secondary": link["secondary"]
+        })
 
 
 def rebuild_feed(task):

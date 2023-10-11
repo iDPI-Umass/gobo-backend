@@ -240,7 +240,7 @@ class Mastodon():
         for account in data["accounts"]:
             sources.append({
                 "platform": account.platform,
-                "platform_id": account.id,
+                "platform_id": account.username,
                 "base_url": get_base_url(account.url),
                 "url": account.url,
                 "username": account.username,

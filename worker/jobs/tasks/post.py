@@ -37,7 +37,9 @@ def pull_posts_from_source(task):
     
     identity = models.identity.get(link["origin_id"])
     if identity is None:
-        raise Exception(f"source is followed by identity that doesn't exist {source}")
+        models.link.remove(link["id"])
+        queues.default.put_task(task)
+        return
 
     queues.default.put_details("flow - pull posts", {
         "identity": identity,

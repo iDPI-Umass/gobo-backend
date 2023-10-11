@@ -69,9 +69,9 @@ def read_draft_file(draft):
 
 
 def reconcile_sources(identity, sources):
-    desired_sources = []
+    desired_sources = set()
     for source in sources:
-        desired_sources.append(source["id"])
+        desired_sources.add(source["id"])
     
     results = models.link.pull([
         where("origin_type", "identity"),
@@ -80,14 +80,11 @@ def reconcile_sources(identity, sources):
         where("name", "follows")
     ])
    
-    current_sources = []
-    source_ids = [ result["target_id"] for result in results ]
-    for source in models.source.pluck(source_ids):
-        if source["base_url"] == identity["base_url"]:
-            current_sources.append(source["id"])
+    current_sources = set()
+    for result in results:
+        current_sources.add(result["target_id"])
 
-
-    difference = list(set(desired_sources) - set(current_sources))
+    difference = desired_sources - current_sources
     for source_id in difference:
         logging.info(f"For identity {identity['id']}, adding source {source_id}")
         queues.default.put_details("follow", {
@@ -95,7 +92,7 @@ def reconcile_sources(identity, sources):
             "source_id": source_id
         })
 
-    difference = list(set(current_sources) - set(desired_sources))
+    difference = current_sources - desired_sources
     for source_id in difference:
         logging.info(f"For identity {identity['id']}, removing source {source_id}")
         queues.default.put_details("unfollow", {
