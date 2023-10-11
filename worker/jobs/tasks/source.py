@@ -56,3 +56,7 @@ def reconcile_sources(task):
     sources = h.enforce("sources", task)
     h.reconcile_sources(identity, sources)
     return {"sources": sources}
+
+def remove_source(task):
+    source = h.enforce("source", task)
+    h.remove_source(source)

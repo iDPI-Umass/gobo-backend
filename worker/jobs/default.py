@@ -35,6 +35,8 @@ def dispatch(task):
         return tasks.upsert_sources(task)
     elif task.name == "reconcile sources":
         return tasks.reconcile_sources(task)
+    elif task.name == "remove source":
+        return tasks.remove_source(task)
 
     
     elif task.name == "pull posts fanout":
@@ -65,6 +67,8 @@ def dispatch(task):
         return tasks.hard_reset(task)
     elif task.name == "clear posts":
         return tasks.clear_posts(task)
+    elif task.name == "clear sources":
+        return tasks.clear_sources(task)
     elif task.name == "clear last retrieved":
         return tasks.clear_last_retrieved(task)
 

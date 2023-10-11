@@ -10,6 +10,7 @@ QueryIterator = models.helpers.QueryIterator
 
 def hard_reset(task):
     queues.default.put_details("clear posts", task.details)
+    queues.default.put_details("clear sources", task.details)
     queues.default.put_details("clear last retrieved", task.details)
 
 
@@ -39,6 +40,33 @@ def clear_posts(task):
         max_id = posts[-1]["id"]
         for post in posts:
             queues.default.put_details("remove post", {"post": post})
+
+
+def clear_sources(task):
+    platform = h.get_platform(task.details)
+  
+    if platform == "all":
+        wheres = []
+    else:
+        wheres = [where("platform", platform)]
+    
+    max_id = None
+    while True:
+        _wheres = wheres.copy()
+        if max_id is not None:
+            _wheres.append(where("id", max_id, "gt"))
+        
+        sources = models.source.scan({
+            "direction": "ascending",
+            "where": _wheres
+        })
+
+        if len(sources) == 0:
+            break
+        
+        max_id = sources[-1]["id"]
+        for source in sources:
+            queues.default.put_details("remove source", {"source": source})
 
 
 def clear_last_retrieved(task):

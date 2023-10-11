@@ -8,8 +8,8 @@ from .helpers import define_crud
 Source = tables.Source
 Link = tables.Link
 
-add, get, update, remove, query, find, pluck, pull = itemgetter(
-    "add", "get", "update", "remove", "query", "find", "pluck", "pull"
+add, get, update, remove, query, find, pluck, pull, scan = itemgetter(
+    "add", "get", "update", "remove", "query", "find", "pluck", "pull", "scan"
 )(define_crud(Source))
 
 

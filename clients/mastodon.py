@@ -129,6 +129,8 @@ class Poll():
 class Mastodon():
     def __init__(self, identity = None):
         self.identity = identity
+        if self.identity is not None:
+            self.base_url = self.identity["base_url"]
 
     @staticmethod
     def register_client(base_url):
@@ -148,7 +150,7 @@ class Mastodon():
     
 
     def login(self):
-        base_url = self.identity["base_url"]
+        base_url = self.base_url
         mastodon_client = models.mastodon_client.find({"base_url": base_url})
         if mastodon_client == None:
             raise Exception(f"no mastodon client found for {base_url}")
@@ -240,16 +242,13 @@ class Mastodon():
         for account in data["accounts"]:
             sources.append({
                 "platform": account.platform,
-                "platform_id": account.username,
-                "base_url": get_base_url(account.url),
+                "platform_id": account.id,
+                "base_url": self.base_url,
                 "url": account.url,
                 "username": account.username,
                 "name": account.name,
                 "icon_url": account.icon_url,
-                "active": True,
-                "stash": {
-                    "platform_id": account.id
-                }
+                "active": True
             })
   
         return sources
@@ -257,7 +256,6 @@ class Mastodon():
 
     def map_posts(self, data):        
         sources = {}
-        root_source = data["source"]
         for item in data["sources"]:
             sources[item["platform_id"]] = item
         
@@ -269,7 +267,7 @@ class Mastodon():
         def map_post(source, status):
             return {
                 "source_id": source["id"],
-                "base_url": root_source["base_url"],
+                "base_url": source["base_url"],
                 "platform": source["platform"],
                 "platform_id": status.id,
                 "title": None,
@@ -284,14 +282,14 @@ class Mastodon():
         for status in data["statuses"]:
             if status.id is None:
                 continue
-            source = sources[status.account.username]
+            source = sources[status.account.id]
             posts.append(map_post(source, status))
 
 
         for status in data["partials"]:
             if status.id is None:
                 continue
-            source = sources[status.account.username]
+            source = sources[status.account.id]
             partials.append(map_post(source, status))
 
         
@@ -367,7 +365,7 @@ class Mastodon():
         else:
             default_limit = 100
         max_id = None
-        platform_id = source["stash"]["platform_id"]
+        platform_id = source["platform_id"]
 
         statuses = []
         partials = []
@@ -466,13 +464,13 @@ class Mastodon():
         seen_accounts = set()
         for status in statuses:
             account = status.account
-            if account.username not in seen_accounts:
-                seen_accounts.add(account.username)
+            if account.id not in seen_accounts:
+                seen_accounts.add(account.id)
                 accounts.append(account)
         for status in partials:
             account = status.account
-            if account.username not in seen_accounts:
-                seen_accounts.add(account.username)
+            if account.id not in seen_accounts:
+                seen_accounts.add(account.id)
                 accounts.append(account)
 
 
