@@ -313,7 +313,7 @@ class Post():
                 target = original[start:end].decode()
                 text += f"<a rel='nofollow noopener noreferrer' target='_blank' href='https://bsky.app/profile/{did}'>{target}</a>"
                 original = original[end:]
-                offset = end
+                offset += end
 
             if facet["features"][0]["$type"] == "app.bsky.richtext.facet#link":
                 uri = facet["features"][0]["uri"]
@@ -321,7 +321,7 @@ class Post():
                 target = original[start:end].decode()
                 text += f"<a rel='nofollow noopener noreferrer' target='_blank' href='{uri}'>{target}</a>"
                 original = original[end:]
-                offset = end
+                offset += end
 
         text += original.decode()
         self.content = text
@@ -579,6 +579,8 @@ class Bluesky():
             cursor = result.get("cursor", None)
             if cursor is None:
                 break
+            
+        logging.info(f"bluesky actor count {len(actors)}")
 
         return {"actors": actors}
 
