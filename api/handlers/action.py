@@ -21,6 +21,8 @@ def action_onboard_identity_start_post():
     elif platform == "smalltown":
         base_url = h.parse_base_url(request.json)
         response = smalltown.get_redirect_url(person, base_url)
+    else:
+        raise Exception("unrecognized platform, cannot start onboard")
 
     return response
   
