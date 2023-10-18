@@ -6,7 +6,7 @@ python-jose[cryptography]==3.3.0
 python_dotenv==1.0.0
 tweepy==4.14.0
 snscrape==0.7.0.20230622
-praw==7.7.0
+praw==7.7.1
 pmaw==3.0.0
 Mastodon.py==1.8.1
 schedule==1.2.0
