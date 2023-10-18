@@ -203,25 +203,25 @@ shards:
       <<: *mastodonClientCore
       <<: *timestamp
 
-  lensCore: &lensCore
+  filterCore: &filterCore
     <<: *person_id
     category:
-      description: Describes the type of lens and controls how it acts on the feed
+      description: Describes the type of filter and controls how it acts on the feed
       type: string
     active:
-      description: This flag provides a hint as to this lens effect on a given feed.
+      description: This flag provides a hint as to this filter effect on a given feed.
       type: boolean
     configuration:
-      description: Description of a given lens configuration. Varies based on lens category.
+      description: Description of a given filter configuration. Varies based on filter category.
       type: object
 
-  lens: &lens
+  filter: &filter
     type: object
     additionalProperties: false
     required: [ id, person_id ]
     properties:
       <<: *id
-      <<: *lensCore
+      <<: *filterCore
       <<: *timestamp
 
   sourceCore: &sourceCore
@@ -718,9 +718,9 @@ resources:
         response:
           status: 204
 
-  lenses:
-    template: /lenses{?view,direction,per_page,page}
-    route: /lenses
+  filters:
+    template: /filters{?view,direction,per_page,page}
+    route: /filters
     methods:
       post:
         request:
@@ -728,10 +728,10 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            properties: *lensCore
+            properties: *filterCore
         response:
           type: application/json
-          schema: *lens
+          schema: *filter
           status: 201
 
       get:
@@ -741,28 +741,28 @@ resources:
           status: 200
           schema:
             type: array
-            items: *lens
+            items: *filter
 
 
-  lens:
-    template: /lenses/{id}
-    route: /lenses/<int:id>
+  filter:
+    template: /filters/{id}
+    route: /filters/<int:id>
     methods:
       get:
         request: {}
         response:
           type: application/json
           status: 200
-          schema: *lens
+          schema: *filter
 
       put:
         request:
           type: application/json
-          schema: *lens
+          schema: *filter
         response:
           type: application/json
           status: 200
-          schema: *lens
+          schema: *filter
 
       delete:
         request: {}
@@ -990,9 +990,9 @@ resources:
         response:
           status: 204
 
-  person_lenses:
-    template: /people/{person_id}/lenses{?per_page,page}
-    route: /people/<int:person_id>/lenses
+  person_filters:
+    template: /people/{person_id}/filters{?per_page,page}
+    route: /people/<int:person_id>/filters
     methods:
       get:
         request:
@@ -1003,7 +1003,7 @@ resources:
           status: 200
           schema:
             type: array
-            items: *lens
+            items: *filter
 
       post:
         request:
@@ -1013,26 +1013,26 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            properties: *lensCore
+            properties: *filterCore
         response:
           type: application/json
           status: 201
-          schema: *lens
+          schema: *filter
 
-  person_lens:
-    template: /people/{person_id}/lenses/{id}{?per_page,page,category}
-    route: /people/<int:person_id>/lenses/<int:id>
+  person_filter:
+    template: /people/{person_id}/filters/{id}
+    route: /people/<int:person_id>/filters/<int:id>
     methods:
       put:
         request:
           authorization:
             - person
           type: application/json
-          schema: *lens
+          schema: *filter
         response:
           status: 200
           type: application/json
-          schema: *lens
+          schema: *filter
 
       delete:
         request:

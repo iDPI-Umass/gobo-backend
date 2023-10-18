@@ -6,4 +6,4 @@ from .helpers import define_crud
 
 add, get, update, remove, query, find,  = itemgetter(
     "add", "get", "update", "remove", "query", "find"
-)(define_crud(tables.Lens))
+)(define_crud(tables.Filter))

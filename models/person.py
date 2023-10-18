@@ -7,9 +7,6 @@ from .helpers import define_crud
 
 Person = tables.Person
 Link = tables.Link
-tableDict = {
-  
-}
 
 
 add, get, update, remove, query, find, pluck = itemgetter(

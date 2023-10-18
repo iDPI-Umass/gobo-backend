@@ -1,6 +1,6 @@
 from .helpers import *
 from .identity import *
-from .lens import *
+from .filter import *
 from .link import *
 from .mastodon_client import *
 from .person import *

@@ -11,8 +11,8 @@ optional = [
 ]
 
 
-class Lens(Base):
-    __tablename__ = "lens"
+class Filter(Base):
+    __tablename__ = "filter"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     person_id: Mapped[int]
@@ -28,7 +28,7 @@ class Lens(Base):
         configuration = _data.get("configuration", None)
         if configuration is not None:
             _data["configuration"] = json.dumps(configuration)
-        return Lens(**_data)
+        return Filter(**_data)
 
     def to_dict(self):
         data = {
