@@ -19,11 +19,23 @@ def dispatch(task):
     
     
     elif task.name == "create post":
-        return create_post(task)
+        try:
+            return create_post(task)
+        except Exception as e:
+            logging.error(e)
+            raise Exception("mastodon create post failure")
     elif task.name == "add post edge":
-        return add_post_edge(task)
+        try:
+            return add_post_edge(task)
+        except Exception as e:
+            logging.error(e)
+            raise Exception("mastodon add post edge failure")
     elif task.name == "remove post edge":
-        return remove_post_edge(task)
+        try:
+            return remove_post_edge(task)
+        except Exception as e:
+            logging.error(e)
+            raise Exception("mastodon remove post edge failure")
 
 
     else:

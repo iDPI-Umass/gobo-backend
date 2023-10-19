@@ -4,6 +4,7 @@ from os import environ
 from datetime import timedelta
 import json
 from os import environ
+import re
 import html
 import praw
 from pmaw import PushshiftAPI
@@ -22,6 +23,12 @@ def is_video(url):
 
 def is_gallery(url):
     return url.startswith("https://www.reddit.com/gallery/")
+
+# This is purely tactical. The JSON that comes back for galleries in the "new" listing
+# contains "preview" URLs that are producing 403 responses. We see that "i" URLs
+# do not produce those responses. For now, we just map it emperically.
+def correct_media_url(url):
+    return re.sub(r"https://preview.redd.it", "https://i.redd.it", url)
 
 def get_subreddit(submission):
     subreddit = submission["subreddit"]
@@ -107,11 +114,12 @@ class Submission():
                             if best == None or entry_area > best_area:
                                 best = entry
                                 best_area = entry_area
-                          
+                      
                         self.attachments.append({
-                            "url": best["u"],
+                            "url": correct_media_url(best["u"]),
                             "type": content_type
                         })
+            
             except Exception as e:
                 logging.warning(e)
 
