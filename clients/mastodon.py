@@ -46,6 +46,7 @@ class Status():
         self.poll = None
         self.reblog = None
         self.reply = None
+        self.thread = None
 
         if _.reblog is not None:
             self.reblog = Status(_.reblog)
@@ -312,6 +313,24 @@ class Mastodon():
                     "name": "replies",
                 })
 
+            if status.thread is not None:
+                edges.append({
+                    "origin_type": "post",
+                    "origin_reference": status.id,
+                    "target_type": "post",
+                    "target_reference": status.thread[-1],
+                    "name": "originates-thread",
+                })
+
+                for id in status.thread:
+                    edges.append({
+                        "origin_type": "post",
+                        "origin_reference": status.id,
+                        "target_type": "post",
+                        "target_reference": id,
+                        "name": "threads",
+                    })
+
 
         return {
             "posts": posts,
@@ -421,7 +440,6 @@ class Mastodon():
 
 
         seen_statuses = set()
-        reply_ids = set()
         for status in statuses:
             seen_statuses.add(status.id)
         
@@ -431,33 +449,26 @@ class Mastodon():
                 seen_statuses.add(reblog.id)
                 partials.append(reblog)
 
+        # New seen statuses because these are ancestor chains.
+        seen_statuses = set()
         for status in statuses:
             reply = status.reply
-            if reply is not None and reply not in seen_statuses:
-                seen_statuses.add(reply)
-                reply_ids.add(reply) 
-
-
-
-        registered = models.post.pull([
-            models.helpers.where("base_url", source["base_url"]),
-            models.helpers.where("platform_id", list(reply_ids), "in")
-        ])
-
-        for item in registered:
-            reply_ids.remove(item["platform_id"])
-
-        for id in reply_ids:
-            try:
-                logging.info(f"Mastodon: fetching reply {id}")
-                status = Status(self.client.status(id))
-                # We need to stop traversing the graph so we don't pull in lots of replies.
-                # By definition, Mastodon does not allow replies to boosted statuses.
-                status.reply = None
-                partials.append(status)
-            except Exception as e:
-                logging.warning(f"failed to fetch status {id} {e}")
-            time.sleep(1)
+            if reply is not None:
+                try:
+                    logging.info(f"Mastodon: fetching context for {status.id}")
+                    context = self.client.status_context(status.id)
+                    status.thread = []
+                    for item in context.ancestors:
+                        ancestor = build_status(item)
+                        if ancestor is None:
+                            continue
+                        status.thread.append(ancestor.id)
+                        seen_statuses.add(ancestor.id)
+                        partials.append(ancestor)
+            
+                except Exception as e:
+                    logging.warning(f"failed to fetch context {status.id} {e}")
+                time.sleep(1)
 
 
 

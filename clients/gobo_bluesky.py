@@ -139,6 +139,15 @@ class GOBOBluesky():
        
         return self.bluesky_get(url)
     
+    def get_thread(self, uri, parentHeight = None, depth = None):
+        url = self.build_url("app.bsky.feed.getPostThread", {
+            "uri": uri,
+            "parentHeight": parentHeight,
+            "depth": depth,
+        })
+       
+        return self.bluesky_get(url)
+    
     def create_post(self, post):
         url = self.build_url("com.atproto.repo.createRecord", {})
 

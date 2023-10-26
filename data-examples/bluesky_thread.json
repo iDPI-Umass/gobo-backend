@@ -1,0 +1,157 @@
+{
+  "$type": "app.bsky.feed.defs#threadViewPost",
+  "post": {
+    "uri": "at://did:plc:h4idk7sk2x2mklmbbihur2ti/app.bsky.feed.post/3kclvt67uwg2k",
+    "cid": "bafyreifbdmhzjbwlbtghzjczcbxllinou6omwetncpyuseb4absrl3un34",
+    "author": {
+      "did": "did:plc:h4idk7sk2x2mklmbbihur2ti",
+      "handle": "ozmodiar.bsky.social",
+      "displayName": "Ozmodiar, Space Elf",
+      "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:h4idk7sk2x2mklmbbihur2ti/bafkreihfqbked5fd4wh42d3u23iubuyack6m73xihq4ofg65cybeva2eey@jpeg",
+      "viewer": {
+        "muted": false,
+        "blockedBy": false
+      },
+      "labels": []
+    },
+    "record": {
+      "text": "$10k Trump will never pay. Yawn. Courts are so totally unequipped to deal with his M.O. All of these judges are weaklings who are asking to be treated this way.",
+      "$type": "app.bsky.feed.post",
+      "langs": [
+        "en"
+      ],
+      "reply": {
+        "root": {
+          "cid": "bafyreigwp7ervwgb6n4ksxkdpwgx4faobhl5hdaczb4xgoylb2uvpephke",
+          "uri": "at://did:plc:on5oeywiqx32fh2zau473wz6/app.bsky.feed.post/3kcluuoxbcc2g"
+        },
+        "parent": {
+          "cid": "bafyreicu7ogjxzmmgiguf6eewoxornlrmdbv3dlbnklgdiehz4s6qervwa",
+          "uri": "at://did:plc:on5oeywiqx32fh2zau473wz6/app.bsky.feed.post/3kclvcnwqw52x"
+        }
+      },
+      "createdAt": "2023-10-25T18:51:41.277Z"
+    },
+    "replyCount": 0,
+    "repostCount": 0,
+    "likeCount": 1,
+    "indexedAt": "2023-10-25T18:51:41.277Z",
+    "viewer": {},
+    "labels": []
+  },
+  "parent": {
+    "$type": "app.bsky.feed.defs#threadViewPost",
+    "post": {
+      "uri": "at://did:plc:on5oeywiqx32fh2zau473wz6/app.bsky.feed.post/3kclvcnwqw52x",
+      "cid": "bafyreicu7ogjxzmmgiguf6eewoxornlrmdbv3dlbnklgdiehz4s6qervwa",
+      "author": {
+        "did": "did:plc:on5oeywiqx32fh2zau473wz6",
+        "handle": "nycsouthpaw.bsky.social",
+        "displayName": "southpaw",
+        "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:on5oeywiqx32fh2zau473wz6/bafkreic6qqg3667av7342pxsb2dxivechw6v3rmk2ybewpiwncoakoqbxq@jpeg",
+        "viewer": {
+          "muted": false,
+          "blockedBy": false,
+          "following": "at://did:plc:dwwqhkndlvabhskr6flmlld7/app.bsky.graph.follow/3k2tdgn75hw2r"
+        },
+        "labels": []
+      },
+      "record": {
+        "text": "Justice Engoron says he doesn\u2019t believe Trump\u2019s testimony, and sanctions him.",
+        "$type": "app.bsky.feed.post",
+        "embed": {
+          "$type": "app.bsky.embed.images",
+          "images": [
+            {
+              "alt": "Tweets from Erica Orden reporting the questioning and the judge\u2019s ruling.",
+              "image": {
+                "$type": "blob",
+                "ref": {
+                  "$link": "bafkreidpcdkkrvehlk34nhnscfcoqym5aqx6ua2wmvmvmqdu62mirz7lu4"
+                },
+                "mimeType": "image/jpeg",
+                "size": 402685
+              },
+              "aspectRatio": {
+                "width": 1179,
+                "height": 1286
+              }
+            }
+          ]
+        },
+        "langs": [
+          "en"
+        ],
+        "reply": {
+          "root": {
+            "cid": "bafyreigwp7ervwgb6n4ksxkdpwgx4faobhl5hdaczb4xgoylb2uvpephke",
+            "uri": "at://did:plc:on5oeywiqx32fh2zau473wz6/app.bsky.feed.post/3kcluuoxbcc2g"
+          },
+          "parent": {
+            "cid": "bafyreigwp7ervwgb6n4ksxkdpwgx4faobhl5hdaczb4xgoylb2uvpephke",
+            "uri": "at://did:plc:on5oeywiqx32fh2zau473wz6/app.bsky.feed.post/3kcluuoxbcc2g"
+          }
+        },
+        "createdAt": "2023-10-25T18:42:28.729Z"
+      },
+      "embed": {
+        "$type": "app.bsky.embed.images#view",
+        "images": [
+          {
+            "thumb": "https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:on5oeywiqx32fh2zau473wz6/bafkreidpcdkkrvehlk34nhnscfcoqym5aqx6ua2wmvmvmqdu62mirz7lu4@jpeg",
+            "fullsize": "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:on5oeywiqx32fh2zau473wz6/bafkreidpcdkkrvehlk34nhnscfcoqym5aqx6ua2wmvmvmqdu62mirz7lu4@jpeg",
+            "alt": "Tweets from Erica Orden reporting the questioning and the judge\u2019s ruling.",
+            "aspectRatio": {
+              "width": 1179,
+              "height": 1286
+            }
+          }
+        ]
+      },
+      "replyCount": 4,
+      "repostCount": 16,
+      "likeCount": 100,
+      "indexedAt": "2023-10-25T18:42:28.729Z",
+      "viewer": {},
+      "labels": []
+    },
+    "parent": {
+      "$type": "app.bsky.feed.defs#threadViewPost",
+      "post": {
+        "uri": "at://did:plc:on5oeywiqx32fh2zau473wz6/app.bsky.feed.post/3kcluuoxbcc2g",
+        "cid": "bafyreigwp7ervwgb6n4ksxkdpwgx4faobhl5hdaczb4xgoylb2uvpephke",
+        "author": {
+          "did": "did:plc:on5oeywiqx32fh2zau473wz6",
+          "handle": "nycsouthpaw.bsky.social",
+          "displayName": "southpaw",
+          "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:on5oeywiqx32fh2zau473wz6/bafkreic6qqg3667av7342pxsb2dxivechw6v3rmk2ybewpiwncoakoqbxq@jpeg",
+          "viewer": {
+            "muted": false,
+            "blockedBy": false,
+            "following": "at://did:plc:dwwqhkndlvabhskr6flmlld7/app.bsky.graph.follow/3k2tdgn75hw2r"
+          },
+          "labels": []
+        },
+        "record": {
+          "text": "Trump is being sworn in to testify about his compliance with Justice Engoron\u2019s gag order, reports from the courtroom indicate.",
+          "$type": "app.bsky.feed.post",
+          "langs": [
+            "en"
+          ],
+          "createdAt": "2023-10-25T18:34:39.914Z"
+        },
+        "replyCount": 10,
+        "repostCount": 23,
+        "likeCount": 140,
+        "indexedAt": "2023-10-25T18:34:39.914Z",
+        "viewer": {},
+        "labels": []
+      },
+      "replies": []
+    },
+    "replies": []
+  },
+  "viewer": {
+    "canReply": true
+  }
+}

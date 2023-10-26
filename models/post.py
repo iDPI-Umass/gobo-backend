@@ -67,6 +67,7 @@ def view_identity_feed(data):
         posts = []
         shares = []
         replies = []
+        threads = []
         sources = []
         seen_posts = set()
         seen_sources = set()
@@ -114,6 +115,20 @@ def view_identity_feed(data):
         rows = session.scalars(statement).all()
         for row in rows:
             replies.append([row.origin_id, row.target_id])
+            seen_posts.add(row.target_id)
+
+
+
+        # Same for thread ancestors.
+        statement = select(Link) \
+            .where(Link.origin_type == "post") \
+            .where(Link.origin_id.in_(feed)) \
+            .where(Link.target_type == "post") \
+            .where(Link.name == "originates-thread")
+
+        rows = session.scalars(statement).all()
+        for row in rows:
+            threads.append([row.origin_id, row.target_id])
             seen_posts.add(row.target_id)
 
 
@@ -185,6 +200,7 @@ def view_identity_feed(data):
             "posts": posts,
             "shares": shares,
             "replies": replies,
+            "threads": threads,
             "sources": sources
         }
 
@@ -200,6 +216,7 @@ def view_post_graph(data):
         post_edges = []
         posts = []
         replies = []
+        fullThread = []
         shares = []
         sources = []
         seen_posts = set()
@@ -209,17 +226,17 @@ def view_post_graph(data):
         seen_posts.add(data["id"])
 
 
-        # Possible Reply Secondary
+        # Possible thread ancestors.
         statement = select(Link) \
             .where(Link.origin_type == "post") \
-            .where(Link.origin_id.in_(feed)) \
+            .where(Link.origin_id == data["id"]) \
             .where(Link.target_type == "post") \
-            .where(Link.name == "replies") \
-            .limit(1)
+            .where(Link.name == "threads") \
+            .order_by(Link.secondary.asc())
 
-        row = session.scalars(statement).first()
-        if row is not None:
-            replies.append([row.origin_id, row.target_id])
+        rows = session.scalars(statement).all()
+        for row in rows:
+            fullThread.append(row.target_id)
             seen_posts.add(row.target_id)
 
 
@@ -291,5 +308,6 @@ def view_post_graph(data):
             "posts": posts,
             "shares": shares,
             "replies": replies,
+            "fullThread": fullThread,
             "sources": sources,
         }

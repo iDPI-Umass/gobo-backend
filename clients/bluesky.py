@@ -42,7 +42,7 @@ def parse_links(text):
 
 
 
-def isRepost(data):
+def is_repost(data):
     reason = data.get("reason", None)
 
     if reason is None:
@@ -82,6 +82,17 @@ def build_post(data):
     try:
         # logging.info(json.dumps(data, indent = 2, default = json_failure))
         return Post.create(data)
+    except Exception as e:
+        logging.error(e, exc_info=True)
+        logging.error("\n\n")
+        logging.error(json.dumps(data, indent = 2, default = json_failure))
+        logging.error("\n\n")
+        return None
+    
+def build_thread(data):
+    try:
+        # logging.info(json.dumps(data, indent = 2, default = json_failure))
+        return Post.create_thread(data["thread"])
     except Exception as e:
         logging.error(e, exc_info=True)
         logging.error("\n\n")
@@ -160,6 +171,8 @@ def get_record_view(data):
     self.share = None
     self.reply = None
     self.poll = None
+    self.thread = None
+
 
     embeds = record.get("embeds", [])
     for embed in embeds:
@@ -195,7 +208,7 @@ class Post():
         if data is None:
             raise Exception("raw dictionary passed to Post constructor is None")
 
-        if isRepost(data):
+        if is_repost(data):
             return Post.create_repost(data)
         else:
             return Post.create_regular(data)
@@ -221,6 +234,7 @@ class Post():
 
         self = Post()
         self.id = json.dumps({"uri": post["uri"], "cid": post["cid"]})
+        self.uri = post["uri"]
         self.author = Actor(author)
         self.content = record.get("text", None)
         self.url = Post.get_url(self)
@@ -232,6 +246,7 @@ class Post():
         self.share = None
         self.reply = None
         self.poll = None
+        self.thread = None
 
         embed = post.get("embed", {"$type": None})
         if embed["$type"] in ["app.bsky.embed.record#view", "app.bsky.embed.record#viewRecord"]:
@@ -271,6 +286,7 @@ class Post():
         self.attachments = []
         self.reply = None
         self.poll = None
+        self.thread = None
 
         # Bluesky (or this client library) represents reposts as virtual resources
         # without a standalone ID or URI. GOBO's abstract post model at a minimum
@@ -286,6 +302,21 @@ class Post():
 
         self.id = f"gobo:{self.author.id}:{self.published}:{post['cid']}"
         return self
+    
+    @staticmethod
+    def create_thread(data):
+        thread = []
+
+        current = data["parent"]
+        while True:
+            if current.get("post", None) is None:
+                break
+            thread.append(Post.create_regular(current))
+            current = current.get("parent", None)
+            if current is None:
+                break
+
+        return thread
     
 
 
@@ -663,6 +694,24 @@ class Bluesky():
                     "name": "replies",
                 })
 
+            if post.thread is not None:
+                edges.append({
+                    "origin_type": "post",
+                    "origin_reference": post.id,
+                    "target_type": "post",
+                    "target_reference": post.thread[-1],
+                    "name": "originates-thread",
+                })
+
+                for id in post.thread:
+                    edges.append({
+                        "origin_type": "post",
+                        "origin_reference": post.id,
+                        "target_type": "post",
+                        "target_reference": id,
+                        "name": "threads",
+                    })
+
         return {
             "posts": posts,
             "partials": partials,
@@ -682,7 +731,7 @@ class Bluesky():
         if is_shallow == True:
             default_limit = 100
         else:
-            default_limit = 400
+            default_limit = 200
         
         isDone = False
         count = 1
@@ -733,11 +782,6 @@ class Bluesky():
         for post in posts:
             seen_posts.add(post.id)
         for post in posts:
-            reply = post.reply
-            if reply is not None and reply.id not in seen_posts:
-                seen_posts.add(reply.id)
-                partials.append(reply)
-
             share = post.share
             if share is not None and share.id not in seen_posts:
                 seen_posts.add(share.id)
@@ -752,6 +796,17 @@ class Bluesky():
                 if share is not None and share.id not in seen_posts:
                     seen_posts.add(share.id)
                     partials.append(share)
+
+            reply = post.reply
+            if reply is not None:
+                post.thread = []
+                thread = build_thread(
+                    self.client.get_thread(post.uri, 1000, 0)
+                )
+                for ancestor in thread:
+                    post.thread.append(ancestor.id)
+                    seen_posts.add(ancestor.id)
+                    partials.append(ancestor)
       
 
 
