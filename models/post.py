@@ -66,7 +66,6 @@ def view_identity_feed(data):
         post_edges = []
         posts = []
         shares = []
-        replies = []
         threads = []
         sources = []
         seen_posts = set()
@@ -105,26 +104,13 @@ def view_identity_feed(data):
 
 
 
-        # Reply secondary posts go next because they might have share edges.
+        # Reply secondary posts and ancestors. These go first to get their share edges.
         statement = select(Link) \
             .where(Link.origin_type == "post") \
             .where(Link.origin_id.in_(feed)) \
             .where(Link.target_type == "post") \
-            .where(Link.name == "replies")
-
-        rows = session.scalars(statement).all()
-        for row in rows:
-            replies.append([row.origin_id, row.target_id])
-            seen_posts.add(row.target_id)
-
-
-
-        # Same for thread ancestors.
-        statement = select(Link) \
-            .where(Link.origin_type == "post") \
-            .where(Link.origin_id.in_(feed)) \
-            .where(Link.target_type == "post") \
-            .where(Link.name == "originates-thread")
+            .where(Link.name == "threads") \
+            .order_by(Link.secondary.asc())
 
         rows = session.scalars(statement).all()
         for row in rows:
@@ -199,7 +185,6 @@ def view_identity_feed(data):
             "post_edges": post_edges,
             "posts": posts,
             "shares": shares,
-            "replies": replies,
             "threads": threads,
             "sources": sources
         }
@@ -215,8 +200,7 @@ def view_post_graph(data):
         feed = []
         post_edges = []
         posts = []
-        replies = []
-        fullThread = []
+        threads = []
         shares = []
         sources = []
         seen_posts = set()
@@ -236,7 +220,7 @@ def view_post_graph(data):
 
         rows = session.scalars(statement).all()
         for row in rows:
-            fullThread.append(row.target_id)
+            threads.append([row.origin_id, row.target_id])
             seen_posts.add(row.target_id)
 
 
@@ -307,7 +291,6 @@ def view_post_graph(data):
             "post_edges": post_edges,
             "posts": posts,
             "shares": shares,
-            "replies": replies,
-            "fullThread": fullThread,
+            "threads": threads,
             "sources": sources,
         }

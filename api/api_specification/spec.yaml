@@ -1080,13 +1080,6 @@ resources:
                   type: array
                   items:
                     type: integer
-              replies:
-                description: List of post references that have reply relationships.
-                type: array
-                items:
-                  type: array
-                  items:
-                    type: integer
               threads:
                 description: List of post references that have thread relationships.
                 type: array
@@ -1141,18 +1134,13 @@ resources:
                   type: array
                   items:
                     type: integer
-              replies:
-                description: List of post references that have reply relationships.
-                type: array
-                items:
-                  type: array
-                  items:
-                    type: integer
-              fullThread:
+              threads:
                 description: List of post references that have thread relationships to this post.
                 type: array
                 items:
                   type: integer
+                  items:
+                    type: integer
               sources:
                 description: List of sources that appear somewhere in this feed segment.
                 type: array

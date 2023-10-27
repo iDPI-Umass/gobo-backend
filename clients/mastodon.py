@@ -314,14 +314,6 @@ class Mastodon():
                 })
 
             if status.thread is not None:
-                edges.append({
-                    "origin_type": "post",
-                    "origin_reference": status.id,
-                    "target_type": "post",
-                    "target_reference": status.thread[-1],
-                    "name": "originates-thread",
-                })
-
                 for id in status.thread:
                     edges.append({
                         "origin_type": "post",

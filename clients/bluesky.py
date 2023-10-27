@@ -695,14 +695,6 @@ class Bluesky():
                 })
 
             if post.thread is not None:
-                edges.append({
-                    "origin_type": "post",
-                    "origin_reference": post.id,
-                    "target_type": "post",
-                    "target_reference": post.thread[-1],
-                    "name": "originates-thread",
-                })
-
                 for id in post.thread:
                     edges.append({
                         "origin_type": "post",
