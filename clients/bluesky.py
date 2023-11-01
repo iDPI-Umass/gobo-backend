@@ -173,6 +173,12 @@ def get_record_view(data):
     self.poll = None
     self.thread = None
 
+    # # TODO: These records can have reply data. We don't want to spend time
+    # # fetching them right now, but if we start to need to be able to move
+    # # through the graph more freely in the future, we'll need this.
+    # if record.get("reply", None) is not None:
+    #     self.reply = Reply.from_parent(record["reply"]["parent"])
+
 
     embeds = record.get("embeds", [])
     for embed in embeds:
@@ -248,6 +254,9 @@ class Post():
         self.poll = None
         self.thread = None
 
+        if record.get("reply", None) is not None:
+            self.reply = Reply.from_parent(record["reply"]["parent"])
+
         embed = post.get("embed", {"$type": None})
         if embed["$type"] in ["app.bsky.embed.record#view", "app.bsky.embed.record#viewRecord"]:
             self.share = get_record_view(embed)
@@ -266,7 +275,6 @@ class Post():
     @staticmethod
     def create_regular(data):
         self = Post.create_core(data["post"])
-        self.reply = get_reply(data)
         return self
     
 
@@ -370,6 +378,22 @@ class Repost():
     def get_rkey(uri):
         match = repost_rkey_regex.search(uri)
         return match.group(1)
+    
+# Simplified post class to handle reply references for thread construction.
+class Reply():
+    def __init__(self, data):
+        self.id = data["id"]
+        self.uri = data["uri"]
+
+    @staticmethod
+    def from_parent(parent):
+        uri = parent["uri"]
+        cid = parent["cid"]
+        id = json.dumps({"uri": uri, "cid": cid})
+        return Reply({
+            "id": id,
+            "uri": uri
+        })
 
 
 class Actor():
@@ -778,11 +802,6 @@ class Bluesky():
             if share is not None and share.id not in seen_posts:
                 seen_posts.add(share.id)
                 partials.append(share)
-                
-                reply = share.reply
-                if reply is not None and reply.id not in seen_posts:
-                    seen_posts.add(reply.id)
-                    partials.append(reply)
 
                 share = share.share
                 if share is not None and share.id not in seen_posts:
@@ -797,8 +816,9 @@ class Bluesky():
                 )
                 for ancestor in thread:
                     post.thread.append(ancestor.id)
-                    seen_posts.add(ancestor.id)
-                    partials.append(ancestor)
+                    if ancestor.id not in seen_posts:
+                        seen_posts.add(ancestor.id)
+                        partials.append(ancestor)
       
 
 

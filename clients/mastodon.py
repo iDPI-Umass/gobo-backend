@@ -441,8 +441,6 @@ class Mastodon():
                 seen_statuses.add(reblog.id)
                 partials.append(reblog)
 
-        # New seen statuses because these are ancestor chains.
-        seen_statuses = set()
         for status in statuses:
             reply = status.reply
             if reply is not None:
@@ -455,8 +453,9 @@ class Mastodon():
                         if ancestor is None:
                             continue
                         status.thread.append(ancestor.id)
-                        seen_statuses.add(ancestor.id)
-                        partials.append(ancestor)
+                        if ancestor.id not in seen_statuses:
+                            seen_statuses.add(ancestor.id)
+                            partials.append(ancestor)
             
                 except Exception as e:
                     logging.warning(f"failed to fetch context {status.id} {e}")
