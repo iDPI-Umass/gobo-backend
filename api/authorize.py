@@ -15,7 +15,7 @@ JWKS_TIMEOUT = 3600
 cache = {}
 
 
-def get_token():
+def parse_authorization():
     header = request.headers.get("Authorization")
     if header == None:
         raise http_errors.unauthorized("request is missing authorization header")
@@ -24,10 +24,7 @@ def get_token():
     if len(parts) != 2:
         raise http_errors.unauthorized("authorization header does not use expected format")
 
-    if parts[0] != "Bearer":
-        raise http_errors.unauthorized("authorization header does not use expected scheme")
-
-    return parts[1]
+    return parts
 
 def refresh_keyset():
     with httpx.Client() as client:
@@ -87,11 +84,18 @@ def validate_token(token):
     raise http_errors.unauthorized("Unable to find appropriate key")
 
 
-def get_roles():
-    token = get_token()
+def get_roles(token):
     claims = validate_token(token)
     g.claims = claims
     return claims.get("permissions")
+
+
+def lookup_gobo_key(key): 
+    key = models.gobo_key.find({"key": key})
+    if key is None:
+        return None
+    
+    return key["person_id"]
 
 
 
@@ -104,22 +108,54 @@ def authorize_request(configuration):
         if "public" in schema:
             return
         
-        roles = get_roles()
-        if "admin" in roles:
-            return
+        # Below this, we're looking at the authorization header.
+        parts = parse_authorization()            
         
-        for role in roles:
-            if role in schema:
+        
+        if parts[0] == "GoboKey":
+            # Relies on internally managed bearer credential.
+            if "gobo-key" not in schema:
+                raise Exception("no matching permissions")
+
+            person_id = lookup_gobo_key(parts[1])
+            if person_id is None:
+                raise Exception("no matching permissions")
+            
+            if "general" in schema:
+                g.person = models.person.get(person_id)
                 return
 
-        if "person" in schema:
-            person = models.person.lookup(g.claims["sub"])
-            g.person = person
-            if person["id"] == request.view_args.get("person_id"):
+            if person_id == request.view_args.get("person_id"):
+                g.person = models.person.get(person_id)
+                return
+            
+            raise Exception("no matching permissions")
+        
+
+        elif parts[0] == "Bearer":
+            # Relies on integration with Auth0        
+            roles = get_roles(parts[1])
+        
+            if "admin" in roles:
                 return
 
-        raise Exception("no matching permissions")
-    
+            if "general" in roles and "general" in schema:
+                return
+
+            if "person" in schema:
+                person = models.person.lookup(g.claims["sub"])
+                if person["id"] != request.view_args.get("person_id"):
+                    raise Exception("no matching permissions")
+                g.person = person
+                return
+
+            raise Exception("no matching permissions")
+ 
+
+        else:
+            raise http_errors.unauthorized("authorization header does not use expected scheme")
+        
+
     except Exception:
         raise http_errors.unauthorized("requester lacks proper permissions")
 

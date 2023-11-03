@@ -5,8 +5,10 @@ import models
 from .helpers import parse_query
 
 def me_get():
-    authority_id = g.claims["sub"]
-    person = models.person.lookup(authority_id)
+    person = getattr(g, "person", None)
+    if person is None:
+        authority_id = g.claims["sub"]
+        person = models.person.lookup(authority_id)
     return person
 
 def me_put():

@@ -2,6 +2,7 @@ from .action import *
 from .discovery import *
 from .identity import *
 from .filter import *
+from .gobo_key import *
 from .link import *
 from .mastodon_client import *
 from .me import *

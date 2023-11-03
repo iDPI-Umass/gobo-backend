@@ -29,6 +29,11 @@ USING btree
 (authority_id);
 
 CREATE INDEX CONCURRENTLY 
+ON gobo_key 
+USING btree 
+(key);
+
+CREATE INDEX CONCURRENTLY 
 ON post_edge 
 USING btree 
 (identity_id, post_id, secondary);

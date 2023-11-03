@@ -392,6 +392,23 @@ shards:
       <<: *postEdgeCore
       <<: *timestamp
      
+  goboKeyCore: &goboKeyCore
+    person_id:
+      description: The ID of the person to whom this key is assigned.
+      type: integer
+    key:
+      description: The value of this key.
+      type: string
+
+  goboKey: &goboKey
+    type: object
+    additionalProperties: false
+    required: [ id ]
+    properties:
+      <<: *id
+      <<: *goboKeyCore
+      <<: *timestamp
+
 
 resources:
   discovery:
@@ -879,6 +896,7 @@ resources:
         request:
           authorization:
             - general
+            - gobo-key
         response:
           type: application/json
           status: 200
@@ -892,6 +910,57 @@ resources:
           type: application/json
           status: 200
           schema: *person
+
+  gobo_keys:
+    template: /gobo-keys{?view,direction,per_page,page}
+    route: /gobo-keys
+    methods:
+      post:
+        request:
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            properties: *goboKeyCore
+        response:
+          type: application/json
+          schema: *goboKey
+          status: 201
+
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: array
+            items: *goboKey
+
+
+  gobo_key:
+    template: /gobo-keys/{id}
+    route: /gobo-keys/<int:id>
+    methods:
+      get:
+        request: {}
+        response:
+          type: application/json
+          status: 200
+          schema: *goboKey
+
+      put:
+        request:
+          type: application/json
+          schema: *goboKey
+        response:
+          type: application/json
+          status: 200
+          schema: *goboKey
+
+      delete:
+        request: {}
+        response:
+          status: 204
 
   person_profile:
     template: /people/{person_id}/person
@@ -954,6 +1023,7 @@ resources:
         request:
           authorization:
             - person
+            - gobo-key
         response:
           type: application/json
           status: 200
@@ -998,6 +1068,7 @@ resources:
         request:
           authorization:
             - person
+            - gobo-key
         response:
           type: application/json
           status: 200
@@ -1009,6 +1080,7 @@ resources:
         request:
           authorization:
             - person
+            - gobo-key
           type: application/json
           schema:
             type: object
@@ -1049,6 +1121,7 @@ resources:
         request:
           authorization:
             - person
+            - gobo-key
         response:
           type: application/json
           status: 200
@@ -1103,6 +1176,7 @@ resources:
         request:
           authorization:
             - person
+            - gobo-key
         response:
           type: application/json
           status: 200
