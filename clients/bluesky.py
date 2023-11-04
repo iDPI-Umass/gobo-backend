@@ -138,7 +138,7 @@ def sort_facets(facet):
 
 def get_record_view(data):
     record = data.get("record")
-    author = record.get("author")
+    author = record.get("author", record.get("creator"))
     value = record.get("value")
 
     # TODO: This isn't a post. It looks like a list of sources, which we might
