@@ -98,7 +98,7 @@ def build_thread(data):
         logging.error("\n\n")
         logging.error(json.dumps(data, indent = 2, default = json_failure))
         logging.error("\n\n")
-        return None
+        return []
 
 
 def get_attachments(embed):
@@ -157,6 +157,12 @@ def get_record_view(data):
     #       Punt for now, which errs on the side of privacy, but there's an
     #       an access control calculation problem here.
     if record["$type"] == "app.bsky.embed.record#viewBlocked":
+        return None
+
+    # TODO: This one should probably be reclassified as a syndicated content
+    #   attachment. Bluesky treats it like an embed type, it's a summary view
+    #   of a list including a text description and author. Is there image?
+    if record["$type"] == "app.bsky.graph.defs#listView":
         return None
 
     self = Post()
@@ -737,6 +743,10 @@ class Bluesky():
 
 
     def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
+        if source["username"] == "handle.invalid":
+            logging.warning(source)
+            raise Exception("this Bluesky source has an invalid handle")
+        
         posts = []
         partials = []
         actors = []
