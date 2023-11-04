@@ -56,6 +56,7 @@ def person_post_edge_put(person_id, identity_id, post_id, name):
     models.task.add({
         "queue": identity["platform"],
         "name": "add post edge",
+        "priority": 1,
         "details": {
             "identity": identity,
             "post": post,
@@ -92,6 +93,7 @@ def person_post_edge_delete(person_id, identity_id, post_id, name):
     models.task.add({
         "queue": identity["platform"],
         "name": "remove post edge",
+        "priority": 1,
         "details": {
             "identity": identity,
             "post": post,

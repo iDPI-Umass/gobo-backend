@@ -9,7 +9,8 @@ from .helpers import read_optional, write_optional
 
 optional = [
     "queue",
-    "name"
+    "name",
+    "priority",
 ]
 
 class Task(Base):
@@ -18,6 +19,7 @@ class Task(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     queue: Mapped[Optional[str]]
     name: Mapped[Optional[str]]
+    priority: Mapped[Optional[int]]
     details: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)

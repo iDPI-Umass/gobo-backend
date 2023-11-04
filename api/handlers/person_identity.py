@@ -72,6 +72,7 @@ def person_identity_delete(person_id, id):
     models.task.add({
         "queue": "default",
         "name": "remove identity",
+        "priority": 10,
         "details": {
             "identity_id": id
         }

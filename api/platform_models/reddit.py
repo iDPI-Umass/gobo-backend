@@ -100,6 +100,7 @@ def confirm_identity(registration, data):
     models.task.add({
         "queue": "default",
         "name": "flow - onboard sources",
+        "priority": 1,
         "details": {
             "identity": identity
         }

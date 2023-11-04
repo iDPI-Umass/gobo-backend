@@ -5,10 +5,11 @@ import queue
 
 
 class Task():
-    def __init__(self, name, details = None, id = None, tries = 0, flow = []):
+    def __init__(self, name, priority = 10, details = None, id = None, tries = 0, flow = []):
         self.id = id or joy.crypto.random({"encoding": "safe-base64"})
         self.name = name
         self.reset_tracking()
+        self.priority = priority
         self.details = details or {}
         self.flow = flow
 
@@ -23,6 +24,7 @@ class Task():
         return str({
           "id": self.id,
           "name": self.name,
+          "priority": self.priority,
           "tries": self.tries,
           "created": self.created,
           "updated": self.updated,
@@ -30,6 +32,9 @@ class Task():
     
     def __str__(self): 
         return self.__repr__()
+    
+    def __lt__(self, task):
+        return self.priority < task.priority
     
 
     def start(self, queue):
@@ -77,6 +82,7 @@ class Task():
         if next is not None:
             queue = getattr(queues, next["queue"])
             self.name = next["name"]
+            self.priority = next.get("priority", 10)
             self.reset_tracking()
             
             for key, value in result.items():
@@ -92,33 +98,38 @@ class Task():
 class Queue():
     def __init__(self, name):
         self.name = name
-        self.queue = queue.Queue()
+        self.queue = queue.PriorityQueue()
 
     def put_task(self, task):
         self.queue.put(task)
 
-    def put_details(self, name, details = None):
+    def put_details(self, name, details = None, priority = 10):
         task = Task(
             name = name,
+            priority = priority,
             details = details
         )
 
-        self.queue.put(task)
+        self.put_task(task)
 
     def put_dict(self, task):
         task = Task(
           id = task["id"],
           name = task["name"],
+          priority = task.get("priority", 10),
           details = task["details"]
         )
 
-        self.queue.put(task)
+        self.put_task(task)
 
-    def put_flow(self, flow):
-        self.put_task(Task(
+    def put_flow(self, flow, priority = 10):
+        task = Task(
             name = "start flow",
+            priority = priority,
             flow = flow
-        ))
+        )
+
+        self.put_task(task)
 
     def get(self):
         return self.queue.get()

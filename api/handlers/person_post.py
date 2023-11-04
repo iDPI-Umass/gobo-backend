@@ -56,6 +56,7 @@ def person_posts_post(person_id):
         tasks.append(models.task.add({
             "queue": identity["platform"],
             "name": "create post",
+            "priority": 1,
             "details": {
               "identity": identity,
               "post": post,
