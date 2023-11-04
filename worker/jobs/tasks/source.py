@@ -22,9 +22,11 @@ def pull_sources_fanout(task):
         wheres = wheres
     )
     for identity in identities:
-        queues.default.put_details("flow - pull sources", {
-            "identity": identity
-        })
+        queues.default.put_details(
+            name = "flow - pull sources",
+            priority = task.priority,
+            details = {"identity": identity}
+        )
 
 
 def pull_sources(task):
@@ -54,7 +56,7 @@ def upsert_sources(task):
 def reconcile_sources(task):
     identity = h.enforce("identity", task)
     sources = h.enforce("sources", task)
-    h.reconcile_sources(identity, sources)
+    h.reconcile_sources(task, identity, sources)
     return {"sources": sources}
 
 def remove_source(task):

@@ -31,10 +31,14 @@ def cycle_blusky_sessions(task):
 
     for session in sessions:
         identity = find_identity(session)
-        queues.bluesky.put_details("cycle refresh token", {
-            "identity": identity,
-            "session": session
-        })
+        queues.bluesky.put_details(
+            name = "cycle refresh token", 
+            priority = task.priority,
+            details = {
+                "identity": identity,
+                "session": session
+            }
+        )
       
 
     sessions = QueryIterator(
@@ -46,10 +50,14 @@ def cycle_blusky_sessions(task):
 
     for session in sessions:
         identity = find_identity(session)
-        queues.bluesky.put_details("cycle access token", {
-            "identity": identity,
-            "session": session
-        })
+        queues.bluesky.put_details(
+            name = "cycle access token",
+            priority = task.priority,
+            details = {
+                "identity": identity,
+                "session": session
+            }
+        )
 
 
 def test_facet_parsing(task):

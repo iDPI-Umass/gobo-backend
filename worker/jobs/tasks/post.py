@@ -21,7 +21,11 @@ def pull_posts_fanout(task):
         wheres = wheres
     )
     for source in sources:
-        queues.default.put_details("pull posts from source", {"source": source})
+        queues.default.put_details(
+            name = "pull posts from source",
+            priority = task.priority,
+            details = {"source": source}
+        )
 
 def pull_posts_from_source(task):
     source = h.enforce("source", task)
@@ -41,10 +45,14 @@ def pull_posts_from_source(task):
         queues.default.put_task(task)
         return
 
-    queues.default.put_details("flow - pull posts", {
-        "identity": identity,
-        "source": source
-    })
+    queues.default.put_details(
+        name = "flow - pull posts",
+        priority = task.priority,
+        details = {
+            "identity": identity,
+            "source": source
+        }
+    )
 
 
 def get_last_retrieved(task):
@@ -150,13 +158,21 @@ def upsert_posts(task):
 
     if is_list == True:
         for post in full_posts:
-            queues.default.put_details("add post to list followers", {
-                "source": source,
-                "post": post
-            })
+            queues.default.put_details(
+                name = "add post to list followers", 
+                priority = task.priority,
+                details = {
+                    "source": source,
+                    "post": post
+                }
+            )
     else:
         for post in full_posts:
-            queues.default.put_details("add post to followers", {"post": post})
+            queues.default.put_details(
+                name = "add post to followers", 
+                priority = task.priority,
+                details = {"post": post}
+            )
 
 
 

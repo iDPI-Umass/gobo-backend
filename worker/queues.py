@@ -82,7 +82,8 @@ class Task():
         if next is not None:
             queue = getattr(queues, next["queue"])
             self.name = next["name"]
-            self.priority = next.get("priority", 10)
+            if next.get("priority") is not None:
+                self.priority = next["priority"]
             self.reset_tracking()
             
             for key, value in result.items():
@@ -122,7 +123,7 @@ class Queue():
 
         self.put_task(task)
 
-    def put_flow(self, flow, priority = 10):
+    def put_flow(self, priority, flow):
         task = Task(
             name = "start flow",
             priority = priority,

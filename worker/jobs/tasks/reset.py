@@ -9,9 +9,21 @@ QueryIterator = models.helpers.QueryIterator
 
 
 def hard_reset(task):
-    queues.default.put_details("clear posts", task.details)
-    queues.default.put_details("clear sources", task.details)
-    queues.default.put_details("clear last retrieved", task.details)
+    queues.default.put_details(
+        name = "clear posts",
+        priority = task.priority,
+        details = task.details
+    )
+    queues.default.put_details(
+        name = "clear sources",
+        priority = task.priority,
+        details = task.details
+    )
+    queues.default.put_details(
+        name = "clear last retrieved",
+        priority = task.priority,
+        details = task.details
+    )
 
 
 
@@ -39,7 +51,11 @@ def clear_posts(task):
         
         max_id = posts[-1]["id"]
         for post in posts:
-            queues.default.put_details("remove post", {"post": post})
+            queues.default.put_details(
+                name = "remove post",
+                priority = task.priority,
+                details = {"post": post}
+            )
 
 
 def clear_sources(task):
@@ -66,7 +82,11 @@ def clear_sources(task):
         
         max_id = sources[-1]["id"]
         for source in sources:
-            queues.default.put_details("remove source", {"source": source})
+            queues.default.put_details(
+                name = "remove source",
+                priority = task.priority,
+                details = {"source": source}
+            )
 
 
 def clear_last_retrieved(task):

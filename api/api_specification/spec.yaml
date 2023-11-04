@@ -68,6 +68,9 @@ shards:
     name:
       description: The name describing this task operation.
       type: string
+    priority:
+      type: integer
+      minimum: 1
     details:
       description: The payload of information relevant to completing this task.
       type: object

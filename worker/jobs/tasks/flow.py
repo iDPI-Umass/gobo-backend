@@ -18,7 +18,7 @@ def flow_pull_sources(task):
     identity = h.enforce("identity", task)
     platform = h.get_platform(identity)
 
-    queues.default.put_flow([
+    queues.default.put_flow(task.priority, [
         {
             "queue": platform, 
             "name": "pull sources",
@@ -45,7 +45,7 @@ def flow_pull_posts(task):
     source = h.enforce("source", task)
     platform = h.get_platform(source)
 
-    queues.default.put_flow([
+    queues.default.put_flow(task.priority, [
         {
             "queue": "default",
             "name": "get last retrieved",
@@ -83,7 +83,7 @@ def flow_onboard_sources(task):
     identity = h.enforce("identity", task)
     platform = h.get_platform(identity)
 
-    queues.default.put_flow([
+    queues.default.put_flow(task.priority, [
         {
             "queue": platform, 
             "name": "pull sources",
@@ -114,7 +114,7 @@ def flow_onboard_source_posts(task):
     platform = h.get_platform(identity)
 
     for source in sources:
-        queues.default.put_flow([
+        queues.default.put_flow(task.priority, [
             {
                 "queue": "default",
                 "name": "get last retrieved",

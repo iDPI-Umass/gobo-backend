@@ -102,10 +102,14 @@ def rebuild_feed(task):
 
         for source in sources:
             source_id = source["target_id"]
-            queues.default.put_details("follow", {
-                "identity_id": identity_id,
-                "source_id": source_id
-            })
+            queues.default.put_details(
+                name = "follow",
+                priority = task.priority,
+                details = {
+                    "identity_id": identity_id,
+                    "source_id": source_id
+                }
+            )
 
 
 def remove_identity(task):

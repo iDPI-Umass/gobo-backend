@@ -68,7 +68,7 @@ def read_draft_file(draft):
             return f.read()
 
 
-def reconcile_sources(identity, sources):
+def reconcile_sources(task, identity, sources):
     desired_sources = set()
     for source in sources:
         desired_sources.add(source["id"])
@@ -87,18 +87,26 @@ def reconcile_sources(identity, sources):
     difference = desired_sources - current_sources
     for source_id in difference:
         logging.info(f"For identity {identity['id']}, adding source {source_id}")
-        queues.default.put_details("follow", {
-            "identity_id": identity["id"],
-            "source_id": source_id
-        })
+        queues.default.put_details(
+            name = "follow",
+            priority = task.priority,
+            details = {
+                "identity_id": identity["id"],
+                "source_id": source_id
+            }
+        )
 
     difference = current_sources - desired_sources
     for source_id in difference:
         logging.info(f"For identity {identity['id']}, removing source {source_id}")
-        queues.default.put_details("unfollow", {
-            "identity_id": identity["id"],
-            "source_id": source_id
-        })
+        queues.default.put_details(
+            name = "unfollow",
+            priority = task.priority,
+            details = {
+                "identity_id": identity["id"],
+                "source_id": source_id
+            }
+        )
 
 
 def attach_post(post):
