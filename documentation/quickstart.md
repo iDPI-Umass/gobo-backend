@@ -1,12 +1,11 @@
-# gobo-backend
+# Quickstart
 
 ## Requirements
 - git
 - Docker and Docker Compose
 - `.env` secrets that are not committed as part of this repository
 
-
-## Quickstart
+## Instructions
 
 Pull this repo and use the `docker` branch.
 
