@@ -588,7 +588,7 @@ class Bluesky():
 
 
         post_data = {
-            "text": post.get("content", ""),
+            "text": metadata.get("text"),
             "createdAt": joy.time.now()
         }
 
@@ -597,8 +597,9 @@ class Bluesky():
         if reply is not None:
             post_data["reply"] = reply
 
-        self.parse_facets(post_data)
-        # logging.info(post_data)
+        # self.parse_facets(post_data)
+        post_data["facets"] = metadata.get("facets")
+        logging.info(post_data)
         return self.client.create_post(post_data)
 
 
