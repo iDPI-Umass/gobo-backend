@@ -29,6 +29,15 @@ def build_status(item):
         logging.error(item)
         logging.error("\n\n")
         return None
+    
+def build_partial_status(item):
+    status = build_status(item)
+    if status is not None:
+        status.reblog = None
+        status.reply = None
+        status.thread = None
+    status
+
 
 class Status():
     def __init__(self, _):
@@ -124,7 +133,33 @@ class Account():
 class Poll():
     def __init(self, _):
         self.id = _.id
-        
+
+
+def build_notification(item):
+    try:
+        return Notification(item)
+    except Exception as e:
+        logging.error(e, exc_info=True)
+        logging.error("\n\n")
+        logging.error(item)
+        logging.error("\n\n")
+        return None
+
+class Notification():
+    def __init__(self, _):
+        self.id = str(_.id)
+        self.type = _.type
+        self.created = _.created_at
+        self.account = None
+        self.account_id = None
+        self.status = None
+        self.status_id = None
+        if _.account is not None:
+            self.account = Account(_.account)
+            self.account_id = self.account.id
+        if _.status is not None:
+            self.status = build_partial_status(_.status)
+            self.status_id = self.status.id
 
 
 class Mastodon():
@@ -181,6 +216,16 @@ class Mastodon():
     def get_profile(self):
         return self.client.me()
     
+    def map_profile(self, data):
+        profile = data["profile"]
+        identity = data["identity"]
+        identity["profile_url"] = profile.url
+        identity["profile_image"] = profile.avatar
+        identity["username"] = profile.username
+        identity["name"] = profile.display_name
+        return identity
+
+    
     def create_post(self, post, metadata):
         media_ids = []
         for draft in post.get("attachments", []):
@@ -195,8 +240,6 @@ class Mastodon():
         reply = None
         if metadata.get("reply", None) is not None:
             reply = metadata["reply"]["platform_id"]
-
-        time.sleep(1)          
 
         return self.client.status_post(
             status = post.get("content", ""),
@@ -213,7 +256,6 @@ class Mastodon():
         )
     
     def upload_media(self, draft):
-        time.sleep(1)
         return self.client.media_post(
             media_file = draft["data"],
             mime_type = draft["mime_type"],
@@ -222,20 +264,103 @@ class Mastodon():
         )
     
     def favourite_post(self, post):
-        time.sleep(1)
         return self.client.status_favourite(post["platform_id"])
     
     def undo_favourite_post(self, post):
-        time.sleep(1)
         return self.client.status_unfavourite(post["platform_id"])
     
     def boost_post(self, post):
-        time.sleep(1)
         return self.client.status_reblog(post["platform_id"])
     
     def undo_boost_post(self, post):
-        time.sleep(1)
         return self.client.status_unreblog(post["platform_id"])
+    
+    def get_notifications(self, data):
+      return self.client.notifications(
+          max_id = data.get("max_id"), 
+          limit = data.get("limit"),
+          types = data.get("type", [ 
+              "follow",
+              "follow_request", 
+              "favourite",
+              "reblog",
+              "mention",
+              "poll"
+          ])
+      )
+    
+    def list_notifications(self, data):
+      notifications = []
+      max_id = None
+      isDone = False
+      while True:
+        if isDone == True:
+            break
+
+        items = self._get_notifications({"max_id": max_id})
+        if len(items) == 0:
+            break
+        max_id = str(items[-1].id)
+
+        for item in items:
+          notification = build_notification(item)
+          if notification is None:
+              continue
+          if notification.created < data["oldest_limit"]:
+              isDone = True
+              break
+          notifications.append(notification)
+
+      accounts = []
+      seen_accounts = set()
+      partials = []
+      seen_statuses = set()
+      for notification in notifications:
+          account = notification.account
+          if account is not None and account.id not in seen_accounts:
+              accounts.append(account)
+              seen_accounts.add(account.id)
+          status = notification.status
+          if status is not None and status.id not in seen_statuses:
+              partials.append(status)
+              seen_statuses.add(status.id)
+      
+      return {
+          "statuses": [],
+          "accounts": accounts,
+          "partials": partials,
+          "notifications": notifications
+      }
+    
+    
+    def dismiss_notification(self, notification):
+      return self.client.notifications_dismiss(notification["platform_id"])
+
+
+    def map_notifications(self, data):
+        notifications = []
+        sources = {}
+        for item in data["sources"]:
+            sources[item["platform_id"]] = item
+        posts = {}
+        for item in data["posts"]:
+            posts[item["platform_id"]] = item
+        
+        for notification in data["notifications"]:
+            source = sources[notification.account.id]
+            post = posts[notification.status.id]
+            notifications.append({
+                "platform": notification.account.platform,
+                "platform_id": notification.id,
+                "base_url": self.base_url,
+                "type": notification.type,
+                "notified": notification.created,
+                "active": True,
+                "source_id": source["id"],
+                "post_id": post["id"]
+            })
+
+        return notifications
 
 
     def map_sources(self, data):
@@ -335,7 +460,6 @@ class Mastodon():
         accounts = []
         logging.info("Mastodon: Fetching self profile data")
         accounts.append(Account(self.get_profile()))
-        time.sleep(1)
 
         id = self.identity["platform_id"]
         max_id = None
@@ -347,8 +471,6 @@ class Mastodon():
                 limit = 80
             )
             
-            time.sleep(1)
-
             if len(items) == 0:
                 break
               
@@ -393,7 +515,6 @@ class Mastodon():
                 max_id = max_id,
                 limit=40
             )
-            time.sleep(1)
 
             if len(items) == 0:
                 break
@@ -459,7 +580,6 @@ class Mastodon():
             
                 except Exception as e:
                     logging.warning(f"failed to fetch context {status.id} {e}")
-                time.sleep(1)
 
 
 

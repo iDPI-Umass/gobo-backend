@@ -25,17 +25,15 @@ def start_sources():
         queues.default.put_details, "bluesky cycle sessions"
     )
 
-    # Handles follower-list (source) updates.
-    schedule.every(2).hours.do(
-        queues.default.put_details, "pull sources fanout", {"platform": "all"}
-    )
+    # # Regularly updates all identities in Gobo, their feeds, and notifications.
+    # # Default background tasking, low priority.
+    # schedule.every().hour.do(
+    #     queues.default.put_details, 
+    #     "fanout update identity", 
+    #     {"platform": "all"}
+    # )
 
-    # Pull the latest posts from the tracked sources.
-    schedule.every().hour.do(
-        queues.default.put_details, "pull posts fanout", {"platform": "all"}
-    )
-
-    # Prune resources older than our maximum retention timelimit.
-    schedule.every().hours.do(
-        queues.default.put_details, "prune resources"
-    )
+    # # Prune resources older than our maximum retention timelimit.
+    # schedule.every().hours.do(
+    #     queues.default.put_details, "prune resources"
+    # )

@@ -4,65 +4,47 @@ import queues
 import jobs
 import joy
 
-class MiniThread():
-    def __init__(self, queue, dispatch):
-        def main():
-            while True:
-                try:
-                    task = queue.get()
-                    dispatch(task)
-                    queue.task_done() 
-                except Exception as e:
-                    logging.error(f"failure in {queue.name} {task.name}")
-                    logging.error(e, exc_info=True)
-                    if task != None:
-                        queue.task_done()
-                        # TODO: Create dead-letter queue.
-                        task.remove()
-      
+# TODO: Consider recovery and dead-letter states.
+def fail_task(queue, task, e):
+    if task is None:
+        # This should never happen, so it' alarming if it does.
+        logging.error("exception in task processing, but no task defined")
+        return
+    
+    logging.error(f"failure in {queue.name} {task.name}")
+    logging.error(e, exc_info=True)
+    task.failure()
+    task.remove()
+    queue.task_done()
 
-        self.thread = threading.Thread(target=main)
-
-    def start(self):
-        self.thread.start()
-
-
-class Thread():
-    def __init__(self, queue, dispatch):
-        def main():
-            while True:
-                try:
-                    task = queue.get()
-                    task.start(queue)
-                    result = dispatch(task)
-                    task.finish(queue)
-                    task.progress(queues, result)
-                    task.remove()
-                    queue.task_done()
-                
-                except joy.error.RecoverableException as e:
-                    logging.error(f"trying to recover from failure in {queue.name} {task.name}")
-                    logging.warning(e, exc_info=True)
-                    task.tries = task.tries + 1
-                    if task.tries < 3:
-                        queue.put_task(task)
-                    else:
-                        # TODO: Create dead-letter queue.
-                        task.remove()
-                
-                except Exception as e:
-                    logging.error(f"failure in {queue.name} {task.name}")
-                    logging.error(e, exc_info=True)
-                    if task != None:
-                        queue.task_done()
-                        # TODO: Create dead-letter queue.
-                        task.remove()
-                
+def thread_core(queue, dispatch):
+    while True:
+        try:
+            task = queue.get()
+            task.start(queue)
+            result = dispatch(task)
+            task.finish(queue)
+            task.progress(queues, result)
+            task.remove()
+            queue.task_done()
+        except Exception as e:
+            fail_task(queue, task, e)
+ 
         
-        self.thread = threading.Thread(target=main)
+class Thread():
+    def __init__(self, queue, dispatch):  
+        self.thread = threading.Thread(
+            target = thread_core,
+            args = (queue, dispatch)
+        )
 
     def start(self):
         self.thread.start()
+
+
+thread_counts = {}
+def set_thread_counts(counts):
+    thread_counts.update(counts)
 
 
 
@@ -71,62 +53,26 @@ def start_api():
     thread.start()
 
 def start_default(count):
-    for i in range(count):
+    for i in range(thread_counts["default"]):
         thread = Thread(queues.default, jobs.default.dispatch)
         thread.start()
 
 def start_bluesky(count):
-    for i in range(count):
-        thread = Thread(queues.bluesky, jobs.bluesky.dispatch)
+    for i in range(thread_counts["bluesky"]):
+        thread = Thread(queues.bluesky[i], jobs.bluesky.dispatch)
+        thread.start()
+
+def start_mastodon(count):
+    for i in range(thread_counts["mastodon"]):
+        thread = Thread(queues.mastodon[i], jobs.mastodon.dispatch)
         thread.start()
 
 def start_reddit(count):
-    for i in range(count):
-        thread = Thread(queues.reddit, jobs.reddit.dispatch)
+    for i in range(thread_counts["reddit"]):
+        thread = Thread(queues.reddit[i], jobs.reddit.dispatch)
         thread.start()
 
 def start_smalltown(count):
-    for i in range(count):
-        thread = Thread(queues.smalltown, jobs.smalltown.dispatch)
-        thread.start()
-
-
-def start_mastodon(count):
-    for i in range(count):
-        thread = MiniThread(queues.mastodon, jobs.mastodon.super_dispatch)
-        thread.start()  
-
-def start_mastodon_default(count):
-    for i in range(count):
-        thread = Thread(queues.mastodon_default, jobs.mastodon.dispatch)
-        thread.start()
-
-def start_mastodon_social(count):
-    for i in range(count):
-        thread = Thread(queues.mastodon_social, jobs.mastodon.dispatch)
-        thread.start()
-
-def start_mastodon_hachyderm(count):
-    for i in range(count):
-        thread = Thread(queues.mastodon_hachyderm, jobs.mastodon.dispatch)
-        thread.start()
-
-def start_mastodon_octodon(count):
-    for i in range(count):
-        thread = Thread(queues.mastodon_octodon, jobs.mastodon.dispatch)
-        thread.start()
-
-def start_mastodon_techpolicy(count):
-    for i in range(count):
-        thread = Thread(queues.mastodon_techpolicy, jobs.mastodon.dispatch)
-        thread.start()
-
-def start_mastodon_vis_social(count):
-    for i in range(count):
-        thread = Thread(queues.mastodon_vis_social, jobs.mastodon.dispatch)
-        thread.start()
-
-def start_mastodon_social_coop(count):
-    for i in range(count):
-        thread = Thread(queues.mastodon_social_coop, jobs.mastodon.dispatch)
+    for i in range(thread_counts["smalltown"]):
+        thread = Thread(queues.smalltown[i], jobs.smalltown.dispatch)
         thread.start()

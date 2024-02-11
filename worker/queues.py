@@ -1,99 +1,6 @@
 import logging
-import joy
-import models
 import queue
-
-
-class Task():
-    def __init__(self, name, priority = 10, details = None, id = None, tries = 0, flow = []):
-        self.id = id or joy.crypto.random({"encoding": "safe-base64"})
-        self.name = name
-        self.reset_tracking()
-        self.priority = priority
-        self.details = details or {}
-        self.flow = flow
-
-        self.is_quiet = False
-        self.is_halted = False
-
-    def __repr__(self): 
-        details = {}
-        for key, value in self.details.items():
-            details[key] = value
-
-        return str({
-          "id": self.id,
-          "name": self.name,
-          "priority": self.priority,
-          "tries": self.tries,
-          "created": self.created,
-          "updated": self.updated,
-        })
-    
-    def __str__(self): 
-        return self.__repr__()
-    
-    def __lt__(self, task):
-        return self.priority < task.priority
-    
-
-    def start(self, queue):
-        created = joy.time.convert("iso", "date", self.created)
-        if self.is_quiet != True:
-            logging.info(f"starting {queue.name} {self.name} {self.id} latency: {joy.time.latency(created)}")
-        
-        self.start_time = joy.time.nowdate()
-
-    def finish(self, queue):
-        duration = joy.time.nowdate() - self.start_time
-        if self.is_quiet != True:
-            logging.info(f"finished {queue.name} {self.name} {self.id} duration: {duration}")
-
-    def update(self, data):
-        for key, value in data.items():
-            self.details[key] = value
-        self.updated = joy.time.now()
-
-    def remove(self):
-        if type(self.id) == int:
-            models.task.remove(self.id)
-
-    def reset_tracking(self):
-        now = joy.time.now()
-        self.created = now
-        self.updated = now
-        self.tries = 0
-
-    def halt(self):
-        self.is_halted = True
-
-    def quiet(self):
-        self.is_quiet = True
-
-    def progress(self, queues, result = {}):
-        result = result or {}
-        if self.is_halted == True:
-            return
-
-        next = None
-        if len(self.flow) > 0:
-            next = self.flow.pop(0)
-        
-        if next is not None:
-            queue = getattr(queues, next["queue"])
-            self.name = next["name"]
-            if next.get("priority") is not None:
-                self.priority = next["priority"]
-            self.reset_tracking()
-            
-            for key, value in result.items():
-                self.details[key] = value
-
-            next_details = next.get("details", {})
-            for key, value in next_details.items():
-                self.details[key] = value
-
-            queue.put_task(self)
+from .task import Task
 
 
 class Queue():
@@ -105,29 +12,19 @@ class Queue():
         self.queue.put(task)
 
     def put_details(self, name, details = None, priority = 10):
-        task = Task(
-            name = name,
-            priority = priority,
-            details = details
-        )
-
+        task = Task.from_details(name, details, priority)
         self.put_task(task)
 
     def put_dict(self, task):
-        task = Task(
-          id = task["id"],
-          name = task["name"],
-          priority = task.get("priority", 10),
-          details = task["details"]
-        )
-
+        task = Task.from_dict(task)
         self.put_task(task)
 
-    def put_flow(self, priority, flow):
+    def put_flow(self, priority, flow, failure = None):
         task = Task(
             name = "start flow",
             priority = priority,
-            flow = flow
+            flow = flow,
+            failure = failure
         )
 
         self.put_task(task)
@@ -141,14 +38,83 @@ class Queue():
 
 api = Queue("api")
 default = Queue("default")
-bluesky = Queue("bluesky")
-reddit = Queue("reddit")
-mastodon = Queue("mastodon")
-smalltown = Queue("smalltown")
-mastodon_default = Queue("mastodon-default")
-mastodon_social = Queue("mastodon-social")
-mastodon_hachyderm = Queue("mastodon-hachyderm")
-mastodon_octodon = Queue("mastodon-octodon")
-mastodon_techpolicy = Queue("mastodon-techpolicy")
-mastodon_vis_social = Queue("mastodon-vis-social")
-mastodon_social_coop = Queue("mastodon-social-coop")
+# Platform queues are sharded to limit per-account concurrency.
+shard_counts = {}
+bluesky = []
+mastodon = []
+reddit = []
+smalltown = []
+
+def build_sharded_queues(counts):
+    shard_counts.update(counts)
+    for i in range(counts["bluesky"]):
+        bluesky.append(Queue(f"bluesky {i}"))
+    for i in range(counts["mastodon"]):
+        mastodon.append(Queue(f"mastodon {i}"))
+    for i in range(counts["reddit"]):
+        reddit.append(Queue(f"reddit {i}"))
+    for i in range(counts["smalltown"]):
+        smalltown.append(Queue(f"smalltown {i}"))
+
+
+
+
+import hashlib
+
+def get_shard(platform, task):
+    identity = task.details.get("identity")
+    if identity is None:
+        raise Exception("cannot shard a task that lacks an identity")
+    
+    base_url = identity.get("base_url")
+    if base_url is None:
+        raise Exception("cannot shard a task with identity that lacks base_url")
+    
+    platform_id = identity.get("platform_id")
+    if platform_id is None:
+        raise Exception("cannot shard a task with identity that lacks platform_id")
+    
+    # Based on uniform hashing algorithm here:
+    # https://www.d.umn.edu/~gshute/cs2511/slides/hash_tables/sections/uniform_hashing.xhtml
+    text = base_url + platform_id
+    m = hashlib.sha512()
+    m.update(text)
+    byte_array = m.digest()
+    
+    result = 1
+    for value in byte_array:
+      result = (result * 31) + value
+    return result % shard_counts[platform]
+
+
+def shard_task(platform, task):
+  if platform == "default":
+      return default.put_task(task)
+  if platform == "api":
+      return api.put_task(task)
+
+  shard = get_shard(platform, task)
+  if platform == "bluesky":
+      return bluesky[shard].put_task(task)
+  if mastodon == "mastodon":
+      return mastodon[shard].put_task(task)
+  if platform == "reddit":
+      return reddit[shard].put_task(task)
+  if platform == "smalltown":
+      return smalltown[shard].put_task(task)
+
+  logging.warn({
+      "platform": platform, 
+      "task": task
+  })
+  raise Exception("unable to shard task")
+
+
+def shard_task_dict(task):
+    platform = task.get("queue", "default")
+    task = Task.from_dict(task)
+    return shard_task(platform, task)
+
+def shard_task_details(platform, name, details = {}, priority = None):
+    task = Task.from_details(name, details, priority)
+    return shard_task(platform, task)

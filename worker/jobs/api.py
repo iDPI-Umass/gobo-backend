@@ -41,31 +41,13 @@ def poll_database(task):
     tasks = models.task.query(query)
 
     for _task in tasks:
-        queue = _task["queue"]
-
-        if queue == "default":
-            queues.default.put_dict(_task)
-        elif queue == "bluesky":
-            queues.bluesky.put_dict(_task)
-        elif queue == "reddit":
-            queues.reddit.put_dict(_task)
-        elif queue == "mastodon":
-            queues.mastodon.put_dict(_task)
-        elif queue == "smalltown":
-            queues.smalltown.put_dict(_task)
-        else:
-            logging.warning("No matching queue for task: %s", _task)
-
+        queues.shard_task_dict(_task)
 
     if len(tasks) == 0:
         time.sleep(1)
     else:
         task.update({"last": tasks[-1]})
 
-    new_task = queues.Task(
-        name = "poll",
-        details = task.details
-    )
-    
+    new_task = queues.Task.from_details("poll", task.details)
     new_task.quiet()
     queues.api.put_task(new_task)

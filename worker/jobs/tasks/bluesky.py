@@ -31,8 +31,9 @@ def cycle_blusky_sessions(task):
 
     for session in sessions:
         identity = find_identity(session)
-        queues.bluesky.put_details(
-            name = "cycle refresh token", 
+        queues.shard_task_details(
+            platform = "bluesky",
+            name = "cycle refresh token",
             priority = task.priority,
             details = {
                 "identity": identity,
@@ -50,7 +51,8 @@ def cycle_blusky_sessions(task):
 
     for session in sessions:
         identity = find_identity(session)
-        queues.bluesky.put_details(
+        queues.shard_task_details(
+            platform = "bluesky",
             name = "cycle access token",
             priority = task.priority,
             details = {

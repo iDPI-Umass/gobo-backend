@@ -181,3 +181,9 @@ def remove_source(source):
         models.link.remove(link["id"])
 
     models.source.remove(source["id"])
+
+
+def rollback_cursor(task):
+    cursor = task.details.get("cursor")
+    if cursor is not None:
+        cursor.rollback()

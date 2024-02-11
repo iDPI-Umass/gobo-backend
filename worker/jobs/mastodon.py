@@ -12,10 +12,16 @@ QueryIterator = models.helpers.QueryIterator
 
 
 def dispatch(task):
+    if task.name == "get client":
+        return tasks.get_client(task)
+    
+    
     if task.name == "pull sources":
         return tasks.pull_sources(task)
     elif task.name == "pull posts":
         return tasks.pull_posts(task)
+    elif task.name == "pull notifications":
+        return tasks.pull_notifications(task)
     
     
     elif task.name == "create post":
@@ -42,28 +48,6 @@ def dispatch(task):
         logging.warning("No matching job for task: %s", task)
 
 
-# Special case. Because Mastodon is federated we need to pull multiple copies of
-# resources and treat each one as a mini platform. But we can also split the
-# load for throttled actions for large servers.
-def super_dispatch(task):
-    identity = task.details.get("identity", None)
-    if identity is None:
-        queues.mastodon_default.put_task(task)
-    elif identity["base_url"] == "https://mastodon.social":
-        queues.mastodon_social.put_task(task)
-    elif identity["base_url"] == "https://hachyderm.io":
-        queues.mastodon_hachyderm.put_task(task)
-    elif identity["base_url"] == "https://octodon.social":
-        queues.mastodon_octodon.put_task(task)
-    elif identity["base_url"] == "https://techpolicy.social":
-        queues.mastodon_techpolicy.put_task(task)
-    elif identity["base_url"] == "https://vis.social":
-        queues.mastodon_vis_social.put_task(task)
-    elif identity["base_url"] == "https://social.coop":
-        queues.mastodon_social_coop.put_task(task)
-    else:
-        queues.mastodon_default.put_task(task)
-    
 
 
 def create_post(task):

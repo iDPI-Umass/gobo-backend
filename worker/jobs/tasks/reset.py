@@ -20,7 +20,7 @@ def hard_reset(task):
         details = task.details
     )
     queues.default.put_details(
-        name = "clear last retrieved",
+        name = "clear cursors",
         priority = task.priority,
         details = task.details
     )
@@ -89,11 +89,11 @@ def clear_sources(task):
             )
 
 
-def clear_last_retrieved(task):
+def clear_cursors(task):
     platform = h.get_platform(task.details)
     wheres = [
-        where("origin_type", "source"),
-        where("name", "last-retrieved"),
+        where("origin_type", ["source", "notification"], "in"),
+        where("name", "read-cursor-", "starts with")
     ]
     
     if platform == "all":

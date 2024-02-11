@@ -40,25 +40,31 @@ config.dictConfig({
 })
 
 
-# Establish worker threads that drive its work.
+# Establish worker queues and threads that drive its work.
 from os import environ
 import time
-from sources import schedule, start_sources
+from cron import schedule, start_sources
 import threads
+import queues
+
+counts = {
+    "default": int(environ.get("DEFAULT_THREAD_COUNT", 1)),
+    "bluesky": int(environ.get("BLUESKY_THREAD_COUNT", 1)),
+    "mastodon": int(environ.get("MASTODON_THREAD_COUNT", 1)),
+    "reddit": int(environ.get("REDDIT_THREAD_COUNT", 1)),
+    "smalltown": int(environ.get("SMALLTOWN_THREAD_COUNT", 1))
+}
+
+
+queues.build_sharded_queues(counts)
+threads.set_thread_counts(counts)
 
 threads.start_api()
-threads.start_default(int(environ.get("DEFAULT_THREAD_COUNT", 2)))
-threads.start_bluesky(int(environ.get("BLUESKY_THREAD_COUNT", 1)))
-threads.start_reddit(1)
-threads.start_smalltown(1)
-threads.start_mastodon(1)
-threads.start_mastodon_default(1)
-threads.start_mastodon_social(1)
-threads.start_mastodon_hachyderm(1)
-threads.start_mastodon_octodon(1)
-threads.start_mastodon_techpolicy(1)
-threads.start_mastodon_vis_social(1)
-threads.start_mastodon_social_coop(1)
+threads.start_default()
+threads.start_bluesky()
+threads.start_mastodon()
+threads.start_reddit()
+threads.start_smalltown()
 
 start_sources()
 
@@ -66,6 +72,6 @@ start_sources()
 logging.info("GOBO worker is online")
 
 # Main loop that keeps the worker online and issuing cron events into queues.
-while 1:
+while True:
     schedule.run_pending()
     time.sleep(1)

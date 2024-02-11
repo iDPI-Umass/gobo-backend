@@ -11,10 +11,16 @@ QueryIterator = models.helpers.QueryIterator
 
 
 def dispatch(task):
+    if task.name == "get client":
+        return tasks.get_client(task)
+    
+    
     if task.name == "pull sources":
         return tasks.pull_sources(task)
     elif task.name == "pull posts":
         return tasks.pull_posts(task)
+    elif task.name == "pull notifications":
+        return tasks.pull_notifications(task)
     
     
     elif task.name == "create post":

@@ -53,7 +53,6 @@ class Smalltown(Mastodon):
                 max_id = max_id,
                 limit = 40
             )
-            time.sleep(1)
 
             if len(items) == 0:
                 break
@@ -128,7 +127,6 @@ class Smalltown(Mastodon):
                 partials.append(status)
             except Exception as e:
                 logging.warning(f"failed to fetch status {id} {e}")
-            time.sleep(1)
 
 
 

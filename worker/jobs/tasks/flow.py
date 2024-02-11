@@ -9,20 +9,138 @@ build_query = models.helpers.build_query
 QueryIterator = models.helpers.QueryIterator
 
 
-# Noop to create stable start point for all flows. Maybe add some instrumentation here later.
+# no-op to create stable start point for all flows.
+# TODO: Maybe add some instrumentation here later.
 def start_flow(task):
     pass
+
+
+def flow_update_identity(task):
+    identity = h.enforce("identity", task)
+    platform = h.get_platform(identity)
+    is_onboarding = task.details.get("is_onboarding", False)
+
+    queues.default.put_flow(task.priority, [
+        {
+            "queue": platform, 
+            "name": "get client",
+            "details": {
+                "identity": identity,
+                "is_shallow": is_onboarding
+            }
+        },
+        {
+            "queue": platform, 
+            "name": "get profile",
+        },
+        {
+            "queue": "default", 
+            "name": "map profile",
+        },
+        {
+            "queue": "default", 
+            "name": "upsert profile"
+        },        
+        {
+            "queue": platform, 
+            "name": "pull sources",
+        },
+        {
+            "queue": "default", 
+            "name": "map sources"
+        },
+        {
+            "queue": "default", 
+            "name": "upsert sources"
+        },
+        {
+            "queue": "default", 
+            "name": "reconcile sources",
+        },
+        {
+            "queue": "default",
+            "name": "flow - pull notifications"
+        },
+        {
+            "queue": "default",
+            "name": "flow - update identity feed"
+        }
+    ])
+
+def flow_update_identity_feed(task):
+    identity = h.enforce("identity", task)
+    platform = h.get_platform(identity)
+    client = h.enforce("client", task)
+    sources = h.enforce("sources", task)
+    is_shallow = task.details.get("is_shallow", False)
+
+    for source in sources:
+        queues.default.put_flow(
+            priority = task.priority,
+            failure = h.rollback_cursor,
+            flow = [
+            {
+                "queue": "default",
+                "name": "get source cursor",
+                "details": {
+                    "platform": platform,
+                    "identity": identity,
+                    "client": client,
+                    "source": source
+                }
+            },
+            {
+                "queue": platform, 
+                "name": "pull posts",
+                "details": {"is_shallow": is_shallow}
+            },
+            {
+                "queue": "default", 
+                "name": "map sources"
+            },
+            {
+                "queue": "default", 
+                "name": "upsert sources",
+            },
+            {
+                "queue": "default", 
+                "name": "map posts"
+            },
+            {
+                "queue": "default", 
+                "name": "upsert posts"
+            },
+        ])
+
+
+def flow_onboard_identity(task):
+    identity = h.enforce("identity", task)
+
+    queues.default.put_details("flow - update identity", {
+        "priority": task.priority,
+        "identity": identity,
+        "is_onboarding": True
+    })
+
 
 
 def flow_pull_sources(task):
     identity = h.enforce("identity", task)
     platform = h.get_platform(identity)
+    client = task.details.get("client")
 
     queues.default.put_flow(task.priority, [
         {
             "queue": platform, 
+            "name": "get client",
+            "details": {
+                "identity": identity,
+                "client": client
+            }
+        },
+        {
+            "queue": platform, 
             "name": "pull sources",
-            "details": {"identity": identity}
         },
         {
             "queue": "default", 
@@ -44,17 +162,28 @@ def flow_pull_posts(task):
     identity = h.enforce("identity", task)
     source = h.enforce("source", task)
     platform = h.get_platform(source)
+    client = task.details.get("client")
 
-    queues.default.put_flow(task.priority, [
+    queues.default.put_flow(
+        priority = task.priority,
+        failure = h.rollback_cursor,
+        flow = [
+        {
+            "queue": platform, 
+            "name": "get client",
+            "details": {
+                "identity": identity,
+                "client": client
+            }
+        },
         {
             "queue": "default",
-            "name": "get last retrieved",
+            "name": "get source cursor",
             "details": {"source": source}
         },
         {
             "queue": platform, 
             "name": "pull posts",
-            "details": {"identity": identity}
         },
         {
             "queue": "default", 
@@ -70,24 +199,36 @@ def flow_pull_posts(task):
         },
         {
             "queue": "default", 
-            "name": "set last retrieved"
-        },
-        {
-            "queue": "default", 
             "name": "upsert posts"
         },
     ])
 
 
-def flow_onboard_sources(task):
+
+def flow_pull_notifications(task):
     identity = h.enforce("identity", task)
     platform = h.get_platform(identity)
+    client = task.details.get("client")
 
-    queues.default.put_flow(task.priority, [
+    queues.default.put_flow(
+        priority = task.priority,
+        failure = h.rollback_cursor,
+        flow = [
+        {
+          "queue": platform,
+          "name": "get_client",
+          "details": {
+              "identity": identity,
+              "client": client
+          }
+        },
+        {
+            "queue": "default",
+            "name": "get notification cursor"
+        },
         {
             "queue": platform, 
-            "name": "pull sources",
-            "details": {"identity": identity}
+            "name": "pull notifications"
         },
         {
             "queue": "default", 
@@ -99,57 +240,18 @@ def flow_onboard_sources(task):
         },
         {
             "queue": "default", 
-            "name": "reconcile sources",
+            "name": "map posts"
         },
         {
-            "queue": "default",
-            "name": "flow - onboard source posts"
+            "queue": "default", 
+            "name": "upsert posts"
+        },
+        {
+            "queue": "default", 
+            "name": "map notifications"
+        },
+        {
+            "queue": "default", 
+            "name": "upsert notifications"
         }
     ])
-
-
-def flow_onboard_source_posts(task):
-    identity = h.enforce("identity", task)
-    sources = h.enforce("sources", task)
-    platform = h.get_platform(identity)
-
-    for source in sources:
-        queues.default.put_flow(task.priority, [
-            {
-                "queue": "default",
-                "name": "get last retrieved",
-                "details": {"source": source}
-            },
-            {
-                "queue": platform, 
-                "name": "pull posts",
-                "details": {
-                    "identity": identity,
-                    "is_shallow": True
-                }
-            },
-            {
-                "queue": "default", 
-                "name": "map sources"
-            },
-            {
-                "queue": "default", 
-                "name": "upsert sources",
-            },
-            {
-                "queue": "default", 
-                "name": "map posts"
-            },
-            {
-                "queue": "default", 
-                "name": "set last retrieved"
-            },
-            {
-                "queue": "default", 
-                "name": "upsert posts"
-            },
-        ])
-
-
-
-

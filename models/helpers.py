@@ -163,6 +163,8 @@ def define_crud(Table):
                     statement = statement.where(getattr(Table, key) <= value)
                 elif expression["operator"] == "lt":
                     statement = statement.where(getattr(Table, key) < value)
+                elif expression["operator"] == "starts with":
+                    statement = statement.where(getattr(Table, key).startswith(value))
                 elif expression["operator"] == "in":
                     statement = statement.where(getattr(Table, key).in_(value))
                 elif expression["operator"] == "not in":

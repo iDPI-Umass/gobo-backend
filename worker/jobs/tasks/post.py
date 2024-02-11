@@ -9,24 +9,6 @@ build_query = models.helpers.build_query
 QueryIterator = models.helpers.QueryIterator
 
 
-def pull_posts_fanout(task):
-    platform = h.get_platform(task.details)
-    if platform == "all":
-        wheres = []
-    else:
-        wheres = [where("platform", platform)]
-
-    sources = QueryIterator(
-        model = models.source,
-        wheres = wheres
-    )
-    for source in sources:
-        queues.default.put_details(
-            name = "pull posts from source",
-            priority = task.priority,
-            details = {"source": source}
-        )
-
 def pull_posts_from_source(task):
     source = h.enforce("source", task)
     
@@ -55,45 +37,11 @@ def pull_posts_from_source(task):
     )
 
 
-def get_last_retrieved(task):
-    source = h.enforce("source", task)
-    
-    should_fetch = False
-    loop = models.source.get_last_retrieved(source["id"])
-    last_retrieved = loop.get("secondary", None)
-    if last_retrieved is None:
-        should_fetch = True
-        new_last_retrieved = joy.time.now()
-    else:
-        date = joy.time.convert("iso", "date", last_retrieved)
-        if joy.time.latency(date).seconds > 600:
-            should_fetch = True
-            new_last_retrieved = joy.time.now()
-
-    if should_fetch == False:
-        return task.halt()
-
-    return {
-        "last_retrieved_loop": loop,
-        "last_retrieved": last_retrieved,
-        "new_last_retrieved": new_last_retrieved
-    }
-
-
-def set_last_retrieved(task):
-    link = h.enforce("last_retrieved_loop", task)
-    value = h.enforce("new_last_retrieved", task)
-    link["secondary"] = value
-    models.link.update(link["id"], link)
-
-
 def pull_posts(task):
-    identity = h.enforce("identity", task)
+    client = h.enforce("client", task)
     source = h.enforce("source", task)
     last_retrieved = task.details.get("last_retrieved", None)
     is_shallow = task.details.get("is_shallow", False)
-    client = h.get_client(identity)
-    client.login()
     graph = client.get_post_graph(
         source = source, 
         last_retrieved = last_retrieved, 
@@ -103,11 +51,9 @@ def pull_posts(task):
 
 
 def map_posts(task):
-    identity = h.enforce("identity", task)
+    client = h.enforce("client", task)
     graph = h.enforce("graph", task)
-    sources = h.enforce("sources", task)
-    graph["sources"] = sources
-    client = h.get_client(identity)
+    graph["sources"] = h.enforce("sources", task)
     post_data = client.map_posts(graph)
     is_list = graph.get("is_list", False)
     return {

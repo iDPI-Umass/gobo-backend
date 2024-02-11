@@ -18,8 +18,8 @@ class GOBOReddit():
             "User-Agent": os.environ.get("REDDIT_USER_AGENT")
         }
 
-        while True:
-            with httpx.Client() as client:
+        with httpx.Client() as client:
+            while True:
                 r = client.get(url, headers = headers)
                 if r.status_code == 200:
                     body = r.json()
@@ -32,8 +32,11 @@ class GOBOReddit():
                     return output
                 
                 elif r.status_code == 429:
+                    raw_timeout = r.headers.get("X-Ratelimit-Reset")
+                    logging.info(f"Reddit: Ratelimited reached with directive {raw_timeout}")
                     timeout = r.headers.get("X-Ratelimit-Reset", 3)
-                    timeout = int(timeout) + 5
+                    timeout = int(timeout) + 1
+                    logging.info(f"Reddit: Ratelimit reachhed. Backing off for {timeout} seconds.")
                     time.sleep(timeout)
                     continue
                 
