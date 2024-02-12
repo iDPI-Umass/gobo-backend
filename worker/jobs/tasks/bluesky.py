@@ -18,7 +18,7 @@ def find_identity(session):
     })
 
 
-def cycle_blusky_sessions(task):
+def cycle_bluesky_sessions(task):
     access_limit = joy.time.to_iso_string(joy.time.hours_from_now(0.5))
     refresh_limit = joy.time.to_iso_string(joy.time.hours_from_now(24))
 

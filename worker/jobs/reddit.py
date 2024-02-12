@@ -13,39 +13,38 @@ QueryIterator = models.helpers.QueryIterator
 def dispatch(task):
     if task.name == "get client":
         return tasks.get_client(task)
+    if task.name == "get profile":
+        return tasks.get_profile(task)
     
     
     if task.name == "pull sources":
         return tasks.pull_sources(task)
-    elif task.name == "pull posts":
+    if task.name == "pull posts":
         return tasks.pull_posts(task)
-    elif task.name == "pull notifications":
+    if task.name == "pull notifications":
         return tasks.pull_notifications(task)
     
     
-    elif task.name == "create post":
+    if task.name == "create post":
         try:
             return create_post(task)
         except Exception as e:
             logging.error(e)
             raise Exception("reddit create post failure")
-    elif task.name == "add post edge":
+    if task.name == "add post edge":
         try:
             return add_post_edge(task)
         except Exception as e:
             logging.error(e)
             raise Exception("reddit add post edge failure")
-    elif task.name == "remove post edge":
+    if task.name == "remove post edge":
         try:
             return remove_post_edge(task)
         except Exception as e:
             logging.error(e)
             raise Exception("reddit remove post edge failure")
-        
 
-
-    else:
-        logging.warning("No matching job for task: %s", task)
+    logging.warning("No matching job for task: %s", task)
 
 
 

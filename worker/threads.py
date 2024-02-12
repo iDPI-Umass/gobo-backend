@@ -52,27 +52,27 @@ def start_api():
     thread = Thread(queues.api, jobs.api.dispatch)
     thread.start()
 
-def start_default(count):
+def start_default():
     for i in range(thread_counts["default"]):
         thread = Thread(queues.default, jobs.default.dispatch)
         thread.start()
 
-def start_bluesky(count):
+def start_bluesky():
     for i in range(thread_counts["bluesky"]):
         thread = Thread(queues.bluesky[i], jobs.bluesky.dispatch)
         thread.start()
 
-def start_mastodon(count):
+def start_mastodon():
     for i in range(thread_counts["mastodon"]):
         thread = Thread(queues.mastodon[i], jobs.mastodon.dispatch)
         thread.start()
 
-def start_reddit(count):
+def start_reddit():
     for i in range(thread_counts["reddit"]):
         thread = Thread(queues.reddit[i], jobs.reddit.dispatch)
         thread.start()
 
-def start_smalltown(count):
+def start_smalltown():
     for i in range(thread_counts["smalltown"]):
         thread = Thread(queues.smalltown[i], jobs.smalltown.dispatch)
         thread.start()

@@ -1,6 +1,6 @@
 import logging
 import queue
-from .task import Task
+from task import Task
 
 
 class Queue():
@@ -76,9 +76,8 @@ def get_shard(platform, task):
     
     # Based on uniform hashing algorithm here:
     # https://www.d.umn.edu/~gshute/cs2511/slides/hash_tables/sections/uniform_hashing.xhtml
-    text = base_url + platform_id
     m = hashlib.sha512()
-    m.update(text)
+    m.update(bytearray(base_url + platform_id, "utf-8"))
     byte_array = m.digest()
     
     result = 1
@@ -96,14 +95,14 @@ def shard_task(platform, task):
   shard = get_shard(platform, task)
   if platform == "bluesky":
       return bluesky[shard].put_task(task)
-  if mastodon == "mastodon":
+  if platform == "mastodon":
       return mastodon[shard].put_task(task)
   if platform == "reddit":
       return reddit[shard].put_task(task)
   if platform == "smalltown":
       return smalltown[shard].put_task(task)
 
-  logging.warn({
+  logging.warning({
       "platform": platform, 
       "task": task
   })

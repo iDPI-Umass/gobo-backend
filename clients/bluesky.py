@@ -499,6 +499,16 @@ class Bluesky():
 
     def get_profile(self):
         return self.client.get_profile(self.me)
+
+    def map_profile(self, data):
+        profile = data["profile"]
+        identity = data["identity"]
+
+        identity["profile_url"] = f"{self.BASE_URL}/profile/{profile['handle']}"
+        identity["profile_image"] = profile.get("avatar", None)
+        identity["username"] = profile["handle"]
+        identity["name"] = profile.get("displayName", None)
+        return identity
     
     
     # facets are Bluesky's approach to expressing hypertext linkages in post

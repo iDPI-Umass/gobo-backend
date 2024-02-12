@@ -219,6 +219,7 @@ class Mastodon():
     def map_profile(self, data):
         profile = data["profile"]
         identity = data["identity"]
+
         identity["profile_url"] = profile.url
         identity["profile_image"] = profile.avatar
         identity["username"] = profile.username

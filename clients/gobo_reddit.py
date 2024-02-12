@@ -33,10 +33,10 @@ class GOBOReddit():
                 
                 elif r.status_code == 429:
                     raw_timeout = r.headers.get("X-Ratelimit-Reset")
-                    logging.info(f"Reddit: Ratelimited reached with directive {raw_timeout}")
+                    logging.warning(f"Reddit: Ratelimited reached with directive {raw_timeout}")
                     timeout = r.headers.get("X-Ratelimit-Reset", 3)
                     timeout = int(timeout) + 1
-                    logging.info(f"Reddit: Ratelimit reachhed. Backing off for {timeout} seconds.")
+                    logging.warning(f"Reddit: Ratelimit reachhed. Backing off for {timeout} seconds.")
                     time.sleep(timeout)
                     continue
                 

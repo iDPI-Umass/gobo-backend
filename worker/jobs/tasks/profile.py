@@ -17,8 +17,12 @@ def get_profile(task):
 
 def map_profile(task):
     client = h.enforce("client", task)
+    identity = h.enforce("identity", task)
     profile = h.enforce("profile", task)
-    identity = client.map_profile(profile)
+    identity = client.map_profile({
+        "profile": profile, 
+        "identity": identity
+    })
     return {"identity": identity}
 
 

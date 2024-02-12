@@ -3,7 +3,6 @@ from .client import *
 from .fanout import *
 from .flow import *
 from .follow import *
-from .helpers import *
 from .notification import *
 from .platform import *
 from .post import *
@@ -12,3 +11,5 @@ from .prune import *
 from .reset import *
 from .source import *
 from .workbench import *
+
+from . import helpers

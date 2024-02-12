@@ -210,6 +210,17 @@ class Reddit():
     def get_profile(self):
         return self.client.user.me()
 
+    def map_profile(self, data):
+        profile = data["profile"]
+        identity = data["identity"]
+
+        identity["profile_url"] = f"{self.BASE_URL}/user/{profile.name}"
+        identity["profile_image"] = profile.icon_img,
+        identity["username"] = profile.name
+        identity["name"] = profile.name
+        return identity
+
+
     def get_post(self, id):
         item = self.client.submission(id = id)
         submission = Submission(item)

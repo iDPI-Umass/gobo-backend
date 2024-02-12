@@ -13,43 +13,45 @@ QueryIterator = models.helpers.QueryIterator
 def dispatch(task):
     if task.name == "get client":
         return tasks.get_client(task)
+    if task.name == "get profile":
+        return tasks.get_profile(task)
     
     
     if task.name == "pull sources":
         return tasks.pull_sources(task)
-    elif task.name == "pull posts":
+    if task.name == "pull posts":
         return tasks.pull_posts(task)
-    elif task.name == "pull notifications":
+    if task.name == "pull notifications":
         return tasks.pull_notifications(task)
     
     
-    elif task.name == "create post":
+    if task.name == "create post":
         try:
             return create_post(task)
         except Exception as e:
             logging.error(e)
             raise Exception("bluesky create post failure")
-    elif task.name == "add post edge":
+    if task.name == "add post edge":
         try:
             return add_post_edge(task)
         except Exception as e:
             logging.error(e)
             raise Exception("bluesky add post edge failure")
-    elif task.name == "remove post edge":
+    if task.name == "remove post edge":
         try:
             return remove_post_edge(task)
         except Exception as e:
             logging.error(e)
             raise Exception("bluesky remove post edge failure")
-    elif task.name == "cycle refresh token":
+    if task.name == "cycle refresh token":
         return cycle_refresh_token(task)
-    elif task.name == "cycle access token":
+    if task.name == "cycle access token":
         return cycle_access_token(task)
     
     
-    elif task.name == "bootstrap sessions":
+    if task.name == "bootstrap sessions":
         return bootstrap_sessions(task)
-    else:
+    
         logging.warning("No matching job for task: %s", task)
 
 

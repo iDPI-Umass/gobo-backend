@@ -1,4 +1,5 @@
 import logging
+import time
 import json
 import urllib
 import httpx
@@ -21,8 +22,63 @@ class GOBOBluesky():
             url += f"?{urllib.parse.urlencode(data)}"
         return url
 
+
+
+    # Based on this September 2023 blog post where Bluesky added ratelimits:
+    # https://www.docs.bsky.app/blog/rate-limits-pds-v3#adding-rate-limits
+
+    # Bluesky uses a rate limit header negotiation protocol that's part of
+    # an IETF standards track proposal:
+    # https://www.ietf.org/archive/id/draft-polli-ratelimit-headers-02.html#section-4
+
+    # TODO: This is minimal implementation of the above protocol.
+    # Make this more rigorous or switch us over to a published client.
+    
+    # CAUTION: This seems to be a Unix Epoch time, but the IETF proposal
+    #     they link to uses relative seconds. Aside from being an annoying wtf,
+    #     they might switch this randomly.
+    def get_wait_timeout(self, reset):
+        reset = joy.time.convert("unix", "date", reset)
+        now = joy.time.nowdate
+        return (now - reset).total_seconds() + 1
+
+
+    def handle_ratelimit(self, response):
+        remaining = response.headers.get("ratelimit-remaining")
+        reset = response.headers.get("ratelimit-reset")
+
+        if remaining is None:
+            return
+        if int(remaining) > 1:
+            return
+        
+        seconds = self.get_wait_timeout(reset)
+        logging.warning(f"Bluesky: proactively slowing to avoid ratelimit. Waiting for {seconds} seconds")
+        time.sleep(seconds)
+    
+
+    # This is to deal with 429 status responses, but we should never get these
+    # if our above rate_limit watcher respects "remaining". It should be the
+    # warning we respect before crashing into this violation. That's why
+    # these are treated as errors.
+    def handle_too_many(self, response):
+        # This shouldn't happen, but we don't have good recourse if it's not here.
+        reset = response.headers.get("ratelimit-reset")
+        if reset is None:
+            raise Exception("Bluesky: got 429 response, but without ratelimit-reset header guidance")
+
+        seconds = self.get_wait_timeout(reset)
+        logging.warning(f"Bluesky: got 429 response. Waiting for {seconds} seconds.")
+        time.sleep(seconds)
+
+
     def handle_response(self, r, skip_response = False):
-        content_type = r.headers.get("content-type", "")
+        if r.status_code == 429:
+            self.handle_too_many(r)
+            return {"retry": True}
+        
+        self.handle_ratelimit(r)
+        content_type = r.headers.get("content-type")
         body = {}
         if content_type is not None:
             if "application/json" in content_type:
@@ -30,24 +86,33 @@ class GOBOBluesky():
 
         if r.status_code < 400:
             if skip_response == True:
-                return
+                return {"retry": False, "value": None}
             else:
-                return body
+                return {"retry": False, "value": body}
         else:
             logging.warning(body)
             logging.warning(r.headers)
             raise Exception(f"Bluesky: responded with status {r.status_code}")
     
+
     def get(self, url, headers = None, skip_response = False):
         with httpx.Client() as client:
-            r = client.get(url, headers=headers)
-            return self.handle_response(r, skip_response)
+            while True:
+                r = client.get(url, headers=headers)
+                control = self.handle_response(r, skip_response)
+                if control["retry"] == False:
+                    return control.get("value")
+
 
     def post(self, url, data = None, headers = None, skip_response = False):
         with httpx.Client() as client:
-            r = client.post(url, data=data, headers=headers)
-            return self.handle_response(r, skip_response)
-            
+            while True:
+                r = client.post(url, data=data, headers=headers)
+                control = self.handle_response(r, skip_response)
+                if control["retry"] == False:
+                    return control.get("value")
+                
+
     def add_token(self, headers):
         if headers is None:
             headers = {"Authorization": f"Bearer {self.access_token}"}

@@ -57,10 +57,10 @@ def flow_update_identity(task):
             "queue": "default", 
             "name": "reconcile sources",
         },
-        {
-            "queue": "default",
-            "name": "flow - pull notifications"
-        },
+        # {
+        #     "queue": "default",
+        #     "name": "flow - pull notifications"
+        # },
         {
             "queue": "default",
             "name": "flow - update identity feed"

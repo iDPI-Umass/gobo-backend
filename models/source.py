@@ -81,17 +81,17 @@ def stamp_cursor(id, timeout):
         # Unread source. Stamp it with now and signal a fresh read.
         if stored_time is None:
             edge["secondary"] = now
-            update(id, edge)
+            row.update(edge)
             session.commit()
             return None
         
         stored_date = joy.time.convert("iso", "date", stored_time)
-        delta = stored_date - nowdate
+        delta = nowdate - stored_date
 
         # Source is available for read. Stamp it with now and signal scoped read.
         if delta.total_seconds() > timeout:
             edge["secondary"] = now
-            update(id, edge)
+            row.update(edge)
             session.commit()
             return stored_time
         
