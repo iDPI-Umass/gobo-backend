@@ -82,7 +82,7 @@ def dispatch(task):
     if task.name == "map notifications":
         return tasks.map_notifications(task)
     if task.name == "upsert notifications":
-        return tasks.upsert_notifications()
+        return tasks.upsert_notifications(task)
 
 
     if task.name == "hard reset":
@@ -109,6 +109,8 @@ def dispatch(task):
         return tasks.prune_registrations(task)
     if task.name == "prune sources":
         return tasks.prune_sources(task)
+    if task.name == "prune notifications":
+        return tasks.prune_notifications(task)
 
 
     if task.name == "workbench":

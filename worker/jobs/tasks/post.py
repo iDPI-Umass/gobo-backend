@@ -68,7 +68,6 @@ def map_posts(task):
 # full throttle without order considerations.
 def upsert_posts(task):
     post_data = h.enforce("post_data", task)
-    source = h.enforce("source", task)
     is_list = h.enforce("is_list", task)
     full_posts = []
     references = {}      
@@ -103,6 +102,7 @@ def upsert_posts(task):
         })
 
     if is_list == True:
+        source = h.enforce("source", task)
         for post in full_posts:
             queues.default.put_details(
                 name = "add post to list followers", 

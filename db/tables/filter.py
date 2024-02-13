@@ -41,7 +41,7 @@ class Filter(Base):
 
         read_optional(self, data, optional)
         
-        configuration = getattr(self, "configuration")
+        configuration = getattr(self, "configuration", None)
         if configuration != None:
             data["configuration"] = json.loads(configuration)
         

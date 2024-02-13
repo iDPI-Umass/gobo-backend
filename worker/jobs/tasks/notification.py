@@ -8,41 +8,31 @@ where = models.helpers.where
 build_query = models.helpers.build_query
 QueryIterator = models.helpers.QueryIterator
 
-class NotificationCursor:
-    def __init__(self, id):
-        self.link = models.notification.get_cursor(id)
-    
-    # This is a provisional update we make optimistically.
-    # We need to reverse this if we don't get a successful fetch and map.
-    def stamp(self):
-        now = joy.time.now()
-        self.update(now)
-        self.last_retrieved = self.link.get("secondary", now)
-        return self.last_retrieved
-
-    def update(self, time):
-        link = self.link
-        link["secondary"] = time
-        models.link.update(link["id"], link)
-  
-    # We detected a failure and need to roll back the timestamp
-    def rollback(self):
-        self.update(self.last_retrieved)
-
 
 def get_notification_cursor(task):
-    identity = h.enforce("identity", task)
-    cursor = NotificationCursor(identity["id"])
-    cursor.stamp()
-    return {"cursor": cursor}
+    identity = h.enforce("identity", task)    
+    name = "read-cursor-notification"
+    timeout = 0
+
+    cursor = models.link.LoopCursor("identity", identity["id"], name)
+    last_retrieved = cursor.stamp(timeout)
+
+    # If this isn't a viable read, we need to bail.
+    if last_retrieved == False:
+        task.halt()
+        return
+    else:
+      return {
+        "cursor": cursor,
+        "last_retrieved": last_retrieved
+      }
 
 
 def pull_notifications(task):
     client = h.enforce("client", task)
     cursor = h.enforce("cursor", task)
-    graph = client.list_notifications(
-        last_retrieved = cursor.last_retrieved
-    )
+    last_retrieved = cursor.last_retrieved
+    graph = client.list_notifications({"last_retrieved": last_retrieved})
     return {"graph": graph}
 
 

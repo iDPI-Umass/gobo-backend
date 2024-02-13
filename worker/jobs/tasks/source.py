@@ -9,42 +9,18 @@ build_query = models.helpers.build_query
 QueryIterator = models.helpers.QueryIterator
 
 
-class SourceCursor:
-    def __init__(self, id):
-        self.link = models.source.get_cursor(id)
-        self.last_retrieved = None
-    
-    # This carefully fetches the last read time from a transactional read.
-    def stamp(self, timeout):
-        cursor = models.source.stamp_cursor(self.link["id"], timeout)
-        # We've also made an optimistic, provisional update. Save this value
-        # for later if we need to reverse on failure.
-        if isinstance(cursor, str):
-            self.last_retrieved = cursor
-        return cursor
-
-    def update(self, time):
-        link = self.link
-        link["secondary"] = time
-        models.link.update(link["id"], link)
-  
-    # We detected a failure and need to roll back the timestamp
-    def rollback(self):
-        if self.last_retrieved is not None:
-            self.update(self.last_retrieved)
-
-
 
 def get_source_cursor(task):
     source = h.enforce("source", task)    
     platform = h.enforce("platform", task)
+    name = "read-cursor-source"
 
     if platform == "reddit":
-        timeout = 12000
+        timeout = 1200
     else:
         timeout = 120
 
-    cursor = SourceCursor(source["id"])
+    cursor = models.link.LoopCursor("source", source["id"], name)
     last_retrieved = cursor.stamp(timeout)
 
     # If this isn't a viable read, we need to bail.

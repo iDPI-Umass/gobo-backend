@@ -7,7 +7,7 @@ import re
 import mastodon
 import joy
 import models
-from .helpers import guess_mime, get_base_url
+import clients.helpers as h 
 
 # TODO: Do we want this to be moved into GOBO configuration?
 redirect_uris = [
@@ -79,7 +79,7 @@ class Status():
             url = attachment["url"]
             self.attachments.append({
                 "url": url,
-                "type": guess_mime(url)
+                "type": h.guess_mime(url)
             })
           
         poll = getattr(_, "poll", None)
@@ -124,7 +124,7 @@ class Account():
         
     @staticmethod
     def get_platform(account):
-        base_url = get_base_url(account.url)
+        base_url = h.get_base_url(account.url)
         if base_url in smalltown_urls:
             return "smalltown"
         else:
@@ -135,9 +135,9 @@ class Poll():
         self.id = _.id
 
 
-def build_notification(item):
+def build_notification(item, is_active):
     try:
-        return Notification(item)
+        return Notification(item, is_active)
     except Exception as e:
         logging.error(e, exc_info=True)
         logging.error("\n\n")
@@ -146,20 +146,21 @@ def build_notification(item):
         return None
 
 class Notification():
-    def __init__(self, _):
+    def __init__(self, _, is_active):
         self.id = str(_.id)
         self.type = _.type
-        self.created = _.created_at
+        self.created = joy.time.convert(
+            start = "date",
+            end = "iso",
+            value = _.created_at
+        )
+        self.active = is_active
         self.account = None
-        self.account_id = None
         self.status = None
-        self.status_id = None
-        if _.account is not None:
+        if getattr(_, "account", None) is not None:
             self.account = Account(_.account)
-            self.account_id = self.account.id
-        if _.status is not None:
+        if getattr(_, "status", None) is not None:
             self.status = build_partial_status(_.status)
-            self.status_id = self.status.id
 
 
 class Mastodon():
@@ -294,20 +295,31 @@ class Mastodon():
       notifications = []
       max_id = None
       isDone = False
+      last_retrieved = data.get("last_retrieved")
+      is_active = True
+      if last_retrieved is None:
+          last_retrieved = h.two_weeks_ago()
+          is_active = False
+
+      logging.info({
+          "last_retrieved": last_retrieved,
+          "is_active": is_active
+      })
+      
       while True:
         if isDone == True:
             break
 
-        items = self._get_notifications({"max_id": max_id})
+        items = self.get_notifications({"max_id": max_id})
         if len(items) == 0:
             break
         max_id = str(items[-1].id)
 
         for item in items:
-          notification = build_notification(item)
+          notification = build_notification(item, is_active)
           if notification is None:
               continue
-          if notification.created < data["oldest_limit"]:
+          if notification.created < last_retrieved:
               isDone = True
               break
           notifications.append(notification)
@@ -344,21 +356,25 @@ class Mastodon():
         for item in data["sources"]:
             sources[item["platform_id"]] = item
         posts = {}
-        for item in data["posts"]:
+        for item in data["partials"]:
             posts[item["platform_id"]] = item
         
         for notification in data["notifications"]:
-            source = sources[notification.account.id]
-            post = posts[notification.status.id]
+            source_id = None
+            post_id = None
+            if notification.account is not None:
+                source_id = sources[notification.account.id]["id"]
+            if notification.status is not None:
+                post_id = posts[notification.status.id]["id"]
             notifications.append({
                 "platform": notification.account.platform,
                 "platform_id": notification.id,
                 "base_url": self.base_url,
                 "type": notification.type,
                 "notified": notification.created,
-                "active": True,
-                "source_id": source["id"],
-                "post_id": post["id"]
+                "active": notification.active,
+                "source_id": source_id,
+                "post_id": post_id
             })
 
         return notifications

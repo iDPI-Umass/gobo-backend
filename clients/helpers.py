@@ -1,6 +1,8 @@
 from urllib.parse import urlparse
 import markdown
 import mimetypes
+import joy
+from datetime import timedelta
 
 
 md = markdown.Markdown(
@@ -19,3 +21,10 @@ def partition(items, size):
 def get_base_url(url):
     parsed = urlparse(url)
     return f"{parsed.scheme}://{parsed.hostname}"
+
+def two_weeks_ago():
+    return joy.time.convert(
+        start = "date",
+        end = "iso",
+        value = joy.time.nowdate() - timedelta(days = 14)
+    )

@@ -57,12 +57,12 @@ class Post(Base):
             "updated": self.updated
         }
 
-        attachments = getattr(self, "attachments")
-        if attachments != None:
+        attachments = getattr(self, "attachments", None)
+        if attachments is not None:
             data["attachments"] = json.loads(attachments)
 
-        poll = getattr(self, "poll")
-        if poll != None:
+        poll = getattr(self, "poll", None)
+        if poll is not None:
             data["poll"] = json.loads(poll)
 
         read_optional(self, data, optional)

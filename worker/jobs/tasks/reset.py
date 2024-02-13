@@ -92,7 +92,6 @@ def clear_sources(task):
 def clear_cursors(task):
     platform = h.get_platform(task.details)
     wheres = [
-        where("origin_type", ["source", "notification"], "in"),
         where("name", "read-cursor-", "starts with")
     ]
     

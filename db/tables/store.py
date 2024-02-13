@@ -39,8 +39,8 @@ class Store(Base):
 
         read_optional(self, data, optional)
         
-        content = getattr(self, "content")
-        if content != None:
+        content = getattr(self, "content", None)
+        if content is not None:
             data["content"] = json.loads(content)
         
         return data

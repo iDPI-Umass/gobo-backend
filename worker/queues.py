@@ -61,6 +61,18 @@ def build_sharded_queues(counts):
 
 import hashlib
 
+# Based on uniform hashing algorithm here:
+# https://www.d.umn.edu/~gshute/cs2511/slides/hash_tables/sections/uniform_hashing.xhtml
+def uniform_shard(string, count):    
+    m = hashlib.sha512()
+    m.update(bytearray(string, "utf-8"))
+    byte_array = m.digest()
+    
+    result = 1
+    for value in byte_array:
+      result = (result * 31) + value
+    return result % count
+
 def get_shard(platform, task):
     identity = task.details.get("identity")
     if identity is None:
@@ -74,16 +86,9 @@ def get_shard(platform, task):
     if platform_id is None:
         raise Exception("cannot shard a task with identity that lacks platform_id")
     
-    # Based on uniform hashing algorithm here:
-    # https://www.d.umn.edu/~gshute/cs2511/slides/hash_tables/sections/uniform_hashing.xhtml
-    m = hashlib.sha512()
-    m.update(bytearray(base_url + platform_id, "utf-8"))
-    byte_array = m.digest()
-    
-    result = 1
-    for value in byte_array:
-      result = (result * 31) + value
-    return result % shard_counts[platform]
+    string = base_url + platform_id
+    count = shard_counts[platform]
+    return uniform_shard(string, count)
 
 
 def shard_task(platform, task):

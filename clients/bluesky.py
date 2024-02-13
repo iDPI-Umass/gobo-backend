@@ -7,7 +7,7 @@ import re
 import joy
 import models
 from .gobo_bluesky import GOBOBluesky
-from .helpers import guess_mime
+import clients.helpers as h
 
 
 # NOTE: These are taken from the atproto documentation: https://atproto.com/blog/create-post
@@ -114,7 +114,7 @@ def get_attachments(embed):
         url = image["fullsize"]
         attachments.append({
           "url": url,
-          "type": guess_mime(url.replace("@", "."))
+          "type": h.guess_mime(url.replace("@", "."))
         })
 
     return attachments

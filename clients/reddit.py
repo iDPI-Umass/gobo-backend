@@ -11,7 +11,7 @@ from pmaw import PushshiftAPI
 import joy
 import models
 from .gobo_reddit import GOBOReddit
-from .helpers import guess_mime, md, partition
+import clients.helpers as h
 
 gobo_reddit = GOBOReddit()
 
@@ -88,13 +88,13 @@ class Submission():
         if is_image(url) == True:
             self.attachments.append({
                 "url": url,
-                "type": guess_mime(url)
+                "type": h.guess_mime(url)
             })
         
         elif is_video(url) == True:
             try:
                 url = _["media"]["reddit_video"]["fallback_url"]
-                content_type = guess_mime(url) or "video/mp4"
+                content_type = h.guess_mime(url) or "video/mp4"
                 self.attachments.append({
                     "url": url,
                     "type": content_type
@@ -427,7 +427,7 @@ class Reddit():
             secondary.remove(item["platform_id"])
 
         if len(secondary) > 0:
-            for sublist in list(partition(list(secondary), 100)):
+            for sublist in list(h.partition(list(secondary), 100)):
                 generator = self.client.info(fullnames = sublist)
                 for item in generator:
                     partials.append(Submission(vars(item)))

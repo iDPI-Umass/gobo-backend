@@ -17,6 +17,7 @@ def prune_resources(task):
     queues.default.put_details("prune posts")
     queues.default.put_details("prune registrations")
     queues.default.put_details("prune sources")
+    queues.default.put_details("prune notifications")
 
 
 
@@ -98,3 +99,21 @@ def prune_sources(task):
 
     for source in sources:
         h.remove_source(source)
+
+
+def prune_notifications(task):
+    oldest_limit = joy.time.convert("date", "iso", 
+        joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
+    )
+
+    # NOTE: Sorta like sources, we care about "created" not "notified".
+    notifications = QueryIterator(
+        model = models.notification,
+        for_removal = True,
+        wheres = [
+            where("created", oldest_limit, "lt")
+        ]
+    )
+
+    for notification in notifications:
+        h.remove_notification(notification)

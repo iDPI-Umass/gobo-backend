@@ -40,7 +40,7 @@ class Task(Base):
         }
 
         read_optional(self, data, optional)
-        details = getattr(self, "details")
+        details = getattr(self, "details", {})
         data["details"] = json.loads(details)
         
         return data
