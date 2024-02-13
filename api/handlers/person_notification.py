@@ -4,7 +4,7 @@ import http_errors
 import models
 from .helpers import get_viewer
 
-valid_views = ["all", "mention"]
+valid_views = ["all", "mentions"]
 
 def parse_feed_query():
     data = request.args
@@ -25,8 +25,8 @@ def parse_feed_query():
     if view not in valid_views:
         raise http_errors.bad_request(f"view {view} is invalid")
     if view == "all":
-        view == "notification-feed"
-    elif view == "mention":
+        view = "notification-feed"
+    elif view == "mentions":
         view = "notification-mention-feed"
 
     return {
@@ -69,7 +69,7 @@ def person_notification_post(person_id, identity_id, id):
         "origin_id": identity["id"],
         "target_type": "notification",
         "target_id": id,
-        "name": "notifies"
+        "name": "notification-feed"
     })
 
     if edge is None:

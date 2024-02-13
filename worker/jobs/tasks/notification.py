@@ -40,8 +40,7 @@ def map_notifications(task):
     client = h.enforce("client", task)
     graph = h.enforce("graph", task)
     graph["sources"] = h.enforce("sources", task)
-    post_data = h.enforce("post_data", task)
-    graph["posts"] = post_data["posts"]
+    graph["posts"] = h.enforce("posts", task)
     notifications = client.map_notifications(graph)
     return {"notifications": notifications}
 

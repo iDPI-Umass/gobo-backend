@@ -1323,7 +1323,7 @@ resources:
           status: 204
 
   person_notifications:
-    template: /people/{person_id}/identities/{id}/notifications{?per_page,start}
+    template: /people/{person_id}/identities/{id}/notifications{?per_page,start,view}
     route: /people/<int:person_id>/identities/<int:id>/notifications
     methods:
       get:

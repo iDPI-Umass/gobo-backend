@@ -67,7 +67,19 @@ def view_identity_feed(data):
         rows = session.scalars(statement).all()
         for row in rows:
             feed.append(row.target_id)
+
+
+
+        # The next_token tells the client how to try to get the next page.
+        # If we've just pulled an empty page, the client can try again later
+        # with the same next_token. Depending how secondary is calculated,
+        # there might be something there. 
+        if len(rows) == 0:
+            next_token = data.get("start")
+        else:
+            next_token = rows[-1].secondary
         
+
 
         # There are currently no meta-notifications, so we have all neccessary
         # references and can fetch them now.
@@ -80,17 +92,6 @@ def view_identity_feed(data):
 
 
 
-        # The next_token tells the client how to try to get the next page.
-        # If we've just pulled an empty page, the client can try again later
-        # with the same next_token. Depending how secondary is calculated,
-        # there might be something there. 
-        if len(rows) == 0:
-            next_token = data.get("start")
-        else:
-            next_token = rows[-1].secondary
-
-
-
         # Locate posts associated with these notifications.
         statement = select(Link) \
             .where(Link.origin_type == "notification") \
@@ -100,7 +101,7 @@ def view_identity_feed(data):
 
         rows = session.scalars(statement).all()
         for row in rows:
-            seen_posts.append(row.target_id)
+            seen_posts.add(row.target_id)
 
 
 

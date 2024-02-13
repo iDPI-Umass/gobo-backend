@@ -34,7 +34,7 @@ def build_partial_status(item):
     status = build_status(item)
     if status is not None:
         status.reply = None
-    status
+    return status
 
 
 class Status():
@@ -328,12 +328,16 @@ class Mastodon():
           max_id = str(items[-1].id)
 
           for item in items:
+            if item.id == 11106307:
+                logging.info({"status": getattr(item, "status", None)})
             notification = build_notification(item, is_active)
             if notification is None:
                 continue
-            if notification.created < last_retrieved:
-                isDone = True
-                break
+            if notification.id == "11106307":
+                logging.info({"status": notification.status})
+            # if notification.created < last_retrieved:
+            #     isDone = True
+            #     break
             notifications.append(notification)
 
         accounts = []
@@ -368,9 +372,9 @@ class Mastodon():
         }
     
 
-    # Mastodon doesn't seem to have a concept of reading a notification.
-    # In the python client, dismissal deletes the notification. So we'll stub
-    # this for now.
+    # Mastodon doesn't seem to have a concept of reading a notification. Their
+    # API describes a dismissal resource that uses POST, but it deletes the
+    # notification. Stub this for now.
     def dismiss_notification(self, notification):
         pass
 
@@ -381,7 +385,7 @@ class Mastodon():
         for item in data["sources"]:
             sources[item["platform_id"]] = item
         posts = {}
-        for item in data["partials"]:
+        for item in data["posts"]:
             posts[item["platform_id"]] = item
         
         for notification in data["notifications"]:

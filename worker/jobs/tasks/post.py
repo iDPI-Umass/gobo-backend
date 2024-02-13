@@ -67,6 +67,21 @@ def map_posts(task):
 # of the graph we build out of the edges. Afterward, the followers can be
 # full throttle without order considerations.
 def upsert_posts(task):
+    seen_posts = set()
+    all_posts = []
+    def collect_post(post):
+        if post["id"] not in seen_posts:
+            seen_posts.add(post["id"])
+            all_posts.append(post)
+
+    seen_edges = set()
+    all_edges = []
+    def collect_edge(edge):
+        if edge["id"] not in seen_edges:
+            seen_edges.add(edge["id"])
+            all_edges.append(edge)
+
+
     post_data = h.enforce("post_data", task)
     is_list = h.enforce("is_list", task)
     full_posts = []
@@ -76,11 +91,13 @@ def upsert_posts(task):
         post = models.post.upsert(_post)
         full_posts.append(post)
         references[post["platform_id"]] = post
-        h.attach_post(post)     
+        h.attach_post(post)
+        collect_post(post)
     for _post in post_data["partials"]:
         post = models.post.safe_add(_post)
         references[post["platform_id"]] = post
         h.attach_post(post)
+        collect_post(post)
     for edge in post_data["edges"]:
         origin = references.get(edge["origin_reference"], None)
         target = references.get(edge["target_reference"], None)
@@ -92,7 +109,7 @@ def upsert_posts(task):
             logging.warning(f"upsert posts: target post is not available")
             continue
 
-        models.link.upsert({
+        link = models.link.upsert({
             "origin_type": "post",
             "origin_id": origin["id"],
             "target_type": "post",
@@ -100,6 +117,7 @@ def upsert_posts(task):
             "name": edge["name"],
             "secondary": f"{target['published']}::{target['id']}"
         })
+        collect_edge(link)
 
     if is_list == True:
         source = h.enforce("source", task)
@@ -119,6 +137,11 @@ def upsert_posts(task):
                 priority = task.priority,
                 details = {"post": post}
             )
+
+    return {
+        "posts": all_posts,
+        "edges": all_edges
+    }
 
 
 
