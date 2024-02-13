@@ -29,6 +29,8 @@ def dispatch(task):
         return tasks.flow_pull_posts(task)
     if task.name == "flow - pull notifications":
         return tasks.flow_pull_notifications(task)
+    if task.name == "flow - dismiss notification":
+        return tasks.flow_dismiss_notification(task)
 
 
     if task.name == "get profile":

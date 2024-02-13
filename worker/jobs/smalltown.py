@@ -44,6 +44,11 @@ def dispatch(task):
             logging.error(e)
             raise Exception("smalltown remove post edge failure")
         
+    
+    if task.name == "dismiss notification":
+        return tasks.dismiss_notification(task)
+
+    
     logging.warning("No matching job for task: %s", task)
     
 

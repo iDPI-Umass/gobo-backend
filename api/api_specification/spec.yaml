@@ -413,6 +413,42 @@ shards:
       <<: *timestamp
 
 
+  notificationCore: &notificationCore
+    <<: *platform
+    base_url:
+      description: The base URL for the platform that hosts this notification.
+      type: string
+    platform_id:
+      description: The ID of this notification, unique to the platform that hosts it.
+      type: string
+    content:
+      type: string
+    type:
+      description: The notification type that describes the purpose of this notification.
+      type: string
+    notified:
+      description: The ISO 8601 timestamp this notification was registered on the host platform.
+      type: string
+    source_id:
+      description: The unique Gobo ID of the source associated with this notification.
+      type: integer
+    post_id:
+      description: The unique Gobo ID of the post associated with this notification.
+      type: integer
+    active:
+      description: Describes whether this notification is unread or has been dismissed.
+      type: boolean
+
+  notification: &notification
+    type: object
+    additionalProperties: false
+    required: [ id, platform ]
+    properties:
+      <<: *id
+      <<: *notificationCore
+      <<: *timestamp
+
+
 resources:
   discovery:
     template: /
@@ -1189,7 +1225,7 @@ resources:
             required: [ feed, posts, sources ]
             properties:
               feed:
-                description: Array of ordered post IDs for this feed. The order depends on the feed being requested.
+                description: Array of ordered post IDs for this feed.
                 type: array
                 items:
                   type: integer
@@ -1285,6 +1321,74 @@ resources:
             - person
         response:
           status: 204
+
+  person_notifications:
+    template: /people/{person_id}/identities/{id}/notifications{?per_page,start}
+    route: /people/<int:person_id>/identities/<int:id>/notifications
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+            - gobo-key
+        response:
+          type: application/json
+          status: 200
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ feed, notifications, posts, sources ]
+            properties:
+              feed:
+                description: Array of ordered notification IDs for this feed.
+                type: array
+                items:
+                  type: integer
+              notifications:
+                description: List of notifications that appear somewhere in this feed segment.
+                type: array
+                items: *notification
+              posts:
+                description: List of posts that appear somewhere in this feed segment.
+                type: array
+                items: *post
+              post_edges:
+                description: List of post references that have a relationship with this identity.
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: integer
+              shares:
+                description: List of post references that have share relationships.
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: integer
+              sources:
+                description: List of sources that appear somewhere in this feed segment.
+                type: array
+                items: *source
+              next:
+                description: token that allows the client to fetch the next page fo the feed.
+                type: string
+
+
+  person_notification:
+    template: /people/{person_id}/identities/{identity_id}/notifications/{id}
+    route: /people/<int:person_id>/identities/<int:identity_id>/notifications/<int:id>
+    methods:
+      post:
+        request:
+          authorization:
+            - person
+            - gobo-key
+        response:
+          type: application/json
+          status: 200
+          schema: *notification
+       
 
   action_onboard_identity_start:
     template: /actions/onboard-identity

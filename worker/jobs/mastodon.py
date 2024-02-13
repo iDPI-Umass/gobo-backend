@@ -44,6 +44,11 @@ def dispatch(task):
         except Exception as e:
             logging.error(e)
             raise Exception("mastodon remove post edge failure")
+        
+
+    if task.name == "dismiss notification":
+        return tasks.dismiss_notification(task)
+
 
     logging.warning("No matching job for task: %s", task)
 

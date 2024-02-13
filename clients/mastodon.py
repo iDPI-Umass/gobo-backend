@@ -33,9 +33,7 @@ def build_status(item):
 def build_partial_status(item):
     status = build_status(item)
     if status is not None:
-        status.reblog = None
         status.reply = None
-        status.thread = None
     status
 
 
@@ -148,7 +146,7 @@ def build_notification(item, is_active):
 class Notification():
     def __init__(self, _, is_active):
         self.id = str(_.id)
-        self.type = _.type
+        self.type = self.map_type(_.type)
         self.created = joy.time.convert(
             start = "date",
             end = "iso",
@@ -161,6 +159,24 @@ class Notification():
             self.account = Account(_.account)
         if getattr(_, "status", None) is not None:
             self.status = build_partial_status(_.status)
+
+    def map_type(self, type):
+        if type == "follow":
+            return "follow"
+        if type == "follow_request":
+            return "follow request"
+        if type == "favourite":
+            return "like"
+        if type == "reblog":
+            return "repost"
+        if type == "mention":
+            return "mention"
+        if type == "poll":
+            return "poll complete"
+        if type == "status":
+            return "new post"
+        logging.warning(f"Mastodon: unable to map notification type {type}")
+        return type
 
 
 class Mastodon():
@@ -278,76 +294,85 @@ class Mastodon():
         return self.client.status_unreblog(post["platform_id"])
     
     def get_notifications(self, data):
-      return self.client.notifications(
-          max_id = data.get("max_id"), 
-          limit = data.get("limit"),
-          types = data.get("type", [ 
-              "follow",
-              "follow_request", 
-              "favourite",
-              "reblog",
-              "mention",
-              "poll"
-          ])
-      )
+        return self.client.notifications(
+            max_id = data.get("max_id"), 
+            limit = data.get("limit"),
+            types = data.get("type", [ 
+                "follow",
+                "follow_request", 
+                "favourite",
+                "reblog",
+                "mention",
+                "poll",
+                "status"
+            ])
+        )
     
     def list_notifications(self, data):
-      notifications = []
-      max_id = None
-      isDone = False
-      last_retrieved = data.get("last_retrieved")
-      is_active = True
-      if last_retrieved is None:
-          last_retrieved = h.two_weeks_ago()
-          is_active = False
-
-      logging.info({
-          "last_retrieved": last_retrieved,
-          "is_active": is_active
-      })
-      
-      while True:
-        if isDone == True:
-            break
-
-        items = self.get_notifications({"max_id": max_id})
-        if len(items) == 0:
-            break
-        max_id = str(items[-1].id)
-
-        for item in items:
-          notification = build_notification(item, is_active)
-          if notification is None:
-              continue
-          if notification.created < last_retrieved:
-              isDone = True
+        notifications = []
+        max_id = None
+        isDone = False
+        last_retrieved = data.get("last_retrieved")
+        is_active = True
+        if last_retrieved is None:
+            last_retrieved = h.two_weeks_ago()
+            is_active = False
+        
+        while True:
+          if isDone == True:
               break
-          notifications.append(notification)
 
-      accounts = []
-      seen_accounts = set()
-      partials = []
-      seen_statuses = set()
-      for notification in notifications:
-          account = notification.account
-          if account is not None and account.id not in seen_accounts:
-              accounts.append(account)
-              seen_accounts.add(account.id)
-          status = notification.status
-          if status is not None and status.id not in seen_statuses:
-              partials.append(status)
-              seen_statuses.add(status.id)
+          items = self.get_notifications({"max_id": max_id})
+          if len(items) == 0:
+              break
+          max_id = str(items[-1].id)
+
+          for item in items:
+            notification = build_notification(item, is_active)
+            if notification is None:
+                continue
+            if notification.created < last_retrieved:
+                isDone = True
+                break
+            notifications.append(notification)
+
+        accounts = []
+        seen_accounts = set()
+        partials = []
+        seen_statuses = set()
+        for notification in notifications:
+            account = notification.account
+            if account is not None and account.id not in seen_accounts:
+                accounts.append(account)
+                seen_accounts.add(account.id)
+            status = notification.status
+            if status is not None and status.id not in seen_statuses:
+                partials.append(status)
+                seen_statuses.add(status.id)
+                reblog = status.reblog
+                if reblog is not None and reblog.id not in seen_statuses:
+                    seen_statuses.add(reblog.id)
+                    partials.append(reblog)
+
+        for status in partials:
+            account = status.account
+            if account.id not in seen_accounts:
+                seen_accounts.add(account.id)
+                accounts.append(account)
       
-      return {
-          "statuses": [],
-          "accounts": accounts,
-          "partials": partials,
-          "notifications": notifications
-      }
+        return {
+            "statuses": [],
+            "accounts": accounts,
+            "partials": partials,
+            "notifications": notifications
+        }
     
-    
+
+    # Mastodon doesn't seem to have a concept of reading a notification.
+    # In the python client, dismissal deletes the notification. So we'll stub
+    # this for now.
     def dismiss_notification(self, notification):
-      return self.client.notifications_dismiss(notification["platform_id"])
+        pass
 
 
     def map_notifications(self, data):

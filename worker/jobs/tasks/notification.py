@@ -47,9 +47,51 @@ def map_notifications(task):
 
 
 def upsert_notifications(task):
+    identity = h.enforce("identity", task)
     _notifications = h.enforce("notifications", task)
     notifications = []
-    for _notification in _notifications:
-        notification = models.notification.upsert(_notification)
+    for item in _notifications:
+        notification = models.notification.upsert(item)
         notifications.append(notification)
+
+        models.link.upsert({
+            "origin_type": "identity",
+            "origin_id": identity["id"],
+            "target_type": "notification",
+            "target_id": notification["id"],
+            "name": "notification-feed",
+            "secondary": f"{notification['notified']}::{notification['id']}"
+        })
+
+        if notification["type"] == "mention":
+            models.link.upsert({
+                "origin_type": "identity",
+                "origin_id": identity["id"],
+                "target_type": "notification",
+                "target_id": notification["id"],
+                "name": "notification-mention-feed",
+                "secondary": f"{notification['notified']}::{notification['id']}"
+            })            
+
+        if notification.get("post_id") is not None:
+            models.link.upsert({
+                "origin_type": "notification",
+                "origin_id": notification["id"],
+                "target_type": "post",
+                "target_id": notification["post_id"],
+                "name": "notifies",
+                "secondary": f"{notification['notified']}::{notification['id']}"
+            })
+
     return {"notifications": notifications}
+
+
+def dismiss_notification(task):
+    id = h.enforce("notification_id", task)
+    client = h.enforce("client", task)
+    
+    notification = models.notification.get(id)
+    if notification is None:
+        logging.warn(f"cannot dismiss notification {id} because it was not found")
+    
+    client.dismiss_notification(notification)

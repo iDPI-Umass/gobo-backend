@@ -255,3 +255,26 @@ def flow_pull_notifications(task):
             "name": "upsert notifications"
         }
     ])
+
+
+def flow_dismiss_notification(task):
+    identity = h.enforce("identity", task)
+    platform = h.get_platform(identity)
+    notification_id = h.enforce("notification_id", task)
+
+    queues.default.put_flow(
+        priority = task.priority,
+        flow = [
+        {
+          "queue": platform,
+          "name": "get client",
+          "details": {
+              "identity": identity,
+              "notification_id": notification_id
+          }
+        },
+        {
+            "queue": platform, 
+            "name": "dismiss notification"
+        }
+    ])

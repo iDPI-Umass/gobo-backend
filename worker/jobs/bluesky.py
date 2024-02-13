@@ -52,7 +52,12 @@ def dispatch(task):
     if task.name == "bootstrap sessions":
         return bootstrap_sessions(task)
     
-        logging.warning("No matching job for task: %s", task)
+    
+    if task.name == "dismiss notification":
+        return tasks.dismiss_notification(task)
+
+
+    logging.warning("No matching job for task: %s", task)
 
 
 

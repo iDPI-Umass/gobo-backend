@@ -139,7 +139,7 @@ def view_identity_feed(data):
         # graph operations in the HX. Lookup their relevant edges.
         statement = select(PostEdge) \
             .where(PostEdge.identity_id == data["identity_id"]) \
-            .where(PostEdge.post_id.in_(list(seen_posts))) \
+            .where(PostEdge.post_id.in_(list(seen_posts)))
             
         rows = session.scalars(statement).all()
         for row in rows:
@@ -245,7 +245,7 @@ def view_post_graph(data):
         # graph operations in the HX. Lookup their relevant edges.
         statement = select(PostEdge) \
             .where(PostEdge.identity_id == data["identity_id"]) \
-            .where(PostEdge.post_id.in_(list(seen_posts))) \
+            .where(PostEdge.post_id.in_(list(seen_posts)))
             
         rows = session.scalars(statement).all()
         for row in rows:
