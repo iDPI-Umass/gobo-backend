@@ -328,16 +328,12 @@ class Mastodon():
           max_id = str(items[-1].id)
 
           for item in items:
-            if item.id == 11106307:
-                logging.info({"status": getattr(item, "status", None)})
             notification = build_notification(item, is_active)
             if notification is None:
                 continue
-            if notification.id == "11106307":
-                logging.info({"status": notification.status})
-            # if notification.created < last_retrieved:
-            #     isDone = True
-            #     break
+            if notification.created < last_retrieved:
+                isDone = True
+                break
             notifications.append(notification)
 
         accounts = []

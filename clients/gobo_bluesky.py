@@ -43,13 +43,18 @@ class GOBOBluesky():
         return (now - reset).total_seconds() + 1
 
 
-    def handle_ratelimit(self, response):
+    def handle_ratelimit(self, url, response):
         remaining = response.headers.get("ratelimit-remaining")
         reset = response.headers.get("ratelimit-reset")
 
         if remaining is None:
             return
         if int(remaining) > 1:
+            logging.info({
+                "message": "Bluesky: monitoring ratelimit headers",
+                "url": url,
+                "remaining": remaining
+            })
             return
         
         seconds = self.get_wait_timeout(reset)
@@ -61,7 +66,11 @@ class GOBOBluesky():
     # if our above rate_limit watcher respects "remaining". It should be the
     # warning we respect before crashing into this violation. That's why
     # these are treated as errors.
-    def handle_too_many(self, response):
+    def handle_too_many(self, url, response):
+        logging.warning({
+            "message": f"Bluesky: 429 response for url {url}",
+            "headers": response.headers
+        })
         # This shouldn't happen, but we don't have good recourse if it's not here.
         reset = response.headers.get("ratelimit-reset")
         if reset is None:
@@ -72,12 +81,12 @@ class GOBOBluesky():
         time.sleep(seconds)
 
 
-    def handle_response(self, r, skip_response = False):
+    def handle_response(self, url, r, skip_response = False):
         if r.status_code == 429:
-            self.handle_too_many(r)
+            self.handle_too_many(url, r)
             return {"retry": True}
         
-        self.handle_ratelimit(r)
+        self.handle_ratelimit(url, r)
         content_type = r.headers.get("content-type")
         body = {}
         if content_type is not None:
@@ -99,7 +108,7 @@ class GOBOBluesky():
         with httpx.Client() as client:
             while True:
                 r = client.get(url, headers=headers)
-                control = self.handle_response(r, skip_response)
+                control = self.handle_response(url, r, skip_response)
                 if control["retry"] == False:
                     return control.get("value")
 
@@ -108,7 +117,7 @@ class GOBOBluesky():
         with httpx.Client() as client:
             while True:
                 r = client.post(url, data=data, headers=headers)
-                control = self.handle_response(r, skip_response)
+                control = self.handle_response(url, r, skip_response)
                 if control["retry"] == False:
                     return control.get("value")
                 
@@ -283,3 +292,23 @@ class GOBOBluesky():
         }
 
         return self.bluesky_post(url, data, skip_response=True)
+    
+
+    def list_notifications(self, cursor, limit = 100):
+        url = self.build_url("app.bsky.notification.listNotifications", {
+            "cursor": cursor,
+            "limit": limit
+        })
+       
+        return self.bluesky_get(url)
+    
+    def get_posts(self, uris):
+        values = {}
+        index = 0
+        for uri in uris:
+            values[f"uris[{index}]"] = uri
+            index += 1
+
+        url = self.build_url("app.bsky.feed.getPosts", values)
+
+        return self.bluesky_get(url)

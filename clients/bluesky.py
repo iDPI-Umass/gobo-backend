@@ -80,8 +80,15 @@ def parse_object(input):
 
 def build_post(data):
     try:
+        # This bit of silliness is because we get labeled objects when we pluck
+        # them from the feed, but not from the return value of the getPosts
+        # "hydration" request. Looks like interface tree rings.
+        if data.get("post") is not None:
+            _data = data
+        else:
+            _data = {"post": data}
         # logging.info(json.dumps(data, indent = 2, default = json_failure))
-        return Post.create(data)
+        return Post.create(_data)
     except Exception as e:
         logging.error(e, exc_info=True)
         logging.error("\n\n")
@@ -309,10 +316,9 @@ class Post():
         # offer optionality in the future. I'm going to create a virtual
         # ID as a placeholder for this resource within GOBO.
 
-        # TODO: This suggests that we should model the relationship between
+        # TODO: This suggests that we could model the relationship between
         # posts with empty content and their targets as "reposts" instead of
-        # uniformly using "shares". The latter works for our immediate needs,
-        # but graph calculations could be helped by that hint.
+        # uniformly using "shares". I favor the optionality offered by uniformity.
 
         self.id = f"gobo:{self.author.id}:{self.published}:{post['cid']}"
         return self
@@ -456,6 +462,46 @@ class Session():
             "refresh_token": refresh_token,
             "refresh_expires": refresh_expires
         }
+    
+
+
+def build_notification(item, is_active):
+    try:
+        return Notification(item, is_active)
+    except Exception as e:
+        logging.error(e, exc_info=True)
+        logging.error("\n\n")
+        logging.error(item)
+        logging.error("\n\n")
+        return None
+
+class Notification():
+    def __init__(self, _, is_active):
+        self.type = self.map_type(_["reason"])
+        self.created = _["indexedAt"]
+        self.active = is_active
+        self.author = Actor(_["author"])
+        self.post = self.map_post(_)
+        self.id = f"gobo:notification:{self.type}:{self.author.id}:{_['uri']}:{self.created}"
+
+
+    def map_type(self, reason):
+        if reason in ["follow", "like", "repost", "reply", "quote", "mention"]:
+            return reason
+        logging.warning(f"Bluesky: unable to map notification type {reason}")
+        return reason
+    
+    # This method is about getting a post URI that we must dereference.
+    def map_post(self, _):
+        if self.type == "follow":
+            return None
+        if self.type in ["quote", "reply", "mention"]:
+            return _["uri"]
+        if self.type in ["repost", "like"]:
+            return _["reasonSubject"]
+        logging.warning(_)
+        raise Exception(f"Bluesky: unable to map notification post")
+
 
 
 class Bluesky():
@@ -532,7 +578,6 @@ class Bluesky():
             })
 
         for match in parse_links(text):
-            logging.info(match)
             facets.append({
                 "index": {
                     "byteStart": match["start"],
@@ -635,6 +680,136 @@ class Bluesky():
     def undo_repost_post(self, edge):
         rkey = Repost.get_rkey(edge["stash"]["uri"])
         return self.client.undo_repost_post(rkey)
+    
+    def get_notification_posts(self, notifications):
+        lookup = {}
+        uris = set()
+        for item in notifications:
+            if item.post is not None:
+                uris.add(item.post)
+
+        if len(uris) > 0:
+            for sublist in h.partition(list(uris), 25):
+                response = self.client.get_posts(sublist)
+                for item in response["posts"]:
+                    post = build_post(item)
+                    # Discard reply edges, but retain shares.
+                    post.reply = None
+                    lookup[item["uri"]] = post
+        
+            for item in notifications:
+                if item.post is not None:
+                    item.post = lookup[item.post]
+
+        return notifications
+
+    
+    def list_notifications(self, data):
+        notifications = []
+        cursor = None
+        isDone = False
+        last_retrieved = data.get("last_retrieved")
+        is_active = True
+        if last_retrieved is None:
+            last_retrieved = h.two_weeks_ago()
+            is_active = False
+        
+        while True:
+          if isDone == True:
+              break
+
+          result = self.client.list_notifications(cursor)
+          cursor = result.get("cursor")
+          items = result.get("notifications", [])
+          if len(items) == 0:
+              break
+          
+          for item in items:
+            notification = build_notification(item, is_active)
+            if notification is None:
+                continue
+            if notification.created < last_retrieved:
+                isDone = True
+                break
+            notifications.append(notification)
+          
+          # TODO: I had trouble getting the cursor to appear, but it's promised
+          #   as part of the response. So pagination remains unconfirmed.
+          if cursor is None:
+              break
+
+        self.get_notification_posts(notifications)
+
+        actors = []
+        seen_actors = set()
+        partials = []
+        seen_posts = set()
+        for notification in notifications:
+            actor = notification.author
+            if actor is not None and actor.id not in seen_actors:
+                actors.append(actor)
+                seen_actors.add(actor.id)
+            post = notification.post
+            if post is not None and post.id not in seen_posts:
+                partials.append(post)
+                seen_posts.add(post.id)
+                share = post.share
+                if share is not None and share.id not in seen_posts:
+                    partials.append(share)
+                    seen_posts.add(share.id)
+
+        for post in partials:
+            actor = post.author
+            if actor.id not in seen_actors:
+                seen_actors.add(actor.id)
+                actors.append(actor)
+      
+        return {
+            "posts": [],
+            "partials": partials,
+            "actors": actors,
+            "notifications": notifications
+        }
+    
+
+    # Bluesky _does_ support the concept of reading a notification, and it's
+    # present in the resource. However, notifications are not represented with
+    # identifiers, so they cannot be individually referenced for update.
+    # Instead, they offer a blanket dismissal with a time cursor, assuming
+    # that you're dealing with a frontend that works like theirs. So we'll 
+    # stub this for now and seek guidance on desired behavior.
+    def dismiss_notification(self, notification):
+        pass
+
+
+    def map_notifications(self, data):
+        notifications = []
+        sources = {}
+        for item in data["sources"]:
+            sources[item["platform_id"]] = item
+        posts = {}
+        for item in data["posts"]:
+            posts[item["platform_id"]] = item
+        
+        for notification in data["notifications"]:
+            source_id = None
+            post_id = None
+            if notification.author is not None:
+                source_id = sources[notification.author.id]["id"]
+            if notification.post is not None:
+                post_id = posts[notification.post.id]["id"]
+            notifications.append({
+                "platform": "bluesky",
+                "platform_id": notification.id,
+                "base_url": self.BASE_URL,
+                "type": notification.type,
+                "notified": notification.created,
+                "active": notification.active,
+                "source_id": source_id,
+                "post_id": post_id
+            })
+
+        return notifications
 
 
     def list_sources(self):

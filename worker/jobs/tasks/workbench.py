@@ -13,7 +13,7 @@ def test(task):
     logging.info(task.details)
 
 def workbench(task):
-    identity = models.identity.get(500)
+    identity = models.identity.get(454)
     queues.default.put_details("flow - pull notifications", {
         "identity": identity
     })
