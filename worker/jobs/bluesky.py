@@ -149,6 +149,7 @@ def cycle_refresh_token(task):
         if e.status == 400:
             error = e.body.get("error")
             if error == "ExpiredToken":
+                models.bluesky_session.remove(session["id"])
                 queues.default.put_details(
                     priority = 1,
                     name = "remove identity",
@@ -169,6 +170,7 @@ def cycle_access_token(task):
         if e.status == 400:
             error = e.body.get("error")
             if error == "ExpiredToken":
+                models.bluesky_session.remove(session["id"])
                 queues.default.put_details(
                     priority = 1,
                     name = "remove identity",
