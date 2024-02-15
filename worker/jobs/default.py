@@ -19,10 +19,6 @@ def dispatch(task):
         return tasks.flow_update_identity(task)
     if task.name == "flow - update identity feed":
         return tasks.flow_update_identity_feed(task)
-    if task.name == "flow - onboard sources":
-        return tasks.flow_onboard_sources(task)
-    if task.name == "flow - onboard source posts":
-        return tasks.flow_onboard_source_posts(task)
     if task.name == "flow - pull sources":
         return tasks.flow_pull_sources(task)
     if task.name == "flow - pull posts":
