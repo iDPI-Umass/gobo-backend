@@ -44,7 +44,7 @@ def fanout_update_notifications(task):
     )
     for identity in identities:
         queues.default.put_details(
-            name = "flow - update identity",
+            name = "flow - update notifications",
             priority = task.priority,
             details = {"identity": identity}
         )

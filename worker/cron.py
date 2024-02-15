@@ -28,7 +28,13 @@ def start_sources():
     # # Regularly updates all identities in Gobo, their feeds, and notifications.
     # # Default background tasking, low priority.
     # schedule.every().hour.do(
-    #     queues.default.put_details, "fanout update identity", 
+    #     queues.default.put_details, "fanout - update identity", 
+    #     {"platform": "all"}
+    # )
+
+    # # Higher frequency notification fetches. Still low priority, but slightly higher.
+    # schedule.every(30).minutes.do(
+    #     queues.default.put_details, "fanout - update notifications", 
     #     {"platform": "all"}
     # )
 

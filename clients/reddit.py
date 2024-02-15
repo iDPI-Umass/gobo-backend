@@ -291,6 +291,25 @@ class Reddit():
         self.client.submission(post["platform_id"]).clear_vote()
 
 
+    # We need to discuss how to handle notifications from Reddit, so for now,
+    # this will be a passthrough no-op that hooks into the outer notification flow.
+    def list_notifications(self, data):
+        return {
+            "submissions": [],
+            "partials": [],
+            "subreddits": [],
+            "notifications": []
+        }
+    
+    def dismiss_notification(self, notification):
+        pass
+
+
+    def map_notifications(self, data):
+        return []
+
+
+
 
     def map_sources(self, data):
         subreddits = data.get("subreddits") or []

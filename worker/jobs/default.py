@@ -27,7 +27,7 @@ def dispatch(task):
         return tasks.flow_pull_sources(task)
     if task.name == "flow - pull posts":
         return tasks.flow_pull_posts(task)
-    if task.name == "flow - pull notifications":
+    if task.name == "flow - update notifications":
         return tasks.flow_pull_notifications(task)
     if task.name == "flow - dismiss notification":
         return tasks.flow_dismiss_notification(task)
