@@ -149,6 +149,7 @@ def cycle_refresh_token(task):
         if e.status == 400:
             error = e.body.get("error")
             if error == "ExpiredToken":
+                logging.warning("detected revoked Bluesky token, removing session and identity")
                 models.bluesky_session.remove(session["id"])
                 queues.default.put_details(
                     priority = 1,
@@ -170,6 +171,7 @@ def cycle_access_token(task):
         if e.status == 400:
             error = e.body.get("error")
             if error == "ExpiredToken":
+                logging.warning("detected revoked Bluesky token, removing session and identity")
                 models.bluesky_session.remove(session["id"])
                 queues.default.put_details(
                     priority = 1,

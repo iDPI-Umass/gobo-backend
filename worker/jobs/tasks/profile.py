@@ -24,12 +24,16 @@ def get_profile(task):
     try:
         profile = client.get_profile()
     except mastodon.errors.MastodonUnauthorizedError as e:
-        if e[1] == 401 and e[3] == "The access token is invalid":
+        junk, status, status_description, message = e.args
+        if status == 401 and message == "The access token is invalid":
+            logging.warning("detected revoked Mastodon token, removing identity")
             queues.default.put_details(
                 priority = 1,
                 name = "remove identity",
                 details = {"identity": identity}
             )
+            task.halt()
+            return
 
     return {"profile": profile}
 
