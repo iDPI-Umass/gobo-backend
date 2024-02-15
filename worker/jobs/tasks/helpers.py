@@ -209,6 +209,32 @@ def remove_notification(notification):
     models.notification.remove(notification["id"])
 
 
+def remove_identity(identity):
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("origin_type", "identity"),
+            where("origin_id", identity["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("target_type", "identity"),
+            where("target_id", identity["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    models.identity.remove(identity["id"])
+
+
 def rollback_cursor(task):
     cursor = task.details.get("cursor")
     if cursor is not None:

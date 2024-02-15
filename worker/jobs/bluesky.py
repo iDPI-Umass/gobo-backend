@@ -1,7 +1,8 @@
 import logging
 import models
+import queues
 import joy
-from clients import Bluesky
+from clients import Bluesky, HTTPError
 from . import tasks
 
 h = tasks.helpers
@@ -122,13 +123,38 @@ def remove_post_edge(task):
         raise logging.warning(
             f"bluesky does not have post edge action defined for {name}"
         )
-    
+
+
+
+# TODO: Gobo proxies an authorized connection to Bluesky as though it were a 
+#     frontend client. We need to maintain our authorization to the Bluesky
+#     account by cycling out tokens. If the Bluesky member revokes their
+#     authorization, we need to detect that and remove the identity from Gobo.
+#
+#     The tricky part is that we need to map Bluesky token errors into some sort
+#     of action at the Gobo identity level. There's an interface question where
+#     we handle all Bluesky client errors of this type when we attempt to make
+#     a request. But failure flow logic is somewhat harder to express right now.
+#     So, as a compromise, we'll handle it here. It complicates the legibility
+#     of these tasks, but these cycle regularly and only trigger on very specific
+#     error conditions from the client. So the risk is contained.
 
 
 def cycle_refresh_token(task):
     session = h.enforce("session", task)
     identity = h.enforce("identity", task)
-    _session = Bluesky.create_session(identity)
+    try:
+        _session = Bluesky.create_session(identity)
+    except HTTPError as e:
+        if e.status == 400:
+            error = e.body.get("error")
+            if error == "ExpiredToken":
+                queues.default.put_details(
+                    priority = 1,
+                    name = "remove identity",
+                    details = {"identity": identity}
+                )
+    
     _session = Bluesky.map_session(identity, _session)
     models.bluesky_session.update(session["id"], _session)
 
@@ -136,7 +162,18 @@ def cycle_refresh_token(task):
 def cycle_access_token(task):
     session = h.enforce("session", task)
     identity = h.enforce("identity", task)
-    _session = Bluesky.refresh_session(session)
+    try:
+        _session = Bluesky.refresh_session(session)
+    except HTTPError as e:
+        if e.status == 400:
+            error = e.body.get("error")
+            if error == "ExpiredToken":
+                queues.default.put_details(
+                    priority = 1,
+                    name = "remove identity",
+                    details = {"identity": identity}
+                )
+    
     _session = Bluesky.map_session(identity, _session)
     models.bluesky_session.update(session["id"], _session)
 

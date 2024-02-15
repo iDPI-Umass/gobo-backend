@@ -110,34 +110,3 @@ def rebuild_feed(task):
                     "source_id": source_id
                 }
             )
-
-
-def remove_identity(task):
-    identity_id = h.enforce("identity_id", task)
-
-    links = QueryIterator(
-        model = models.link,
-        for_removal = True,
-        wheres = [
-            where("origin_type", "identity"),
-            where("origin_id", identity_id),
-            where("target_type", "source"),
-            where("name", "follows")
-        ]
-    )
-    for link in links:
-        models.link.remove(link["id"])
-
-    
-    links = QueryIterator(
-        model = models.link,
-        for_removal = True,
-        wheres = [
-            where("origin_type", "identity"),
-            where("origin_id", identity_id),
-            where("target_type", "post"),
-            where("name", "identity-feed")
-        ]
-    )
-    for link in links:
-        models.link.remove(link["id"])

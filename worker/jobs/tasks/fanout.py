@@ -30,7 +30,7 @@ def fanout_update_identity(task):
 
 
 
-def fanout_update_notifications(task):
+def fanout_pull_notifications(task):
     platform = h.get_platform(task.details)
   
     if platform == "all":
@@ -44,7 +44,7 @@ def fanout_update_notifications(task):
     )
     for identity in identities:
         queues.default.put_details(
-            name = "flow - update notifications",
+            name = "flow - pull notifications",
             priority = task.priority,
             details = {"identity": identity}
         )

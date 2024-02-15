@@ -4,6 +4,7 @@ import json
 import urllib
 import httpx
 import joy
+from .http_error import HTTPError
 
 
 class GOBOBluesky():
@@ -101,7 +102,7 @@ class GOBOBluesky():
         else:
             logging.warning(body)
             logging.warning(r.headers)
-            raise Exception(f"Bluesky: responded with status {r.status_code}")
+            raise HTTPError(r.status_code, body)
     
 
     def get(self, url, headers = None, skip_response = False):
