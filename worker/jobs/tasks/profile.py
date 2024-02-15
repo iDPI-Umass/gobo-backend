@@ -1,4 +1,5 @@
 import logging
+import mastodon
 import models
 import joy
 import queues
@@ -9,9 +10,27 @@ build_query = models.helpers.build_query
 QueryIterator = models.helpers.QueryIterator
 
 
+# TODO: See Bluesky cycle refresh tokens. There's a mapping problem here.
+#   We need to detect revocation by watching for specific response codes,
+#   then map that to the proper identity removal in Gobo. But handling this
+#   kind of exceptional, branching flow is messy without something like
+#   talos to separate out the paths.
+
+
 def get_profile(task):
+    identity = h.enforce("identity", task)
     client = h.enforce("client", task)
-    profile = client.get_profile()
+
+    try:
+        profile = client.get_profile()
+    except mastodon.errors.MastodonUnauthorizedError as e:
+        if e[1] == 401 and e[3] == "The access token is invalid":
+            queues.default.put_details(
+                priority = 1,
+                name = "remove identity",
+                details = {"identity": identity}
+            )
+
     return {"profile": profile}
 
 
