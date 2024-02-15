@@ -154,6 +154,7 @@ def cycle_refresh_token(task):
                     name = "remove identity",
                     details = {"identity": identity}
                 )
+                return
     
     _session = Bluesky.map_session(identity, _session)
     models.bluesky_session.update(session["id"], _session)
@@ -173,6 +174,7 @@ def cycle_access_token(task):
                     name = "remove identity",
                     details = {"identity": identity}
                 )
+                return
     
     _session = Bluesky.map_session(identity, _session)
     models.bluesky_session.update(session["id"], _session)
