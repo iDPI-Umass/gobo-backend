@@ -51,9 +51,6 @@ def cycle_bluesky_sessions(task):
 
     for session in sessions:
         identity = find_identity(session)
-        if identity is None:
-            models.bluesky_session.remove(session["id"])
-            continue
         queues.shard_task_details(
             platform = "bluesky",
             name = "cycle access token",
