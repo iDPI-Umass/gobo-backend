@@ -20,7 +20,7 @@ def get_source_cursor(task):
     else:
         timeout = 120
 
-    cursor = models.link.LoopCursor("source", source["id"], name)
+    cursor = models.cursor.LoopCursor("source", source["id"], name)
     last_retrieved = cursor.stamp(timeout)
 
     # If this isn't a viable read, we need to bail.

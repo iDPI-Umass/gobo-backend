@@ -14,7 +14,7 @@ def get_notification_cursor(task):
     name = "read-cursor-notification"
     timeout = 0
 
-    cursor = models.link.LoopCursor("identity", identity["id"], name)
+    cursor = models.cursor.LoopCursor("identity", identity["id"], name)
     last_retrieved = cursor.stamp(timeout)
 
     # If this isn't a viable read, we need to bail.
@@ -47,11 +47,20 @@ def map_notifications(task):
 
 def upsert_notifications(task):
     identity = h.enforce("identity", task)
+    counter = models.counter.LoopCounter(
+        "person",
+        identity["person_id"], 
+        "person-notification-count"
+    )
+
     _notifications = h.enforce("notifications", task)
     notifications = []
     for item in _notifications:
         notification = models.notification.upsert(item)
         notifications.append(notification)
+        
+        if notification["active"] == True:
+            counter.increment()
 
         models.link.upsert({
             "origin_type": "identity",
@@ -81,6 +90,9 @@ def upsert_notifications(task):
                 "name": "notifies",
                 "secondary": f"{notification['notified']}::{notification['id']}"
             })
+
+    # Store the updated unread notification count.
+    counter.save()
 
     return {"notifications": notifications}
 

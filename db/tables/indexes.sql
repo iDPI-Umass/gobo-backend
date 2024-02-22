@@ -47,3 +47,13 @@ CREATE INDEX CONCURRENTLY
 ON store
 USING btree 
 (person_id, name);
+
+CREATE INDEX CONCURRENTLY 
+ON notification 
+USING btree 
+(base_url, platform_id);
+
+CREATE INDEX CONCURRENTLY 
+ON counter
+USING btree 
+(target_type, target_id, origin_type, origin_id, name, secondary);

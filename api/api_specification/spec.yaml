@@ -448,6 +448,24 @@ shards:
       <<: *notificationCore
       <<: *timestamp
 
+  notificationCountCore: &notificationCountCore
+    person_id:
+      description: The unique Gobo ID of the person to whom this notification count belongs.
+      type: integer
+    count:
+      description: The current estimated count of unread notifications belonging to this person across all their identities.
+      type: integer
+      minimum: 0
+      maximum: 10000
+
+  notificationCount: &notificationCount
+    type: object
+    additionalProperties: false
+    required: [ person_id, count ]
+    properties:
+      <<: *notificationCountCore
+      <<: *timestamp
+
 
 resources:
   discovery:
@@ -1388,6 +1406,32 @@ resources:
           type: application/json
           status: 200
           schema: *notification
+
+  person_notification_count:
+    template: /people/{person_id}/notification-count
+    route: /people/<int:person_id>/notification-count
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+            - gobo-key
+        response:
+          type: application/json
+          status: 200
+          schema: *notificationCount
+
+      put:
+        request:
+          authorization:
+            - person
+            - gobo-key
+          type: application/json
+          schema: *notificationCount
+        response:
+          type: application/json
+          status: 200
+          schema: *notificationCount
        
 
   action_onboard_identity_start:

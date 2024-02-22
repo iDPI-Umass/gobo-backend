@@ -24,6 +24,11 @@ def hard_reset(task):
         priority = task.priority,
         details = task.details
     )
+    queues.default.put_details(
+        name = "clear counters",
+        priority = task.priority,
+        details = task.details
+    )
 
 
 
@@ -117,3 +122,15 @@ def clear_cursors(task):
 
         for id in removals:
             models.link.remove(id)
+
+
+def clear_counters(task):
+    wheres = []
+    
+    counters = QueryIterator(
+        model = models.counter,
+        for_removal = True,
+        wheres = wheres
+    ) 
+    for counter in counters:
+        models.counter.remove(counter["id"])

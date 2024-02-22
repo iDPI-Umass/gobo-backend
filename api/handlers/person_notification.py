@@ -83,16 +83,6 @@ def person_notification_post(person_id, identity_id, id):
             f"person notification /people/{person_id}/identities/{identity_id}/notifications/{id} is not found"
         )
 
-    # Trigger a notification dismissal.
-    models.task.add({
-        "queue": "default",
-        "name": "flow - dismiss notification",
-        "priority": 2,
-        "details": {
-            "identity": identity,
-            "notification_id": id
-        }
-    })
 
     # Update the Gobo resource to indicate the notification is read.
     notification["active"] = False

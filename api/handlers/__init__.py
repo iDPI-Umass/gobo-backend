@@ -21,3 +21,4 @@ from .person_post import *
 from .person_draft_image import *
 from .person_post_edge import *
 from .person_notification import *
+from .person_notification_count import *

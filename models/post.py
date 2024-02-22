@@ -39,27 +39,6 @@ def upsert(data):
             return row.to_dict()
 
 
-def safe_add(data):
-    with Session() as session:
-        if data.get("base_url") is None or data.get("platform_id") is None:
-            raise Exception("upsert requires post have base_url and platform_id")
-
-        statement = select(Post) \
-            .where(Post.base_url == data["base_url"]) \
-            .where(Post.platform_id == data["platform_id"]) \
-            .limit(1)
-
-        row = session.scalars(statement).first()
-
-        if row is None:
-            row = Post.write(data)
-            session.add(row)
-            session.commit()
-            return row.to_dict()
-        else:
-            return row.to_dict()
-
-
 def view_identity_feed(data):
     with Session() as session:
         feed = []

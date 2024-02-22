@@ -15,8 +15,8 @@ optional = [
     "secondary"
 ]
 
-class Link(Base):
-    __tablename__ = "link"
+class Counter(Base):
+    __tablename__ = "counter"
 
     id: Mapped[str] = mapped_column(Integer, primary_key=True)
     origin_type: Mapped[Optional[str]]
@@ -24,13 +24,13 @@ class Link(Base):
     target_type: Mapped[Optional[str]]
     target_id: Mapped[Optional[int]]
     name: Mapped[Optional[str]]
-    secondary: Mapped[Optional[str]]
+    secondary: Mapped[int] = mapped_column(insert_default=0)
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
     @staticmethod
     def write(data):
-        return Link(**data)
+        return Counter(**data)
 
     def to_dict(self):
         data = {

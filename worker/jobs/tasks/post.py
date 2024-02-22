@@ -94,7 +94,7 @@ def upsert_posts(task):
         h.attach_post(post)
         collect_post(post)
     for _post in post_data["partials"]:
-        post = models.post.safe_add(_post)
+        post = models.post.upsert(_post)
         references[post["platform_id"]] = post
         h.attach_post(post)
         collect_post(post)
