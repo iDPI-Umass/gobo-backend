@@ -44,6 +44,7 @@ class Status():
         self.account = Account(_.account)
         self.content = _.content
         self.url = _.url
+        self.visibility = _.visibility
         self.published = joy.time.convert(
             start = "date",
             end = "iso",
@@ -541,6 +542,7 @@ class Mastodon():
             default_limit = 100
         max_id = None
         platform_id = source["platform_id"]
+        visibilities = ["public", "unlisted"]
 
         statuses = []
         partials = []
@@ -568,6 +570,8 @@ class Mastodon():
                     status = build_status(item)
                     if status is None:
                         continue
+                    if status.visibility not in visibilities:
+                        continue
                     
                     count += 1
                     if status.published < oldest_limit:
@@ -582,6 +586,8 @@ class Mastodon():
                 for item in items:
                     status = build_status(item)
                     if status is None:
+                        continue
+                    if status.visibility not in visibilities:
                         continue
                     
                     if status.published < oldest_limit:
