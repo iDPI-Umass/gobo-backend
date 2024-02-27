@@ -22,7 +22,12 @@ smalltown_urls = [
 
 def build_status(item):
     try:
-        return Status(item)
+        status = Status(item)
+        if status.visibility not in Status.VISIBLE:
+          return None
+    
+        return status
+    
     except Exception as e:
         logging.error(e, exc_info=True)
         logging.error("\n\n")
@@ -38,6 +43,8 @@ def build_partial_status(item):
 
 
 class Status():
+    VISIBLE = ["public", "unlisted"]
+
     def __init__(self, _):
         self._ = _
         self.id = str(_.id)
@@ -147,7 +154,6 @@ def build_notification(item, is_active):
 class Notification():
     def __init__(self, _, is_active):
         self.id = str(_.id)
-        self.type = self.map_type(_.type)
         self.created = joy.time.convert(
             start = "date",
             end = "iso",
@@ -156,12 +162,16 @@ class Notification():
         self.active = is_active
         self.account = None
         self.status = None
+        
         if getattr(_, "account", None) is not None:
             self.account = Account(_.account)
         if getattr(_, "status", None) is not None:
             self.status = build_partial_status(_.status)
+        
+        self.type = self.map_type(_.type, self.status)
 
-    def map_type(self, type):
+
+    def map_type(self, type, status):
         if type == "follow":
             return "follow"
         if type == "follow_request":
@@ -171,7 +181,10 @@ class Notification():
         if type == "reblog":
             return "repost"
         if type == "mention":
-            return "mention"
+            if status is None:
+              return "direct message"
+            else:
+              return "mention"              
         if type == "poll":
             return "poll complete"
         if type == "status":
@@ -570,8 +583,6 @@ class Mastodon():
                     status = build_status(item)
                     if status is None:
                         continue
-                    if status.visibility not in visibilities:
-                        continue
                     
                     count += 1
                     if status.published < oldest_limit:
@@ -586,8 +597,6 @@ class Mastodon():
                 for item in items:
                     status = build_status(item)
                     if status is None:
-                        continue
-                    if status.visibility not in visibilities:
                         continue
                     
                     if status.published < oldest_limit:
