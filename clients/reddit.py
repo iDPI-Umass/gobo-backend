@@ -10,7 +10,7 @@ import praw
 from pmaw import PushshiftAPI
 import joy
 import models
-from .gobo_reddit import GOBOReddit
+from .gobo_reddit import GOBOReddit, HTTPError
 import clients.helpers as h
 
 gobo_reddit = GOBOReddit()
@@ -328,6 +328,12 @@ class Reddit():
             })
   
         return sources
+    
+
+    def lockout_source(self, source):
+        handle = models.link.Lockout("source", source["id"], "source-lockout")
+        handle.lock()
+        logging.warning(f"Reddit: subreddit r/{source['name']} is not public. Gobo worker will lock this source out for now.")
 
 
     def map_posts(self, data):
@@ -412,8 +418,16 @@ class Reddit():
 
         name = source["name"]
         _submissions = []
-        logging.info(f"Reddit Fetch r/{source['name']}")
-        for item in gobo_reddit.get_new_ids(name):
+        logging.info(f"Reddit: Fetch r/{source['name']}")
+
+        try:
+            items = gobo_reddit.get_new_ids(name)
+        # Special case for source lockouts.
+        except HTTPError:
+            self.lockout_source(source)
+            return False
+        
+        for item in items:
             submission = build_submission(item)
             if submission is not None:
                 _submissions.append(submission)

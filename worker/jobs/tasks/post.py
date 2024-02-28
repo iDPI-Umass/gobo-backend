@@ -47,6 +47,10 @@ def pull_posts(task):
         last_retrieved = last_retrieved, 
         is_shallow = is_shallow
     )
+    # Special case for early returns.
+    if graph == False:
+        task.halt()
+        return
     return {"graph": graph}
 
 

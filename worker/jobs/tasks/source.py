@@ -9,6 +9,12 @@ build_query = models.helpers.build_query
 QueryIterator = models.helpers.QueryIterator
 
 
+def check_source_lockout(task):
+    source = h.enforce("source", task)
+    handle = models.link.Lockout("source", source["id"], "source-lockout")
+    if handle.read() is not None:
+        task.halt()
+
 
 def get_source_cursor(task):
     source = h.enforce("source", task)    

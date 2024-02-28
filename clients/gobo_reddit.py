@@ -6,42 +6,121 @@ import httpx
 import joy
 
 
+class HTTPError(Exception):
+  def __init__(self, status, response):
+      self.status = status
+      self.response = response
+
+
 class GOBOReddit():
     def __init__(self):
         pass
 
-    def get_new_ids(self, subreddit):
-        output = []
 
+    # These methods observe Reddit's set of ratelimit headers that give hints
+    # about pacing on HTTP requests. Based on these three:
+    # ('x-ratelimit-remaining', '95')
+    # ('x-ratelimit-used', '1')
+    # ('x-ratelimit-reset', '503')
+       
+    def get_wait_timeout(self, reset):
+        if reset is None:
+            logging.warning("Reddit: x-ratelimit-reset header is not available")
+            reset = 500
+            
+        return int(reset) + 2
+
+    def handle_ratelimit(self, url, response):
+        remaining = response.headers.get("x-ratelimit-remaining")
+        reset = response.headers.get("x-ratelimit-reset")
+
+        if remaining is None:
+            return
+        if int(remaining) > 2:
+            logging.info({
+                "message": "Reddit: monitoring ratelimit headers",
+                "url": url,
+                "remaining": remaining,
+                "used": response.headers.get("x-ratelimit-used")
+            })
+            return
+        
+        seconds = self.get_wait_timeout(reset)
+        logging.warning({
+            "message": f"Reddit: proactively slowing to avoid ratelimit. Waiting for {seconds} seconds",
+            "timeout": seconds
+        })
+        time.sleep(seconds)
+
+    def handle_too_many(self, url, response):
+        timeout = response.headers.get("x-ratelimit-reset", 500)
+        timeout = int(timeout) + 1
+        logging.warning({
+            "message": f"Reddit: Got 429 response. Backing off for {timeout} seconds",
+            "url": url,
+            "timeout": timeout
+        })
+        time.sleep(timeout)
+
+    def handle_error(self, url, error):
+        logging.warning({
+            "url": url,
+            "status": error.status,
+            "headers": error.response.headers,
+            "body": self.get_body(error.response),
+        })
+
+
+    def get_body(self, response):
+        content_type = response.headers.get("content-type")
+        body = {}
+        if content_type is not None:
+            if "application/json" in content_type:
+                body = response.json()
+            else:
+                logging.warning("Reddit: got non JSON response")
+        return body
+  
+
+    def issue_request(self, method, url, headers):
+        with httpx.Client() as client:
+            while True:
+                request = getattr(client, method)
+                response = request(url, headers = headers)
+                
+                if response.status_code == 200:
+                    self.handle_ratelimit(url, response)
+                    return response
+                elif response.status_code == 429:
+                    self.handle_too_many(url, response)
+                else:
+                    raise HTTPError(response.status_code, response)
+
+
+
+    def get_new_ids(self, subreddit):
         url = f"https://www.reddit.com/r/{subreddit}/new.json?limit=100"
         headers = {
             "User-Agent": os.environ.get("REDDIT_USER_AGENT")
         }
 
-        with httpx.Client() as client:
-            while True:
-                r = client.get(url, headers = headers)
-                if r.status_code == 200:
-                    body = r.json()
-                    if body.get("data", None) is None:
-                        logging.warning(f"Reddit: Fetching posts for {subreddit} but response did not include data")
-                        logging.warning(body)
-                    else:
-                        for post in body["data"]["children"]:
-                            output.append(post["data"])
-                    return output
-                
-                elif r.status_code == 429:
-                    raw_timeout = r.headers.get("X-Ratelimit-Reset")
-                    logging.warning(f"Reddit: Ratelimited reached with directive {raw_timeout}")
-                    timeout = r.headers.get("X-Ratelimit-Reset", 3)
-                    timeout = int(timeout) + 1
-                    logging.warning(f"Reddit: Ratelimit reachhed. Backing off for {timeout} seconds.")
-                    time.sleep(timeout)
-                    continue
-                
-                else:
-                    logging.warning(f"Reddit: fetching posts for {subreddit} responded with status {r.status_code}")
-                    logging.warning(r.json())
-                    logging.warning(r.headers)
-                    return output
+        try:
+            response = self.issue_request("get", url, headers)
+        except HTTPError as e:
+            # Re-raise special case for source lockout.
+            if e.status == 403:
+                raise e
+            self.handle_error(url, e)
+            return []
+        
+        body = self.get_body(response)
+        data = body.get("data")
+        if data is None:
+            logging.warning(f"Reddit: fetching posts for {subreddit} but response did not include data")
+            logging.warning(body)
+            return []
+       
+        output = []
+        for post in data["children"]:
+            output.append(post["data"])
+        return output

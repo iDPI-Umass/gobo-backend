@@ -55,6 +55,8 @@ def dispatch(task):
         return tasks.remove_source(task)
 
 
+    if task.name == "check source lockout":
+        return tasks.check_source_lockout(task)
     if task.name == "get source cursor":
         return tasks.get_source_cursor(task)
     if task.name == "pull posts from source":

@@ -69,3 +69,29 @@ def find_and_remove(data):
             session.delete(row)
             session.commit()
             return row.to_dict()
+
+
+class Lockout():
+    def __init__(self, type, id, name):
+        self.type = type
+        self.id = id
+        self.name = name
+        self.link = None
+
+    def body(self):
+        return {
+            "origin_type": self.type,
+            "origin_id": self.id,
+            "name": self.name,
+            "target_type": self.type,
+            "target_id": self.id          
+        }
+    
+    def read(self):
+        return find(self.body())
+
+    def lock(self):
+        return upsert(self.body())
+
+    def unlock(self):
+        return find_and_remove(self.body())

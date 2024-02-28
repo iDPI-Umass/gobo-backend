@@ -81,13 +81,17 @@ def flow_update_identity_feed(task):
             flow = [
             {
                 "queue": "default",
-                "name": "get source cursor",
+                "name": "check source lockout",
                 "details": {
                     "platform": platform,
                     "identity": identity,
                     "client": client,
                     "source": source
                 }
+            },
+            {
+                "queue": "default",
+                "name": "get source cursor"
             },
             {
                 "queue": platform, 
@@ -178,8 +182,12 @@ def flow_pull_posts(task):
         },
         {
             "queue": "default",
-            "name": "get source cursor",
+            "name": "check source lockout",
             "details": {"source": source}
+        },
+        {
+            "queue": "default",
+            "name": "get source cursor"
         },
         {
             "queue": platform, 
