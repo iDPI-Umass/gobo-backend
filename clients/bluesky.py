@@ -415,6 +415,8 @@ class Actor():
 
         did = data["did"]
         handle = data["handle"]
+        if handle == "handle.invalid":
+            handle = did
 
         self.id = did
         self.url = Actor.get_url(data)
@@ -929,9 +931,10 @@ class Bluesky():
 
 
     def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
+        # Special case for sources with invalid handles. Needs more work.
         if source["username"] == "handle.invalid":
-            logging.warning(source)
-            raise Exception("this Bluesky source has an invalid handle")
+            logging.warn("Bluesky get_post_graph: source has 'handle.invalid' username")
+            return False
         
         posts = []
         partials = []
