@@ -11,3 +11,4 @@ schedule==1.2.0
 Markdown==3.5.2
 mdx-linkify==2.1
 atproto==0.0.40
+numpy==1.26.4

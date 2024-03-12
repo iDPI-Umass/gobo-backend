@@ -1,5 +1,7 @@
+import logging
 import secrets
 import base64
+import numpy
 
 def random (configuration = None):
     if configuration == None:
@@ -21,3 +23,15 @@ def random (configuration = None):
         raise Exception(f"{encoding} is not a recognized encoding")
 
     return value.decode("utf-8")
+
+
+# Base 36 addresses are guaranteed to be URL safe while maintaining relatively
+# short expression for their byte length.
+def address ( length = 16 ):
+    power = length - 1
+    result = 0
+    for byte in secrets.token_bytes(length):
+        result += byte * (256 ** power)
+        power -= 1
+
+    return numpy.base_repr(result, base=36).lower()
