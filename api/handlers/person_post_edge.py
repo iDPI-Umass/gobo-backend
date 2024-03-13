@@ -88,6 +88,14 @@ def person_post_edge_delete(person_id, identity_id, post_id, name):
     post = models.post.get(post_id)
     if post is None:
         raise http_errors.not_found(f"post edge {name} is not found")
+    
+    # Bluesky requires a special secondary reference to complete its edge description.
+    # Check for it now and reject state transfer if it appears we don't have it.
+    # Because edge_add is idempotent, we should delete bad state in this case.
+    # TODO: Does this point to a need for some kind of component-spanning transaction system?
+    if identity.get("source") == "bluesky" and edge.get("stash") is None:
+        models.post_edge.remove(edge["id"])
+        raise http_errors.not_found(f"post edge {name} is not found")
 
     models.post_edge.remove(edge["id"])
     models.task.add({
