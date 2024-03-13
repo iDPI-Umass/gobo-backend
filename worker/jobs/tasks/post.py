@@ -109,11 +109,21 @@ def upsert_posts(task):
         origin = references.get(edge["origin_reference"], None)
         target = references.get(edge["target_reference"], None)
         
+        # We don't want to indefinitely pull in the post graph during this fetch
+        # of the primary posts in the author's feed. Right now we're focusing our
+        # perspective on those primary posts, and the secondary posts can get
+        # pulled in some other way, like through another task.
+        
+        # That leads the division between "posts" and "partials", where we
+        # relieve ourselves of completely representing the graph. Partials
+        # might show edges that we're not prepared to store in this pass, so
+        # this check skips them.
+
+        # TODO: Consider how to restructure tasks to pull in these secondary edges
+        #       and to what extent that is desireable for Gobo members.
         if origin is None:
-            logging.warning("upsert posts: origin post is not available")
             continue
         if target is None:
-            logging.warning(f"upsert posts: target post is not available")
             continue
 
         link = models.link.upsert({
