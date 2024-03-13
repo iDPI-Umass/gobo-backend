@@ -368,32 +368,6 @@ shards:
           poll:
             description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
             type: object   
-
-  postEdgeCore: &postEdgeCore
-    identity:
-      description: The ID of the edge origin identity
-      type: integer
-    post:
-      description: The ID of the edge target post
-      type: integer
-    name:
-      description: The name of edge connecting these vertices.
-      type: string
-      enum:
-        - like
-        - upvote
-        - downvote
-        - repost
-      
-
-  postEdge: &postEdge
-    type: object
-    additionalProperties: false
-    required: [ id, identity, post, edge ]
-    properties:
-      <<: *id
-      <<: *postEdgeCore
-      <<: *timestamp
      
   goboKeyCore: &goboKeyCore
     person_id:
@@ -1329,9 +1303,7 @@ resources:
           authorization:
             - person
         response:
-          status: 200
-          type: application/json
-          schema: *postEdge
+          status: 204
 
       delete:
         request:

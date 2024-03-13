@@ -26,23 +26,11 @@ def dispatch(task):
     
     
     if task.name == "create post":
-        try:
-            return create_post(task)
-        except Exception as e:
-            logging.error(e)
-            raise Exception("reddit create post failure")
+        return create_post(task)
     if task.name == "add post edge":
-        try:
-            return add_post_edge(task)
-        except Exception as e:
-            logging.error(e)
-            raise Exception("reddit add post edge failure")
+       return add_post_edge(task)
     if task.name == "remove post edge":
-        try:
-            return remove_post_edge(task)
-        except Exception as e:
-            logging.error(e)
-            raise Exception("reddit remove post edge failure")
+        return remove_post_edge(task)
         
     
     if task.name == "dismiss notification":
@@ -83,18 +71,21 @@ def add_post_edge(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)
     name = h.enforce("name", task)
+    edge = h.enforce("edge", task)
     client = Reddit(identity)
     client.login()
 
     if name in ["upvote", "downvote"]:
         if name == "upvote":
             client.upvote_post(post)
+            models.post_edge.add(edge)
             logging.info(f"reddit: upvote post complete on {post['id']}")
         elif name == "downvote":
             client.downvote_post(post)
+            models.post_edge.add(edge)
             logging.info(f"reddit: dowvote post complete on {post['id']}")
     else:
-        raise logging.warning(
+        raise Exception(
             f"reddit does not have post edge action defined for {name}"
         )
 
@@ -102,14 +93,16 @@ def remove_post_edge(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)
     name = h.enforce("name", task)
+    edge = h.enforce("edge", task)
     client = Reddit(identity)
     client.login()
 
     if name in ["upvote", "downvote"]:
         if name in ["upvote", "downvote"]:
             client.undo_vote_post(post)
+            models.post_edge.remove(edge["id"])
             logging.info(f"reddit: undo vote post complete on {post['id']}")
     else:
-        raise logging.warning(
+        raise Exception(
             f"reddit does not have post edge action defined for {name}"
         )

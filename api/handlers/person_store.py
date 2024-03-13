@@ -3,7 +3,7 @@ from flask import request
 import http_errors
 import models
 from db import tables
-from .helpers import get_viewer, parse_page_query
+from .helpers import parse_page_query
 
 allowed_stores = [
     "feed",

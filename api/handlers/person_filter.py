@@ -3,7 +3,7 @@ from flask import request
 import http_errors
 import models
 from db import tables
-from .helpers import get_viewer, parse_page_query
+from .helpers import parse_page_query
 
 
 def check_claim(person_id, id):
@@ -17,7 +17,6 @@ def check_claim(person_id, id):
     return filter
 
 def person_filters_get(person_id):
-    person = get_viewer(person_id)
     query = parse_page_query(request.args)
     query["person_id"] = person_id
     query["resource"] = "filter"
@@ -26,14 +25,13 @@ def person_filters_get(person_id):
     return filters
 
 def person_filters_post(person_id):
-    person = get_viewer(person_id)
     data = dict(request.json)
     data["person_id"] = person_id
 
     filter = models.filter.add(data)
     models.link.add({
         "origin_type": "person",
-        "origin_id": person["id"],
+        "origin_id": person_id,
         "target_type": "filter",
         "target_id": filter["id"],
         "name": "has-filter"

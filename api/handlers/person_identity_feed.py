@@ -2,7 +2,6 @@ import logging
 from flask import request
 import http_errors
 import models
-from .helpers import get_viewer
 
 valid_views = ["full"]
 
@@ -28,7 +27,6 @@ def parse_feed_query():
     }
 
 def person_identity_feed_get(person_id, id):
-    person = get_viewer(person_id)
     query = parse_feed_query()
     query["person_id"] = person_id
     query["identity_id"] = id

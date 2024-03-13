@@ -2,7 +2,6 @@ import logging
 from flask import request
 import http_errors
 import models
-from .helpers import get_viewer
 
 valid_views = ["all", "mentions"]
 
@@ -36,7 +35,6 @@ def parse_feed_query():
     }
 
 def person_notifications_get(person_id, id):
-    person = get_viewer(person_id)
     query = parse_feed_query()
     query["person_id"] = person_id
     query["identity_id"] = id
@@ -54,8 +52,6 @@ def person_notifications_get(person_id, id):
 # This serves to mark the notification as read in the Gobo graph, and for the
 # provider platform where supported. This does not delete the notification.
 def person_notification_post(person_id, identity_id, id):
-    person = get_viewer(person_id)
-
     # Confirm this identity actually belongs to the person in question.
     identity = models.identity.get(identity_id)
     if identity == None or identity["person_id"] != person_id:

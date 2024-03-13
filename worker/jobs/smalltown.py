@@ -26,23 +26,11 @@ def dispatch(task):
     
     
     if task.name == "create post":
-        try:
-            return create_post(task)
-        except Exception as e:
-            logging.error(e)
-            raise Exception("smalltown create post failure")
+        return create_post(task)
     if task.name == "add post edge":
-        try:
-            return add_post_edge(task)
-        except Exception as e:
-            logging.error(e)
-            raise Exception("smalltown add post edge failure")
+       return add_post_edge(task)
     if task.name == "remove post edge":
-        try:
-            return remove_post_edge(task)
-        except Exception as e:
-            logging.error(e)
-            raise Exception("smalltown remove post edge failure")
+        return remove_post_edge(task)
         
     
     if task.name == "dismiss notification":
@@ -74,18 +62,21 @@ def add_post_edge(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)
     name = h.enforce("name", task)
+    edge = h.enforce("edge", task)
     client = Smalltown(identity)
     client.login()
 
     if name in ["like", "repost"]:
         if name == "like":
             client.favourite_post(post)
+            models.post_edge.add(edge)
             logging.info(f"smalltown: like post complete on {post['id']}")
         elif name == "repost":
             client.boost_post(post)
+            models.post_edge.add(edge)
             logging.info(f"smalltown: repost post complete on {post['id']}")
     else:
-        raise logging.warning(
+        raise Exception(
             f"smalltown does not have post edge action defined for {name}"
         )
 
@@ -94,17 +85,20 @@ def remove_post_edge(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)
     name = h.enforce("name", task)
+    edge = h.enforce("edge", task)
     client = Smalltown(identity)
     client.login()
 
     if name in ["like", "repost"]:
         if name == "like":
             client.undo_favourite_post(post)
+            models.post_edge.remove(edge["id"])
             logging.info(f"smalltown: undo like post complete on {post['id']}")
         elif name == "repost":
             client.undo_boost_post(post)
+            models.post_edge.remove(edge["id"])
             logging.info(f"smalltown: undo repost post complete on {post['id']}")
     else:
-        raise logging.warning(
+        raise Exception(
             f"smalltown does not have post edge action defined for {name}"
         )
