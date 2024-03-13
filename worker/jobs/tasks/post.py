@@ -102,6 +102,9 @@ def upsert_posts(task):
         references[post["platform_id"]] = post
         h.attach_post(post)
         collect_post(post)
+    for post in post_data.get("preexisting", []):
+        references[post["platform_id"]] = post
+        collect_post(post)
     for edge in post_data["edges"]:
         origin = references.get(edge["origin_reference"], None)
         target = references.get(edge["target_reference"], None)
