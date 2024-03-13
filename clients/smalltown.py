@@ -26,7 +26,6 @@ class Smalltown(Mastodon):
         return {"accounts": [LocalTimelineAccount()]}
 
     def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
-        logging.info("calling replacement post graph method")
         isDone = False
         oldest_limit = joy.time.convert("date", "iso", 
             joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
@@ -91,7 +90,6 @@ class Smalltown(Mastodon):
 
 
         seen_statuses = set()
-        reply_ids = set()
         for status in statuses:
             seen_statuses.add(status.id)
         
@@ -103,31 +101,22 @@ class Smalltown(Mastodon):
 
         for status in statuses:
             reply = status.reply
-            if reply is not None and reply not in seen_statuses:
-                seen_statuses.add(reply)
-                reply_ids.add(reply) 
-
-
-
-        registered = models.post.pull([
-            models.helpers.where("base_url", source["base_url"]),
-            models.helpers.where("platform_id", list(reply_ids), "in")
-        ])
-
-        for item in registered:
-            reply_ids.remove(item["platform_id"])
-
-        for id in reply_ids:
-            try:
-                logging.info(f"Mastodon: fetching reply {id}")
-                status = Status(self.client.status(id))
-                # We need to stop traversing the graph so we don't pull in lots of replies.
-                # By definition, Mastodon does not allow replies to boosted statuses.
-                status.reply = None
-                partials.append(status)
-            except Exception as e:
-                logging.warning(f"failed to fetch status {id} {e}")
-
+            if reply is not None:
+                try:
+                    logging.info(f"Smalltown: fetching context for {status.id}")
+                    context = self.client.status_context(status.id)
+                    status.thread = []
+                    for item in context.ancestors:
+                        ancestor = build_status(item)
+                        if ancestor is None:
+                            continue
+                        status.thread.append(ancestor.id)
+                        if ancestor.id not in seen_statuses:
+                            seen_statuses.add(ancestor.id)
+                            partials.append(ancestor)
+            
+                except Exception as e:
+                    logging.warning(f"failed to fetch context {status.id} {e}")
 
 
         seen_accounts = set()
