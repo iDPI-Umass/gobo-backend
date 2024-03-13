@@ -347,6 +347,7 @@ class Reddit():
 
 
     def map_posts(self, data):
+        preexisting = data.get("preexisting", [])
         sources = {}
         for item in data["sources"]:
             sources[item["platform_id"]] = item
@@ -373,7 +374,7 @@ class Reddit():
                 "poll": submission.poll
             })
 
-            if submission.crosspost_parent != None:
+            if submission.crosspost_parent is not None:
                 edges.append({
                     "origin_type": "post",
                     "origin_reference": submission.id,
@@ -405,7 +406,8 @@ class Reddit():
         return {
             "posts": posts,
             "partials": partials,
-            "edges": edges
+            "preexisting": preexisting,
+            "edges": edges,
         }
 
 
@@ -420,6 +422,7 @@ class Reddit():
     def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
         submissions = []
         partials = []
+        preexisting = []
         subreddits = []
 
         oldest_limit = joy.time.convert("date", "iso", 
@@ -467,6 +470,7 @@ class Reddit():
         ])
 
         for item in registered:
+            preexisting.append(item)
             secondary.remove(item["platform_id"])
 
         if len(secondary) > 0:
@@ -501,5 +505,6 @@ class Reddit():
         return {
             "submissions": submissions,
             "partials": partials,
+            "preexisting": preexisting,
             "subreddits": subreddits
         }
