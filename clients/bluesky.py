@@ -701,7 +701,10 @@ class Bluesky():
         
             for item in notifications:
                 if item.post is not None:
-                    item.post = lookup[item.post]
+                    value = lookup.get(item.post)
+                    if value is None:
+                        logging.warning(f"get_notification_posts: unable to fetch post {item.post} for notification attribution")
+                    item.post = value
 
         return notifications
 

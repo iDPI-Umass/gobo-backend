@@ -102,7 +102,7 @@ class GOBOBluesky():
         else:
             logging.warning(body)
             logging.warning(r.headers)
-            raise HTTPError(r.status_code, body)
+            raise HTTPError(r.status_code, body, url)
     
 
     def get(self, url, headers = None, skip_response = False):
@@ -304,9 +304,19 @@ class GOBOBluesky():
         return self.bluesky_get(url)
     
     def get_posts(self, uris):
+        if len(uris) == 0:
+            raise Exception("uris list must be longer than 0")
+        
+        def valid_uri(uri):
+            return type(uri) is str and uri.startswith("at://")
+
         values = {}
         index = 0
         for uri in uris:
+            if not valid_uri(uri):
+                logging.error({"uris": uris})
+                raise Exception("value in uris list is not an at-uri string")
+
             values[f"uris[{index}]"] = uri
             index += 1
 
