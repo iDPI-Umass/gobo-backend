@@ -43,7 +43,7 @@ def build_partial_status(item):
 
 
 class Status():
-    VISIBLE = ["public", "unlisted"]
+    VISIBLE = ["public", "unlisted", "followers only"]
 
     def __init__(self, _):
         self._ = _
@@ -51,7 +51,7 @@ class Status():
         self.account = Account(_.account)
         self.content = _.content
         self.url = _.url
-        self.visibility = _.visibility
+        self.visibility = self.get_visibility(_.visibility)
         self.published = joy.time.convert(
             start = "date",
             end = "iso",
@@ -106,6 +106,15 @@ class Status():
                     "key": option.title,
                     "count": option.votes_count or 0
                 })
+
+    def get_visibility(self, type):
+        if type == "public":
+            return "public"
+        if type == "unlisted":
+            return "unlisted"
+        if type == "private":
+            return "followers only"
+        return type
                
 
 class Account():
@@ -454,6 +463,7 @@ class Mastodon():
                 "platform_id": status.id,
                 "title": None,
                 "content": status.content,
+                "visibility": status.visibility,
                 "url": status.url,
                 "published": status.published,
                 "attachments": status.attachments,
