@@ -18,11 +18,19 @@ gobo_reddit = GOBOReddit()
 def is_image(url):
     return url.startswith("https://i.redd.it/")
 
-def is_video(url):
-    return url.startswith("https://v.redd.it/")
+def is_video(submission):
+    url = submission.get("url")
+    media = submission.get("media")
+    return url is not None and \
+        url.startswith("https://v.redd.it/") and \
+        media is not None
 
-def is_gallery(url):
-    return url.startswith("https://www.reddit.com/gallery/")
+def is_gallery(submission):
+    url = submission.get("url")
+    metadata = submission.get("media_metadata")
+    return url is not None and \
+        url.startswith("https://www.reddit.com/gallery/") and \
+        metadata is not None
 
 # This is purely tactical. The JSON that comes back for galleries in the "new" listing
 # contains "preview" URLs that are producing 403 responses. We see that "i" URLs
@@ -91,7 +99,7 @@ class Submission():
                 "type": h.guess_mime(url)
             })
         
-        elif is_video(url) == True:
+        elif is_video(_) == True:
             try:
                 url = _["media"]["reddit_video"]["fallback_url"]
                 content_type = h.guess_mime(url) or "video/mp4"
@@ -100,9 +108,10 @@ class Submission():
                     "type": content_type
                 })
             except Exception as e:
-                logging.warning(e)                              
+                logging.warning(_)
+                logging.warning(e, exc_info=True)                              
         
-        elif is_gallery(url) == True:
+        elif is_gallery(_) == True:
             try:
                 for key, value in _["media_metadata"].items():
                     if value["status"] == "valid":
@@ -121,7 +130,8 @@ class Submission():
                         })
             
             except Exception as e:
-                logging.warning(e)
+                logging.warning(_)
+                logging.warning(e, exc_info=True)
 
         elif poll is not None:
             ends = poll["voting_end_timestamp"]
