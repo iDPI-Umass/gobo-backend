@@ -1,14 +1,12 @@
 import logging
 import models
-from clients import Bluesky
+from clients.bluesky import Bluesky, SessionFrame
+from clients.gobo_bluesky import GOBOBluesky
 import http_errors
 import joy
 
-# result = client.client.bsky.actor.get_profile({"actor": "freeformflow.bsky.social"})
-# result = client.client.bsky.feed.get_author_feed({"actor": "noupside.bsky.social"})
-# logging.info(result)
-
 BASE_URL = Bluesky.BASE_URL
+
 
 def get_redirect_url(person):
     state = joy.crypto.random({"encoding": "safe-base64"})
@@ -58,51 +56,52 @@ def confirm_identity(registration, data):
 
     # Establish a Bluesky session associated with this identity.
     try:
-        session = Bluesky.create_session({
-            "oauth_token": data["bluesky_login"],
-            "oauth_token_secret": data["bluesky_secret"]
-        })
+        client = GOBOBluesky()
+        bundle = client.login(
+            login = data["bluesky_login"],
+            password = data["bluesky_secret"]
+        )
     except Exception as e:
         logging.warning(e)
         raise http_errors.unprocessable_content("unable to access profile from platform")
 
-    # Pull together data to build a session record. A session record must be
-    # available to support proper function of the client. Sessions are part of
-    # the client's internal interface to maintain authorization.
-    _session = Bluesky.map_session(registration, session)
-    session = models.bluesky_session.upsert(_session)
-
-
-    # Now it's safe to use the main class instantiation.
-    client = Bluesky({
+    # Pull together a preliminary identity record. We'll need a valid ID
+    # for the other components.
+    _identity = {
         "person_id": registration["person_id"],
-        "platform_id": session["did"],
+        "platform": "bluesky",
+        "platform_id": bundle["did"],
         "base_url": BASE_URL,
         "oauth_token": data["bluesky_login"],
-        "oauth_token_secret": data["bluesky_secret"],
-    })
+        "oauth_token_secret": data["bluesky_secret"]
+    }
+    identity = models.identity.upsert(_identity)
+
+
+    # Now we can pull together a valid session record. Such a record must be
+    # available to support the proper function of the Bluesky client module.
+    # It's part of the internal authorization inteface.
+    _session = SessionFrame.map(identity, bundle)
+    models.bluesky_session.upsert(_session)
+
+    # Now it's safe to use the main class instantiation.
+    client = Bluesky(identity)
     client.login()
     profile = client.get_profile()
 
 
-    # Pull together data to build an identity record.
-    profile_url = f"{BASE_URL}/profile/{profile['handle']}"  
-    _identity = {
-        "person_id": registration["person_id"],
-        "platform": "bluesky",
-        "platform_id": profile["did"],
-        "base_url": BASE_URL,
-        "profile_url": profile_url,
-        "profile_image": profile.get("avatar", None),
-        "username": profile["handle"],
-        "name": profile.get("displayName", None),
-        "oauth_token": data["bluesky_login"],
-        "oauth_token_secret": data["bluesky_secret"]
-    }
-
+    # Fill out the identity with properties from the platform.
+    handle = profile["handle"]
+    if handle == "handle.invalid":
+        handle = profile["did"]
+    
+    identity["profile_url"] = f"{BASE_URL}/profile/{handle}"
+    identity["profile_image"] = profile.get("avatar", None)
+    identity["username"] = handle
+    identity["name"] = profile.get("displayName", None)
 
     # Store and finalize
-    identity = models.identity.upsert(_identity)
+    identity = models.identity.upsert(identity)
 
     models.link.upsert({
       "origin_type": "person",
@@ -126,4 +125,3 @@ def confirm_identity(registration, data):
     models.registration.remove(registration["id"])
 
     return identity
-

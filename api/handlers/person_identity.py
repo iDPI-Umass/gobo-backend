@@ -44,8 +44,14 @@ def person_identity_post(person_id, id):
     return identity
 
 def person_identity_delete(person_id, id):
-    identity = check_claim(person_id, id)
+    identity = models.identity.find({
+        "person_id": person_id,
+        "id": id,
+    })
+    if identity is None:
+        raise http_errors.forbidden(f"person_identity {person_id}/{id} is not found")
 
+    # Sever the link so we affect the HX right away...
     models.link.find_and_remove({
       "origin_type": "person",
       "origin_id": person_id,
@@ -54,24 +60,13 @@ def person_identity_delete(person_id, id):
       "name": "has-identity"
     })
 
-    if identity is not None:
-        session = models.bluesky_session.find({
-            "person_id": identity["person_id"],
-            "base_url": identity["base_url"],
-            "did": identity["platform_id"]
-        })
-        if session is not None:
-            models.bluesky_session.remove(session["id"])
-
-
-    models.identity.remove(id)
-
+    # ...but remove the associated resources with the worker.
     models.task.add({
         "queue": "default",
         "name": "remove identity",
-        "priority": 10,
+        "priority": 1,
         "details": {
-            "identity_id": id
+            "identity": identity
         }
     })
 

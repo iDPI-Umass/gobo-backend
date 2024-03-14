@@ -18,50 +18,6 @@ def find_identity(session):
     })
 
 
-def cycle_bluesky_sessions(task):
-    access_limit = joy.time.to_iso_string(joy.time.hours_from_now(0.5))
-    refresh_limit = joy.time.to_iso_string(joy.time.hours_from_now(24))
-
-    sessions = QueryIterator(
-        model = models.bluesky_session,
-        wheres = [
-            where("refresh_expires", refresh_limit, "lt")
-        ]
-    )
-
-    for session in sessions:
-        identity = find_identity(session)
-        queues.shard_task_details(
-            platform = "bluesky",
-            name = "cycle refresh token",
-            priority = task.priority,
-            details = {
-                "identity": identity,
-                "session": session
-            }
-        )
-      
-
-    sessions = QueryIterator(
-        model = models.bluesky_session,
-        wheres = [
-            where("access_expires", access_limit, "lt")
-        ]
-    )
-
-    for session in sessions:
-        identity = find_identity(session)
-        queues.shard_task_details(
-            platform = "bluesky",
-            name = "cycle access token",
-            priority = task.priority,
-            details = {
-                "identity": identity,
-                "session": session
-            }
-        )
-
-
 def test_facet_parsing(task):
     a = "@chandrn.bsky.app this post was created in GOBO."
     b = "Hey, @chandrn.bsky.app, this post was created in GOBO."
