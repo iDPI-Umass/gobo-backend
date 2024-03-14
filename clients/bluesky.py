@@ -8,6 +8,7 @@ import joy
 import models
 from .gobo_bluesky import GOBOBluesky
 import clients.helpers as h
+from .http_error import HTTPError
 
 
 # NOTE: These are taken from the atproto documentation: https://atproto.com/blog/create-post
@@ -510,6 +511,7 @@ class Bluesky():
         self.identity = identity
         self.me = self.identity["oauth_token"]
         self.client = GOBOBluesky()
+        self.invalid = False
 
 
     @staticmethod
@@ -929,8 +931,18 @@ class Bluesky():
         }
 
 
+    @staticmethod
+    def is_expired_token(error):
+        return error.status == 400 and \
+            error.body is not None and \
+            error.body.get("error") == "ExpiredToken"
+
 
     def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
+        # Special case for expired authorization.
+        if self.invalid == True:
+            return False
+        
         # Special case for sources with invalid handles. Needs more work.
         if source["username"] == "handle.invalid":
             logging.warn("Bluesky get_post_graph: source has 'handle.invalid' username")
@@ -955,7 +967,13 @@ class Bluesky():
                 break
 
             logging.info(f"Bluesky Fetch {source['username']} {cursor}")
-            result = self.client.get_author_feed(source["username"], cursor)
+            try:
+                result = self.client.get_author_feed(source["username"], cursor)
+            except HTTPError as e:
+              if Bluesky.is_expired_token(e):
+                  logging.warning(e, exc_info=True)
+                  self.invalid = True
+                  return False
 
             if last_retrieved is None:
                 for item in result["feed"]:

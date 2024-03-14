@@ -205,6 +205,7 @@ class Notification():
 class Mastodon():
     def __init__(self, identity = None):
         self.identity = identity
+        self.invalid = False
         if self.identity is not None:
             self.base_url = self.identity["base_url"]
 
@@ -552,9 +553,18 @@ class Mastodon():
                     break
 
         return {"accounts": accounts}
+    
+    @staticmethod
+    def is_expired_token(error):
+        junk, status, status_description, message = error.args
+        return status == 401 and message == "The access token is invalid"
 
 
     def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
+        # Special case for expired authorization.
+        if self.invalid == True:
+            return False
+        
         isDone = False
         oldest_limit = joy.time.convert("date", "iso", 
             joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
@@ -577,11 +587,18 @@ class Mastodon():
                 break
 
             logging.info(f"Mastdon Fetch {source['username']}: {platform_id} {max_id}")
-            items = self.client.account_statuses(
-                id = platform_id,
-                max_id = max_id,
-                limit=40
-            )
+            try:
+                items = self.client.account_statuses(
+                    id = platform_id,
+                    max_id = max_id,
+                    limit=40
+                )
+            except mastodon.errors.MastodonUnauthorizedError as e:
+                if Mastodon.is_expired_token(e):
+                    logging.warning(e, exc_info=True)
+                    self.invalid = True
+                    return False
+
 
             if len(items) == 0:
                 break
