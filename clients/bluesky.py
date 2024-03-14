@@ -323,21 +323,18 @@ class Post():
         self.id = f"gobo:{self.author.id}:{self.published}:{post['cid']}"
         return self
     
+    # Traverse the parents in this tree until we can't find any.
     @staticmethod
     def create_thread(data):
         thread = []
-
-        current = data["parent"]
+        current = data.get("parent")
         while True:
-            if current.get("post", None) is None:
+            if current is None or current.get("post") is None:
                 break
             thread.append(Post.create_regular(current))
-            current = current.get("parent", None)
-            if current is None:
-                break
+            current = current.get("parent")
 
-        return thread
-    
+        return thread    
 
 
     # facets are Bluesky's approach to expressing hypertext linkages in post
