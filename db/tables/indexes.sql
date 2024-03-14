@@ -16,7 +16,7 @@ USING btree
 CREATE INDEX CONCURRENTLY 
 ON bluesky_session 
 USING btree 
-(person_id, base_url, did);
+(person_id, identity_id, base_url, did);
 
 CREATE INDEX CONCURRENTLY 
 ON identity 

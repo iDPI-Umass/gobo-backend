@@ -6,6 +6,7 @@ from ..base import Base
 from .helpers import read_optional, write_optional
 
 optional = [
+    "identity_id",
     "base_url",
     "handle",
     "did",
@@ -20,6 +21,7 @@ class BlueskySession(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     person_id: Mapped[int]
+    identity_id: Mapped[Optional[int]]
     base_url: Mapped[Optional[str]]
     handle: Mapped[Optional[str]]
     did: Mapped[Optional[str]]
@@ -48,5 +50,6 @@ class BlueskySession(Base):
 
     def update(self, data):
         self.person_id = data["person_id"]
+        self.identity_id = data["identity_id"]
         write_optional(self, data, optional)
         self.updated = joy.time.now()

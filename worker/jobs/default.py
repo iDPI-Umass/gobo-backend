@@ -118,9 +118,7 @@ def dispatch(task):
     if task.name == "workbench":
         return tasks.workbench(task)
     
-    
-    if task.name == "bootstrap platform labels":
-        return tasks.boostrap_platform_labels(task)
+
     if task.name == "label identity platform":
         return tasks.label_identity_platform(task)
     if task.name == "label post platform":

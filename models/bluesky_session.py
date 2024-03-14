@@ -15,17 +15,11 @@ add, get, update, remove, query, find = itemgetter(
 
 def upsert(data):
     with Session() as session:
-        if data.get("person_id") is None:
-            raise Exception("upsert requires BlueskySession have person_id")
-        if data.get("base_url") is None:
-            raise Exception("upsert requires BlueskySession have base_url")
-        if data.get("did") is None:
-            raise Exception("upsert requires BlueskySession have did")
+        if data.get("identity_id") is None:
+            raise Exception("upsert requires BlueskySession have identity_id")
 
         statement = select(BlueskySession) \
-            .where(BlueskySession.person_id == data["person_id"]) \
-            .where(BlueskySession.base_url == data["base_url"]) \
-            .where(BlueskySession.did == data["did"]) \
+            .where(BlueskySession.identity_id == data["identity_id"]) \
             .limit(1)
 
         row = session.scalars(statement).first()

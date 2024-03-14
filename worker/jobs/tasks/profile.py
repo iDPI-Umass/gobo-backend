@@ -46,6 +46,7 @@ def get_profile(task):
             )
             task.halt()
             return
+        raise e
         
     except prawcore.exceptions.ResponseException as e:
         if e.response.status_code == 400:
@@ -57,6 +58,8 @@ def get_profile(task):
             )
             task.halt()
             return
+        raise e
+
 
     return {"profile": profile}
 

@@ -232,6 +232,12 @@ def remove_identity(identity):
     for link in links:
         models.link.remove(link["id"])
 
+    session = models.bluesky_session.find({
+        "identity_id": identity["id"]
+    })
+    if session is not None:
+        models.bluesky_session.remove(session["id"])
+
     models.identity.remove(identity["id"])
 
 

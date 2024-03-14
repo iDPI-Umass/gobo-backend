@@ -1,6 +1,6 @@
 import logging
 from os import environ
-from datetime import timedelta
+from datetime import datetime, timedelta
 import json
 from jose import jwt
 import re
@@ -438,32 +438,6 @@ class Actor():
         return f'<a href={url} target="_blank" rel="noopener noreferrer nofollow">@{handle}</a>'
 
 
-class Session():
-    @staticmethod
-    def create(identity, session):
-        if identity is None:
-            raise Exception("raw dictionary passed to Session constructor is None")
-        if session is None:
-            raise Exception("raw dictionary passed to Session constructor is None")
-
-        access_token = session["accessJwt"]
-        expires = jwt.get_unverified_claims(access_token)["exp"]
-        access_expires = joy.time.convert("unix", "iso", expires)     
-        refresh_token = session["refreshJwt"]
-        expires = jwt.get_unverified_claims(refresh_token)["exp"]
-        refresh_expires = joy.time.convert("unix", "iso", expires)
-        return {
-            "person_id": identity["person_id"],
-            "base_url": Bluesky.BASE_URL,
-            "handle": session["handle"],
-            "did": session["did"],
-            "access_token": access_token,
-            "access_expires": access_expires,
-            "refresh_token": refresh_token,
-            "refresh_expires": refresh_expires
-        }
-    
-
 
 def build_notification(item, is_active):
     try:
@@ -504,6 +478,80 @@ class Notification():
 
 
 
+class SessionFrame():
+    def __init__(self, identity):
+        self.identity = identity
+        self.session = models.bluesky_session.find({
+            "identity_id": self.identity["id"]
+        })
+
+    def full_login(self):
+        client = GOBOBluesky()
+        return client.login(
+            login = self.identity.get("oauth_token", None),
+            password = self.identity.get("oauth_token_secret", None)
+        )
+    
+    def refresh(self):
+        client = GOBOBluesky()
+        return client.refresh_session(self.session)
+    
+    @staticmethod
+    def map(identity, bundle):
+        if identity is None:
+            raise Exception("raw identity dictionary passed to SessionFrame constructor is None")
+        if bundle is None:
+            raise Exception("raw bundle dictionary passed to SessionFrame constructor is None")
+
+        access_token = bundle["accessJwt"]
+        expires = jwt.get_unverified_claims(access_token)["exp"]
+        access_expires = joy.time.convert("unix", "iso", expires)     
+        refresh_token = bundle["refreshJwt"]
+        expires = jwt.get_unverified_claims(refresh_token)["exp"]
+        refresh_expires = joy.time.convert("unix", "iso", expires)
+        return {
+            "person_id": identity["person_id"],
+            "identity_id": identity["id"],
+            "base_url": Bluesky.BASE_URL,
+            "handle": bundle["handle"],
+            "did": bundle["did"],
+            "access_token": access_token,
+            "access_expires": access_expires,
+            "refresh_token": refresh_token,
+            "refresh_expires": refresh_expires
+        }
+
+    def refresh_expired(self):
+        if self.session is None:
+            return True
+        timestamp = self.session.get("refresh_expires")
+        if timestamp is None:
+            return True
+        return timestamp < joy.time.now()
+
+    def access_expired(self):
+        if self.session is None:
+            return True
+        timestamp = self.session.get("access_expires")
+        if timestamp is None:
+            return True
+        # Make sure there's at least 20 minutes of access left.
+        expires = datetime.fromisoformat(timestamp)
+        delta = expires - joy.time.nowdate()
+        return delta < timedelta(minutes = 20)
+
+    def cycle_refresh_token(self):
+        bundle = self.full_login()
+        _session = SessionFrame.map(self.identity, bundle)
+        return models.bluesky_session.upsert(_session)
+
+    def cycle_access_token(self):
+        bundle = self.refresh()
+        _session = SessionFrame.map(self.identity, bundle)
+        return models.bluesky_session.upsert(_session)
+        
+    
+
 class Bluesky():
     BASE_URL = "https://bsky.app"
 
@@ -512,35 +560,18 @@ class Bluesky():
         self.me = self.identity["oauth_token"]
         self.client = GOBOBluesky()
         self.invalid = False
-
-
-    @staticmethod
-    def create_session(identity):
-        client = GOBOBluesky()
-        return client.login(
-            login = identity.get("oauth_token", None),
-            password = identity.get("oauth_token_secret", None)
-        )
-    
-    @staticmethod
-    def refresh_session(session):
-        client = GOBOBluesky()
-        return client.refresh_session(session)
-    
-    @staticmethod
-    def map_session(identity, session):
-        return Session.create(identity, session)
-    
     
     def login(self):
-        session = models.bluesky_session.find({
-            "person_id": self.identity["person_id"],
-            "base_url": self.identity["base_url"],
-            "did": self.identity["platform_id"]
-        })
-        if session is None:
-            raise Exception("bluesky client: no matching session for this identity")
-
+        session = None
+        frame = SessionFrame(self.identity)
+        
+        if frame.refresh_expired():
+            session = frame.cycle_refresh_token()
+        elif frame.access_expired():
+            session = frame.cycle_access_token()
+        else:
+            session = frame.session
+        
         self.client.load_session(session)
 
 

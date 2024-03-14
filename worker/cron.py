@@ -19,12 +19,6 @@ def start_sources():
     safe_start()
     queues.api.put_details("poll", {})
 
-    # Standalone tasks for Bluesky
-    queues.default.put_details("bluesky cycle sessions")
-    schedule.every(20).minutes.do(
-        queues.default.put_details, "bluesky cycle sessions"
-    )
-
     # Regularly updates all identities in Gobo, their feeds, and notifications.
     # Default background tasking, low priority.
     schedule.every().hour.do(
