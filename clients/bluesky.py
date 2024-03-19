@@ -721,7 +721,9 @@ class Bluesky():
                 uris.add(item.post)
 
         if len(uris) > 0:
-            for sublist in h.partition(list(uris), 25):
+            # Note that https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/feed/getPosts.json#L16
+            # says maxLength is 25, but empirically only up to 20 works.
+            for sublist in h.partition(list(uris), 20):
                 response = self.client.get_posts(sublist)
                 for item in response["posts"]:
                     post = build_post(item)

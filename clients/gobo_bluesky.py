@@ -305,7 +305,9 @@ class GOBOBluesky():
     
     def get_posts(self, uris):
         if len(uris) == 0:
-            raise Exception("uris list must be longer than 0")
+            raise Exception("uris list length must be longer than 0")
+        if len(uris) > 20:
+            raise Exception("uris list length must be 20 or shorter")
         
         def valid_uri(uri):
             return type(uri) is str and uri.startswith("at://")

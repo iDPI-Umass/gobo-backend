@@ -13,7 +13,8 @@ def test(task):
     logging.info(task.details)
 
 def workbench(task):
-    identity = models.identity.get(501)
+    # identity = models.identity.get(501)
+    identity = models.identity.get(454)
     queues.default.put_details("flow - update identity", {
         "identity": identity
     })
