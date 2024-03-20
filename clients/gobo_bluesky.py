@@ -2,6 +2,7 @@ import logging
 import time
 import json
 import urllib
+from datetime import datetime, timedelta
 import httpx
 import joy
 from .http_error import HTTPError
@@ -179,6 +180,18 @@ class GOBOBluesky():
         self.handle = session["handle"]
         self.access_token = session["access_token"]
         self.refresh_token = session["refresh_token"]
+
+    def is_stale_session(self):
+        session = getattr(self, "session", None)
+        if session is None:
+            return True
+        expires = session.get("access_expires")
+        if expires is None:
+            return True
+        # Make sure there's at least 5 minutes of access left.
+        expires = datetime.fromisoformat(expires)
+        delta = expires - joy.time.nowdate()
+        return delta < timedelta(minutes = 5)
 
     def refresh_session(self, session):
         url = self.build_url("com.atproto.server.refreshSession")

@@ -648,7 +648,7 @@ class Mastodon():
 
         for status in statuses:
             reply = status.reply
-            if reply is not None and status.visibilty in ["public", "unlisted"]:
+            if reply is not None and status.visibility in ["public", "unlisted"]:
                 try:
                     logging.info(f"Mastodon: fetching context for {status.id}")
                     context = self.client.status_context(status.id)

@@ -535,10 +535,10 @@ class SessionFrame():
         timestamp = self.session.get("access_expires")
         if timestamp is None:
             return True
-        # Make sure there's at least 20 minutes of access left.
+        # Make sure there's at least 10 minutes of access left.
         expires = datetime.fromisoformat(timestamp)
         delta = expires - joy.time.nowdate()
-        return delta < timedelta(minutes = 20)
+        return delta < timedelta(minutes = 10)
 
     def cycle_refresh_token(self):
         bundle = self.full_login()
@@ -573,6 +573,12 @@ class Bluesky():
             session = frame.session
         
         self.client.load_session(session)
+
+    def freshen(self):
+        if self.client.is_stale_session():
+            frame = SessionFrame(self.identity)
+            frame.cycle_access_token()
+            self.client.load_session(frame.session)
 
 
     def get_profile(self):
@@ -750,6 +756,10 @@ class Bluesky():
         if last_retrieved is None:
             last_retrieved = h.two_weeks_ago()
             is_active = False
+
+        # Special check to make sure that if our client was waiting in the
+        # queue for a while, the access token hasn't become stale.
+        self.freshen()
         
         while True:
           if isDone == True:
@@ -981,6 +991,10 @@ class Bluesky():
             logging.warn("Bluesky get_post_graph: source has 'handle.invalid' username")
             return False
         
+        # Special check to make sure that if our client was waiting in the
+        # queue for a while, the access token hasn't become stale.
+        self.freshen()
+
         posts = []
         partials = []
         actors = []
