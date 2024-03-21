@@ -23,7 +23,7 @@ def person_store_get(person_id, name):
     if store is None:
         raise http_errors.not_found(f"store {name} is not found")
     
-    return store
+    return {"content": store}
 
 
 def person_store_put(person_id, name):
@@ -34,7 +34,7 @@ def person_store_put(person_id, name):
     data["person_id"] = person_id
     data["name"] = name
     store = models.store.upsert(data)
-    return store
+    return {"content": store}
 
 def person_store_delete(person_id, name):
     store = models.store.find({
@@ -45,4 +45,4 @@ def person_store_delete(person_id, name):
     if store is not None:
         models.store.remove(store["id"])
 
-    return ""
+    return {"content": ""}

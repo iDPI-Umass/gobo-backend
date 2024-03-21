@@ -28,10 +28,10 @@ def get_counter(person_id):
 
 def person_notification_count_get(person_id):    
     counter = NotificationCounter(person_id)
-    return counter.to_resource()
+    return {"content": counter.to_resource()}
 
 
 def person_notification_count_put(person_id):    
     counter = NotificationCounter(person_id)
     counter.set(request.json.get("count"))
-    return counter.to_resource()
+    return {"content": counter.to_resource()}

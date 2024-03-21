@@ -1243,7 +1243,7 @@ resources:
                 description: List of post references that have thread relationships to this post.
                 type: array
                 items:
-                  type: integer
+                  type: array
                   items:
                     type: integer
               sources:

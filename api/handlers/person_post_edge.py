@@ -47,7 +47,7 @@ def person_post_edge_put(person_id, identity_id, post_id, name):
 
     # PUTs are idempotent.
     if edge is not None:
-        return ""
+        return {"content": ""}
 
     models.task.add({
         "queue": identity["platform"],
@@ -61,7 +61,7 @@ def person_post_edge_put(person_id, identity_id, post_id, name):
         }
     })
 
-    return ""
+    return {"content": ""}
 
 
 
@@ -102,4 +102,4 @@ def person_post_edge_delete(person_id, identity_id, post_id, name):
         }
     })
     
-    return ""
+    return {"content": ""}

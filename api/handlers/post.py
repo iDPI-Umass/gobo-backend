@@ -11,19 +11,19 @@ def posts_post():
     if post != None:
         raise http_errors.conflict(f"post {url} is already registered")
 
-    return models.post.add(request.json)
+    return {"content": models.post.add(request.json)}
 
 def posts_get():
     views = ["created"]
     parameters = parse_query(views, request.args)
-    return models.post.query(parameters)
+    return {"content": models.post.query(parameters)}
 
 def post_get(id):
     post = models.post.get(id)
     if post == None:
         raise http_errors.not_found(f"post {id} is not found")
     
-    return post
+    return {"content": post}
 
 def post_put(id):
     if request.json["id"] != None and id != request.json["id"]:
@@ -37,11 +37,11 @@ def post_put(id):
             f"post {id} is not found, create using people post"
         )
     else:
-        return post
+        return {"content": post}
 
 def post_delete(id):
     post = models.post.remove(id)
     if post == None:
         raise http_errors.not_found(f"post {id} is not found")
 
-    return ""
+    return {"content": ""}

@@ -11,19 +11,19 @@ def sources_post():
     if source != None:
         raise http_errors.conflict(f"source {url} is already registered")
 
-    return models.source.add(request.json)
+    return {"content": models.source.add(request.json)}
 
 def sources_get():
     views = ["created"]
     parameters = parse_query(views, request.args)
-    return models.source.query(parameters)
+    return {"content": models.source.query(parameters)}
 
 def source_get(id):
     source = models.source.get(id)
     if source == None:
         raise http_errors.not_found(f"source {id} is not found")
     
-    return source
+    return {"content": source}
 
 def source_put(id):
     if request.json["id"] != None and id != request.json["id"]:
@@ -37,11 +37,11 @@ def source_put(id):
             f"source {id} is not found, create using people post"
         )
     else:
-        return source
+        return {"content": source}
 
 def source_delete(id):
     source = models.source.remove(id)
     if source == None:
         raise http_errors.not_found(f"source {id} is not found")
 
-    return ""
+    return {"content": ""}

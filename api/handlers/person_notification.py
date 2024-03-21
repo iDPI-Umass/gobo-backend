@@ -46,7 +46,7 @@ def person_notifications_get(person_id, id):
         )
 
 
-    return models.notification.view_identity_feed(query)
+    return {"content": models.notification.view_identity_feed(query)}
 
 
 # This serves to mark the notification as read in the Gobo graph, and for the
@@ -83,7 +83,7 @@ def person_notification_post(person_id, identity_id, id):
     # Update the Gobo resource to indicate the notification is read.
     notification["active"] = False
     models.notification.update(id, notification)
-    return notification
+    return {"content": notification}
 
 
 

@@ -5,20 +5,20 @@ import models
 from .helpers import parse_query
 
 def tasks_post():
-    return models.task.add(request.json)
+    return {"content": models.task.add(request.json)}
 
 
 def tasks_get():
     views = ["created"]
     parameters = parse_query(views, request.args)
-    return models.task.query(parameters)
+    return {"content": models.task.query(parameters)}
 
 def task_get(id):
     task = models.task.get(id)
     if task == None:
         raise http_errors.not_found(f"task {id} is not found")
     
-    return task
+    return {"content": task}
 
 def task_put(id):
     if request.json["id"] != None and id != request.json["id"]:
@@ -32,11 +32,11 @@ def task_put(id):
             f"task {id} is not found, create using tasks post"
         )
     else:
-        return task
+        return {"content": task}
 
 def task_delete(id):
     task = models.task.remove(id)
     if task == None:
         raise http_errors.not_found(f"task {id} is not found")
 
-    return ""
+    return {"content": ""}

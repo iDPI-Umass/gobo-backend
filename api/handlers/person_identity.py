@@ -30,7 +30,7 @@ def person_identities_get(person_id):
     for identity in identities:
         censor_identity(identity)
     
-    return identities
+    return {"content": identities}
 
 # NOTE: Conveninece endpoint for now. If there is more stuff associated with the
 # identity that we need to model, we should probably establish some subsidary
@@ -41,7 +41,7 @@ def person_identity_post(person_id, id):
     identity["active"] = request.json["active"]
     identity = models.identity.update(id, identity)
     censor_identity(identity)
-    return identity
+    return {"content": identity}
 
 def person_identity_delete(person_id, id):
     identity = models.identity.find({
@@ -70,7 +70,7 @@ def person_identity_delete(person_id, id):
         }
     })
 
-    return ""
+    return {"content": ""}
 
 
 # I'm running into a weird issue with the naming conventions, so I'm putting
@@ -91,4 +91,4 @@ def person_identity_post_get(person_id, identity_id, id):
     if len(result["feed"]) == 0:
         raise http_errors.not_found(f"post {id} is not found")
     
-    return result
+    return {"content": result}

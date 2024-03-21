@@ -6,19 +6,19 @@ from .helpers import parse_query
 
 
 def filters_post():
-    return models.filter.add(request.json)
+    return {"content": models.filter.add(request.json)}
 
 def filters_get():
     views = ["created"]
     parameters = parse_query(views, request.args)
-    return models.filter.query(parameters)
+    return {"content": models.filter.query(parameters)}
 
 def filter_get(id):
     filter = models.filter.get(id)
     if filter == None:
         raise http_errors.not_found(f"filter {id} is not found")
     
-    return filter
+    return {"content": filter}
 
 def filter_put(id):
     if request.json["id"] != None and id != request.json["id"]:
@@ -32,11 +32,11 @@ def filter_put(id):
             f"filter {id} is not found, create using people post"
         )
     else:
-        return filter
+        return {"content": filter}
 
 def filter_delete(id):
     filter = models.filter.remove(id)
     if filter == None:
         raise http_errors.not_found(f"filter {id} is not found")
 
-    return ""
+    return {"content": ""}

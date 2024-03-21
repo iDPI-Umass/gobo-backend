@@ -38,4 +38,4 @@ def person_identity_feed_get(person_id, id):
         )
 
 
-    return models.post.view_identity_feed(query)
+    return {"content": models.post.view_identity_feed(query)}

@@ -9,7 +9,12 @@ def me_get():
     if person is None:
         authority_id = g.claims["sub"]
         person = models.person.lookup(authority_id)
-    return person
+    return {
+        "content": person,
+        "headers": {
+            "cache-control": "private, max-age=300" 
+        }
+    }
 
 def me_put():
     authority_id = g.claims["sub"]
@@ -19,4 +24,9 @@ def me_put():
 
     person["name"] = request.json["name"]
     person = models.person.update(person["id"], person)
-    return person
+    return {
+        "content": person,
+        "headers": {
+            "cache-control": "private, max-age=300" 
+        }
+    }

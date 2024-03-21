@@ -15,7 +15,7 @@ def links_post():
     if link != None:
         raise http_errors.conflict("this link already exists")
 
-    return models.link.add(request.json)
+    return {"content": models.link.add(request.json)}
 
 def _parse_link_query(parameters, args):
     value = args.get("origin_type")
@@ -68,14 +68,14 @@ def links_get():
     views = ["created"]
     parameters = parse_query(views, request.args)
     _parse_link_query(parameters, request.args)
-    return models.link.query(parameters)
+    return {"content": models.link.query(parameters)}
 
 def link_get(id):
     link = models.link.get(id)
     if link == None:
         raise http_errors.not_found(f"link {id} is not found")
     
-    return link
+    return {"content": link}
 
 def link_put(id):
     if request.json["id"] != None and id != request.json["id"]:
@@ -89,11 +89,11 @@ def link_put(id):
             f"link {id} is not found, create using people post"
         )
     else:
-        return link
+        return {"content": link}
 
 def link_delete(id):
     link = models.link.remove(id)
     if link == None:
         raise http_errors.not_found(f"link {id} is not found")
 
-    return ""
+    return {"content": ""}

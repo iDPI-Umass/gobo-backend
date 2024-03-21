@@ -6,21 +6,21 @@ from .helpers import parse_query
 
 
 def registrations_post():
-    return models.registration.add(request.json)
+    return {"content": models.registration.add(request.json)}
 
 def registrations_get():
     views = ["created", "base_url"]
     parameters = parse_query(views, request.args)
     result = models.registration.query(parameters)
     logging.info(result)
-    return result
+    return {"content": result}
 
 def registration_get(id):
     registration = models.registration.get(id)
     if registration == None:
         raise http_errors.not_found(f"registration {id} is not found")
     
-    return registration
+    return {"content": registration}
 
 def registration_put(id):
     if request.json["id"] != None and id != request.json["id"]:
@@ -34,11 +34,11 @@ def registration_put(id):
             f"registration {id} is not found, create using people post"
         )
     else:
-        return registration
+        return {"content": registration}
 
 def registration_delete(id):
     registration = models.registration.remove(id)
     if registration == None:
         raise http_errors.not_found(f"registration {id} is not found")
 
-    return ""
+    return {"content": ""}

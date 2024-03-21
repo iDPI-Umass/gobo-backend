@@ -12,19 +12,19 @@ def mastodon_clients_post():
     if client != None:
         raise http_errors.conflict(f"mastodon_client {base_url} is already registered")
 
-    return models.mastodon_client.add(request.json)
+    return {"content": models.mastodon_client.add(request.json)}
 
 def mastodon_clients_get():
     views = ["created", "base_url"]
     parameters = parse_query(views, request.args)
-    return models.mastodon_client.query(parameters)
+    return {"content": models.mastodon_client.query(parameters)}
 
 def mastodon_client_get(id):
     client = models.mastodon_client.get(id)
     if client == None:
         raise http_errors.not_found(f"mastodon_client {id} is not found")
     
-    return client
+    return {"content": client}
 
 def mastodon_client_put(id):
     parse_base_url(request.json)
@@ -39,11 +39,11 @@ def mastodon_client_put(id):
             f"mastodon_client {id} is not found, create using people post"
         )
     else:
-        return client
+        return {"content": client}
 
 def mastodon_client_delete(id):
     client = models.mastodon_client.remove(id)
     if client == None:
         raise http_errors.not_found(f"mastodon_client {id} is not found")
 
-    return ""
+    return {"content": ""}

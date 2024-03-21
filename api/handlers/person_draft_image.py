@@ -57,7 +57,7 @@ def person_draft_images_post(person_id):
         "mime_type": mime_type
     })
     
-    return draft
+    return {"content": draft}
 
 def person_draft_image_delete(person_id, id):
     # Locate the draft image
@@ -83,4 +83,4 @@ def person_draft_image_delete(person_id, id):
     models.draft_image.remove(id)
 
     # 204 Response
-    return ""
+    return {"content": ""}

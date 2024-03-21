@@ -57,6 +57,11 @@ from validate import validate_request
 from authorize import authorize_request
 import handlers
 
+def add_headers(response, headers):
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    for key, value in headers.items():
+        response.headers.add(key, value)
+
 def log_duration(start, status):
     end = process_time()
     duration = math.floor((end - start) * 1000)
@@ -66,30 +71,28 @@ def wrap_handler(alias, configuration, handler):
 
     def f(*args, **kwargs):
         start = process_time()
-        response = None
-        status = None
+        status = configuration["response"]["status"]
 
         try:            
             authorize_request(configuration)
             validate_request(configuration)
             result = handler(*args, **kwargs)
-            status = configuration["response"]["status"]
-            response = make_response(result, status)
-            response.headers.add("Access-Control-Allow-Origin", "*")
         except (Exception, HTTPError) as e:
             status = getattr(e, "status", 500)
+            result = {}
             if status == 500:
                 # Log this as an unhandled error and provide limited data to client.
                 logging.error(e, exc_info=True)
-                result = {}
+                result["content"] = {}
             else:
                 # Log this as a handled error and provide relevant data to client.
                 logging.warning(e, exc_info=True)
-                result = {"message": e.message}
-          
-            response = make_response(result, status)
-            response.headers.add("Access-Control-Allow-Origin", "*")
+                result["content"] = {"message": e.message}
         
+        content = result.get("content", "")
+        response = make_response(content, status)
+        headers = result.get("headers", {})
+        add_headers(response, headers)
         log_duration(start, status)
         return response
     

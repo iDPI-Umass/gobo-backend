@@ -16,19 +16,19 @@ def identities_post():
     if identity != None:
         raise http_errors.conflict(f"profile {profile_url} is already registered")
 
-    return models.identity.add(request.json)
+    return {"content": models.identity.add(request.json)}
 
 def identities_get():
     views = ["created", "base_url"]
     parameters = parse_query(views, request.args)
-    return models.identity.query(parameters)
+    return {"content": models.identity.query(parameters)}
 
 def identity_get(id):
     identity = models.identity.get(id)
     if identity == None:
         raise http_errors.not_found(f"identity {id} is not found")
     
-    return identity
+    return {"content": identity}
 
 def identity_put(id):
     parse_base_url(request.json)
@@ -43,11 +43,11 @@ def identity_put(id):
             f"identity {id} is not found, create using people post"
         )
     else:
-        return identity
+        return {"content": identity}
 
 def identity_delete(id):
     identity = models.identity.remove(id)
     if identity == None:
         raise http_errors.not_found(f"identity {id} is not found")
 
-    return ""
+    return {"content": ""}

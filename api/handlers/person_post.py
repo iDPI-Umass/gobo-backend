@@ -65,4 +65,4 @@ def person_posts_post(person_id):
         }))
 
 
-    return tasks
+    return {"content": tasks}

@@ -24,7 +24,7 @@ def action_onboard_identity_start_post():
     else:
         raise Exception("unrecognized platform, cannot start onboard")
 
-    return response
+    return {"content": response}
   
 
 def action_onboard_identity_callback_post():
@@ -57,4 +57,4 @@ def action_onboard_identity_callback_post():
         data = smalltown.validate_callback(request.json, base_url)
         identity = smalltown.confirm_identity(registration, data)
 
-    return identity
+    return {"content": identity}

@@ -9,7 +9,7 @@ def person_profile_get(person_id):
     if person == None:
         raise http_errors.not_found(f"person {person_id} is not found")
     
-    return person
+    return {"content": person}
 
 def person_profile_put(person_id):
     id = request.json.get("id", None)
@@ -30,4 +30,4 @@ def person_profile_put(person_id):
             f"person {person_id} is not found, create using people post"
         )
     else:
-        return person
+        return {"content": person}

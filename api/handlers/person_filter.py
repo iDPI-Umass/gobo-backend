@@ -22,7 +22,7 @@ def person_filters_get(person_id):
     query["resource"] = "filter"
 
     filters = models.person.get_links(tables.Filter, query)
-    return filters
+    return {"content": filters}
 
 def person_filters_post(person_id):
     data = dict(request.json)
@@ -37,7 +37,7 @@ def person_filters_post(person_id):
         "name": "has-filter"
     })
 
-    return filter
+    return {"content": filter}
 
 
 def person_filter_put(person_id, id):
@@ -45,7 +45,7 @@ def person_filter_put(person_id, id):
     data["person_id"] = person_id
     check_claim(person_id, id)
     filter = models.filter.update(id, data)
-    return filter
+    return {"content": filter}
 
 def person_filter_delete(person_id, id):
     check_claim(person_id, id)
@@ -59,4 +59,4 @@ def person_filter_delete(person_id, id):
     })
     
     models.filter.remove(id)
-    return ""
+    return {"content": ""}
