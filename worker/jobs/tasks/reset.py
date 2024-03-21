@@ -20,6 +20,11 @@ def hard_reset(task):
         details = task.details
     )
     queues.default.put_details(
+        name = "clear notifications",
+        priority = task.priority,
+        details = task.details
+    )
+    queues.default.put_details(
         name = "clear cursors",
         priority = task.priority,
         details = task.details
@@ -92,6 +97,27 @@ def clear_sources(task):
                 priority = task.priority,
                 details = {"source": source}
             )
+
+
+# TODO: support platform-specific action here like the others.
+def clear_notifications(task):    
+    notifications = QueryIterator(
+        model = models.notification,
+        for_removal = True,
+    )
+    for notification in notifications:
+        h.remove_notification(notification)
+        
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("name", "read-cursor-notification")
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
 
 
 def clear_cursors(task):
