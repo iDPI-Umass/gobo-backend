@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from flask import Flask, request, g
 import httpx
@@ -7,7 +8,7 @@ import http_errors
 import models
 
 # TODO: Configuration
-AUTH0_DOMAIN = "dev-j72vlrggk1ft8e8u.us.auth0.com"
+AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
 API_AUDIENCE = "https://gobo.social/api"
 ALGORITHMS = ["RS256"]
 JWKS_TIMEOUT = 3600

@@ -1475,3 +1475,15 @@ resources:
           status: 200
           type: application/json
           schema: *identity
+
+
+  action_resend_email_verification:
+    template: /actions/people/{person_id}/resend-email-verification
+    route: /actions/people/<int:person_id>/resend-email-verification
+    methods:
+      post:
+        request:
+          authorization:
+            - person
+        response:
+          status: 204

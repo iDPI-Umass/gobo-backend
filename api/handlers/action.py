@@ -1,6 +1,7 @@
 import logging
 from flask import request, g
 import http_errors
+import email_verification
 import models
 from platform_models import bluesky, reddit, mastodon, smalltown
 from . import helpers as h
@@ -58,3 +59,9 @@ def action_onboard_identity_callback_post():
         identity = smalltown.confirm_identity(registration, data)
 
     return {"content": identity}
+
+
+def action_resend_email_verification_post(person_id):
+    person = models.person.get(person_id)
+    email_verification.resend(person)
+    return {"content": ""}
