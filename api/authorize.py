@@ -113,10 +113,10 @@ def get_permissions(token):
     # Gets the formal permissions from the signed claim.
     permissions = set(claims.get("permissions", []))
 
-    # We honor accounts with verified email addresses as having general access.
-    is_verified = claims.get("https://gobo.social/verified", False)
-    if is_verified == True:
-        permissions.add("general")
+    # # We honor accounts with verified email addresses as having general access.
+    # is_verified = claims.get("https://gobo.social/verified", False)
+    # if is_verified == True:
+    #     permissions.add("general")
     
     return permissions
 
