@@ -118,6 +118,17 @@ def clear_notifications(task):
     for link in links:
         models.link.remove(link["id"])
 
+def clear_notification_cursors(task):            
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("name", "read-cursor-notification")
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
 
 
 def clear_cursors(task):

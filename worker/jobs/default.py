@@ -97,6 +97,8 @@ def dispatch(task):
         return tasks.clear_counters(task)
     if task.name == "clear notifications":
         return tasks.clear_notifications(task)
+    if task.name == "clear notification cursors":
+        return tasks.clear_notification_cursors(task)
 
 
     if task.name == "bluesky cycle sessions":

@@ -178,6 +178,7 @@ class Notification():
             self.status = build_partial_status(_.status)
         
         self.type = self.map_type(_.type, self.status)
+        self.post_meta = self.build_post_meta(_, self.status)
 
 
     def map_type(self, type, status):
@@ -200,6 +201,13 @@ class Notification():
             return "new post"
         logging.warning(f"Mastodon: unable to map notification type {type}")
         return type
+
+    def build_post_meta(self, _, status):
+        meta = {}
+        meta["has_post"] = getattr(_, "status", None) is not None
+        if meta["has_post"] == True:
+            meta["is_direct_message"] = status is None
+        return meta
 
 
 class Mastodon():
@@ -423,7 +431,8 @@ class Mastodon():
                 "notified": notification.created,
                 "active": notification.active,
                 "source_id": source_id,
-                "post_id": post_id
+                "post_id": post_id,
+                "post_meta": notification.post_meta
             })
 
         return notifications
