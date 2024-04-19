@@ -5,17 +5,30 @@ import jobs
 import joy
 
 # TODO: Consider recovery and dead-letter states.
-def fail_task(queue, task, e):
-    if task is None:
-        # This should never happen, so it' alarming if it does.
-        logging.error("exception in task processing, but no task defined")
-        return
+def fail_task(queue, task, error):
+    try:
+        if task is None:
+            # This should never happen, so it's alarming if it does.
+            logging.error("exception in task processing, but no task defined")
+            return
+        
+        logging.error(f"failure in {queue.name} {task.name}")
+        logging.error(error, exc_info=True)
+        task.failure()
+        task.remove()
     
-    logging.error(f"failure in {queue.name} {task.name}")
-    logging.error(e, exc_info=True)
-    task.failure()
-    task.remove()
-    queue.task_done()
+
+    # This is the failsafe designed to catch any issues with the above, more
+    # sophisticated error handling and keeps the thread alive for next task.
+    # It's like a 500-class HTTP error, so it should ideally not get here.
+    # Because the first priority is to keep the thread alive, this handler
+    # needs to be guaranteed to always resolve without another exception.
+    except Exception as abject:
+        logging.error("abject thread failure")
+        logging.error(abject, exc_info=True)
+
+
+
 
 def thread_core(queue, dispatch):
     while True:
@@ -26,9 +39,10 @@ def thread_core(queue, dispatch):
             task.finish(queue)
             task.progress(queues, result)
             task.remove()
-            queue.task_done()
         except Exception as e:
             fail_task(queue, task, e)
+
+        queue.task_done()
  
         
 class Thread():
