@@ -627,15 +627,23 @@ class Bluesky():
                 }],
             })
 
-        data["facets"] = facets 
+        data["facets"] = facets
 
 
     def create_post(self, post, metadata):
-        embed = {
-            "images": None,
-            "record": None
-        }
-        
+        embed = {}
+
+        if metadata.get("link_card_draft_image") is not None:
+            link_card = metadata["linkCard"]
+            image = metadata["link_card_draft_image"]
+            result = self.client.upload_blob(image)
+            embed["external"] = {
+                "uri": link_card.get("url", ""),
+                "title": link_card.get("title", ""),
+                "description": link_card.get("description", ""),
+                "thumb": result["blob"]
+            }
+
         images = []
         for attachment in post.get("attachments", []):
             result = self.client.upload_blob(attachment)
@@ -649,16 +657,40 @@ class Bluesky():
         if metadata.get("quote", None) is not None:
             embed["record"] = json.loads(metadata["quote"]["platform_id"])
 
-        has_images = embed["images"] is not None
-        has_record = embed["record"] is not None
-        if has_record and has_images:
-            embed["$type"] = "app.bsky.embed.recordWithMedia"
+        has_external = embed.get("external") is not None
+        has_images = embed.get("images") is not None
+        has_record = embed.get("record") is not None
+
+        if has_record and has_external:
+            embed = {
+                "$type": "app.bsky.embed.recordWithMedia",
+                "record": {
+                    "$type": "app.bsky.embed.record",
+                    "record": embed["record"]
+                },
+                "media": {
+                    "$type": "app.bsky.embed.external",
+                    "external": embed["external"]
+                }
+            }
+        elif has_record and has_images:
+            embed = {
+                "$type": "app.bsky.embed.recordWithMedia",
+                "record": {
+                    "$type": "app.bsky.embed.record",
+                    "record": embed["record"]
+                },
+                "media": {
+                    "$type": "app.bsky.embed.images",
+                    "images": embed["images"]
+                }
+            }
         elif has_record:
             embed["$type"] = "app.bsky.embed.record"
-            del embed["images"]
         elif has_images:
             embed["$type"] = "app.bsky.embed.images"
-            del embed["record"]
+        elif has_external:
+            embed["$type"] = "app.bsky.embed.external"
         else:
             embed = None
        
@@ -681,8 +713,10 @@ class Bluesky():
 
 
         post_data = {
+            "$type": "app.bsky.feed.post",
+            "createdAt": joy.time.now(),
             "text": metadata.get("text"),
-            "createdAt": joy.time.now()
+            "facets": metadata.get("facets"),
         }
 
         if embed is not None:
@@ -690,8 +724,6 @@ class Bluesky():
         if reply is not None:
             post_data["reply"] = reply
 
-        # self.parse_facets(post_data)
-        post_data["facets"] = metadata.get("facets")
         logging.info(post_data)
         return self.client.create_post(post_data)
 

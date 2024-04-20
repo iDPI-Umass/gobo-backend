@@ -63,8 +63,7 @@ def create_post(task):
     client.create_post(post, metadata)
     logging.info("reddit: create post complete")
     for draft in post["attachments"]:
-        draft["published"] = True
-        models.draft_image.update(draft["id"], draft)
+        models.draft_image.publish(draft["id"])
 
 
 def add_post_edge(task):

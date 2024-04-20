@@ -54,13 +54,19 @@ def create_post(task):
     for draft in post["attachments"]:
         draft["data"] = h.read_draft_file(draft)
 
+    if metadata.get("link_card_draft_image") is not None:
+        draft = metadata["link_card_draft_image"]
+        draft["data"] = h.read_draft_file(draft)
+
     client = Bluesky(identity)
     client.login()
     client.create_post(post, metadata)
     logging.info("bluesky: create post complete")
     for draft in post["attachments"]:
-        draft["published"] = True
-        models.draft_image.update(draft["id"], draft)
+        models.draft_image.publish(draft["id"])
+    if metadata.get("link_card_draft_image") is not None:
+        draft = metadata.get("link_card_draft_image")
+        models.draft_image.publish(draft["id"])
 
 
 

@@ -1,4 +1,5 @@
 import logging
+import os
 from operator import itemgetter
 from sqlalchemy import select
 from db.base import Session
@@ -11,3 +12,10 @@ add, get, update, remove, query, find, pull, random = itemgetter(
     "add", "get", "update", "remove", "query", "find", "pull", "random"
 )(define_crud(DraftImage))
 
+
+def publish(id):
+    directory = os.environ.get("UPLOAD_DIRECTORY")
+    filename = os.path.join(directory, id)
+    if os.path.exists(filename):
+        os.remove(filename)
+    return remove(id)
