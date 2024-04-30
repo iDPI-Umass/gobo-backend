@@ -23,20 +23,18 @@ def dispatch(task):
         return tasks.pull_posts(task)
     if task.name == "pull notifications":
         return tasks.pull_notifications(task)
+
+    if task.name == "dismiss notification":
+        return tasks.dismiss_notification(task)
     
-    
+
     if task.name == "create post":
         return create_post(task)
     if task.name == "add post edge":
        return add_post_edge(task)
     if task.name == "remove post edge":
         return remove_post_edge(task)
-        
-    
-    if task.name == "dismiss notification":
-        return tasks.dismiss_notification(task)
 
-    
     logging.warning("No matching job for task: %s", task)
     
 

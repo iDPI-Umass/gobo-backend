@@ -8,14 +8,22 @@ where = models.helpers.where
 build_query = models.helpers.build_query
 QueryIterator = models.helpers.QueryIterator
 
+publish_only = [
+    "linkedin"
+]
 
+# TODO: For identities from providers where we support publish-only behavior,
+#   we don't want the fanout task to pick them up and run them through the
+#   common read flows. Will this evolve over time?
 def fanout_update_identity(task):
     platform = h.get_platform(task.details)
+
+    wheres = [
+        where("stale", False)
+    ]
   
-    if platform == "all":
-        wheres = []
-    else:
-        wheres = [where("platform", platform)]
+    if platform != "all":
+        wheres.append(where("platform", platform))
 
     identities = QueryIterator(
         model = models.identity,
@@ -33,10 +41,13 @@ def fanout_update_identity(task):
 def fanout_pull_notifications(task):
     platform = h.get_platform(task.details)
   
-    if platform == "all":
-        wheres = []
-    else:
-        wheres = [where("platform", platform)]
+    wheres = [
+        where("stale", False),
+        where("platform", publish_only, "not in")
+    ]
+  
+    if platform != "all":
+        wheres.append(where("platform", platform))
 
     identities = QueryIterator(
         model = models.identity,

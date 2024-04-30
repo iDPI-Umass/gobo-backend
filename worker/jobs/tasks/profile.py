@@ -4,6 +4,7 @@ import prawcore
 import models
 import joy
 import queues
+from clients import HTTPError
 from . import helpers as h
 
 where = models.helpers.where
@@ -20,17 +21,12 @@ QueryIterator = models.helpers.QueryIterator
 # rein in the code there a little, but this pattern works for OAuth-based
 # integrations where there's a clear point where we've failed to send an
 # authorized request to the provider platform.
-#
-# For the future, we should consider taking a less drastic action than
-# removing the identity outright. The errors we look for are reasonably
-# specific, so there's acceptably contained risk for now. But ideally,
-# I'd like to "deactivate" an identity. But that brings up HX questions
-# that are probably best addressed by just re-linking the identity for now.
 
 
 def get_profile(task):
     identity = h.enforce("identity", task)
     client = h.enforce("client", task)
+    platform = identity["platform"]
 
     try:
         profile = client.get_profile()
@@ -38,10 +34,10 @@ def get_profile(task):
     except mastodon.errors.MastodonUnauthorizedError as e:
         junk, status, status_description, message = e.args
         if status == 401 and message == "The access token is invalid":
-            logging.warning("detected revoked Mastodon token, removing identity")
+            logging.warning("detected revoked Mastodon token, stale identity")
             queues.default.put_details(
                 priority = 1,
-                name = "remove identity",
+                name = "stale identity",
                 details = {"identity": identity}
             )
             task.halt()
@@ -50,10 +46,22 @@ def get_profile(task):
         
     except prawcore.exceptions.ResponseException as e:
         if e.response.status_code == 400:
-            logging.warning("detected revoked Reddit token, removing identity")
+            logging.warning("detected revoked Reddit token, stale identity")
             queues.default.put_details(
                 priority = 1,
-                name = "remove identity",
+                name = "stale identity",
+                details = {"identity": identity}
+            )
+            task.halt()
+            return
+        raise e
+    
+    except HTTPError as e:
+        if platform == "linkedin" and e.status == 401:
+            logging.warning("detected revoked LinkedIn token, stale identity")
+            queues.default.put_details(
+                priority = 1,
+                name = "stale identity",
                 details = {"identity": identity}
             )
             task.halt()

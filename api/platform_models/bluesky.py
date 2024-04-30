@@ -73,7 +73,8 @@ def confirm_identity(registration, data):
         "platform_id": bundle["did"],
         "base_url": BASE_URL,
         "oauth_token": data["bluesky_login"],
-        "oauth_token_secret": data["bluesky_secret"]
+        "oauth_token_secret": data["bluesky_secret"],
+        "stale": False
     }
     identity = models.identity.upsert(_identity)
 

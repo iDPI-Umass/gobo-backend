@@ -33,7 +33,7 @@ def get_client(task):
                 logging.warning("detected revoked Bluesky token, removing session and identity")
                 queues.default.put_details(
                     priority = 1,
-                    name = "remove identity",
+                    name = "stale identity",
                     details = {"identity": identity}
                 )
                 return

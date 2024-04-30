@@ -1,20 +1,25 @@
 import logging
-import joy
+import json
 import models
-from clients import Reddit
+from clients.linkedin import Linkedin, SessionFrame
 import http_errors
+import joy
 
-BASE_URL = Reddit.BASE_URL
+BASE_URL = Linkedin.BASE_URL
 
 
 def get_redirect_url(person):
-    client = Reddit()
-    state = joy.crypto.random({"encoding": "safe-base64"})
-    url = client.get_redirect_url(state)
+    scope = "profile openid w_member_social"
+    state = joy.crypto.random({"encoding": "base16"})
+    context = {
+        "scope": scope,
+        "state": state
+    }
+    url = Linkedin.make_login_url(context)
 
     _registration = {
         "person_id": person["id"],
-        "platform": "reddit",
+        "platform": "linkedin",
         "base_url": BASE_URL,
         "state": state
     }
@@ -29,21 +34,19 @@ def get_redirect_url(person):
     else:
         models.registration.update(registration["id"], _registration)
 
-    return  {"redirect_url": url}
-
+    return {"redirect_url": url}
 
 def validate_callback(data):
     output = {
-      "state": data.get("state", None),
-      "code": data.get("code", None)
+      "state": data.get("state"),
+      "code": data.get("code")
     }
 
-    if output["state"] == None:
+    if output["state"] is None:
         raise http_errors.bad_request("field state is required")
-    if output["code"] == None:
+    if output["code"] is None:
         raise http_errors.bad_request("field code is required")
     return output
-
 
 def confirm_identity(registration, data):
     if registration.get("state") == None:
@@ -54,41 +57,36 @@ def confirm_identity(registration, data):
 
     # Convert the code into a durable OAuth token
     try:
-        client = Reddit()
-        oauth_token = client.convert_code(data["code"])
+        bundle = Linkedin.exchange_code(data["code"])
     except Exception as e:
         logging.warning(e)
         raise http_errors.unprocessable_content("unable to process provider credentials")
 
 
-    # Fetch profile data to associate with this identity.
-    try:
-        client = Reddit({"oauth_token": oauth_token})
-        client.login()
-        profile = client.get_profile()
-    except Exception as e:
-        logging.warning(e)
-        raise http_errors.unprocessable_content("unable to access profile from platform")
-  
-
-    # Pull together data to build an identity record.  
-    profile_url = f"{BASE_URL}/user/{profile.name}"
+    # Pull together an identity record to support upserting a session.
     _identity = {
         "person_id": registration["person_id"],
-        "platform": "reddit",
-        "platform_id": str(profile.id),
+        "platform": "linkedin",
+        "platform_id": bundle["user"]["sub"],
         "base_url": BASE_URL,
-        "profile_url": profile_url,
-        "profile_image": profile.icon_img,
-        "username": profile.name,
-        "name": profile.name,
-        "oauth_token": oauth_token,
+        "profile_image": bundle["user"]["picture"],
+        "username": bundle["user"]["name"],
+        "oauth_token": bundle["tokens"]["access_token"],
         "stale": False
     }
-
-    # Store and finalize
     identity = models.identity.upsert(_identity)
 
+
+    # A session is needed to support the proper function of the LinkedIn
+    # client module's authorization inteface.
+    _session = SessionFrame.from_bundle(identity, bundle)
+    models.linkedin_session.upsert(_session)
+
+    # Now it's safe to use the Linkedin class in the workers. We don't need
+    # any more data, but we should confirm session access.
+    client = Linkedin(identity)
+    client.login()
+   
     models.link.upsert({
       "origin_type": "person",
       "origin_id": identity["person_id"],

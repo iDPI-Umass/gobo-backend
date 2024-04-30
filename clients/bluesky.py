@@ -602,7 +602,6 @@ class Bluesky():
         facets = []
 
         for match in parse_mentions(text):
-            logging.info(match)
             did = self.client.resolve_handle(match["handle"])["did"]
             facets.append({
                 "index": {
@@ -905,8 +904,6 @@ class Bluesky():
             cursor = result.get("cursor", None)
             if cursor is None:
                 break
-            
-        logging.info(f"bluesky actor count {len(actors)}")
 
         return {"actors": actors}
 

@@ -28,6 +28,10 @@ def dispatch(task):
     if task.name == "flow - dismiss notification":
         return tasks.flow_dismiss_notification(task)
 
+    
+    if task.name == "filter publish only":
+        return tasks.filter_publish_only(task)
+
 
     if task.name == "get profile":
         return tasks.get_profile(task)
@@ -43,6 +47,8 @@ def dispatch(task):
         return tasks.unfollow(task)
     if task.name == "remove identity":
         return tasks.remove_identity(task)
+    if task.name == "stale identity":
+        return tasks.stale_identity(task)
 
 
     if task.name == "map sources":

@@ -57,3 +57,8 @@ CREATE INDEX CONCURRENTLY
 ON counter
 USING btree 
 (target_type, target_id, origin_type, origin_id, name, secondary);
+
+CREATE INDEX CONCURRENTLY 
+ON linkedin_session 
+USING btree 
+(person_id, identity_id, platform_id);

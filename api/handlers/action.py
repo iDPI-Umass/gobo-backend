@@ -3,7 +3,7 @@ from flask import request, g
 import http_errors
 import email_verification
 import models
-from platform_models import bluesky, reddit, mastodon, smalltown
+from platform_models import bluesky, linkedin, mastodon, reddit, smalltown
 from . import helpers as h
 
 
@@ -14,6 +14,8 @@ def action_onboard_identity_start_post():
 
     if platform == "bluesky":
         response = bluesky.get_redirect_url(person)
+    elif platform == "linkedin":
+        response = linkedin.get_redirect_url(person)
     elif platform == "mastodon":
         base_url = h.parse_base_url(request.json)
         response = mastodon.get_redirect_url(person, base_url)
@@ -48,6 +50,9 @@ def action_onboard_identity_callback_post():
     if platform == "bluesky":
         data = bluesky.validate_callback(request.json)
         identity = bluesky.confirm_identity(registration, data)
+    elif platform == "linkedin":
+        data = linkedin.validate_callback(request.json)
+        identity = linkedin.confirm_identity(registration, data)
     elif platform == "mastodon":
         data = mastodon.validate_callback(request.json, base_url)
         identity = mastodon.confirm_identity(registration, data)

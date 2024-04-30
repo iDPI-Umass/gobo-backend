@@ -50,6 +50,7 @@ import queues
 counts = {
     "default": int(environ.get("DEFAULT_THREAD_COUNT", 1)),
     "bluesky": int(environ.get("BLUESKY_THREAD_COUNT", 1)),
+    "linkedin": int(environ.get("LINKEDIN_THREAD_COUNT", 1)),
     "mastodon": int(environ.get("MASTODON_THREAD_COUNT", 1)),
     "reddit": int(environ.get("REDDIT_THREAD_COUNT", 1)),
     "smalltown": int(environ.get("SMALLTOWN_THREAD_COUNT", 1))
@@ -62,6 +63,7 @@ threads.set_thread_counts(counts)
 threads.start_api()
 threads.start_default()
 threads.start_bluesky()
+threads.start_linkedin()
 threads.start_mastodon()
 threads.start_reddit()
 threads.start_smalltown()

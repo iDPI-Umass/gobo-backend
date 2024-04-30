@@ -30,7 +30,7 @@ def get_redirect_url(person, base_url):
     else:
         models.registration.update(registration["id"], _registration)
 
-    return  {"redirect_url": url}
+    return {"redirect_url": url}
 
 
 def validate_callback(data, base_url):
@@ -95,6 +95,7 @@ def confirm_identity(registration, data):
         "username": profile.username,
         "name": profile.display_name,
         "oauth_token": oauth_token,
+        "stale": False
     }
 
     # Store and finalize

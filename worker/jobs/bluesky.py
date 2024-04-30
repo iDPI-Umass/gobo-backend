@@ -24,6 +24,9 @@ def dispatch(task):
         return tasks.pull_posts(task)
     if task.name == "pull notifications":
         return tasks.pull_notifications(task)
+
+    if task.name == "dismiss notification":
+        return tasks.dismiss_notification(task)
     
     
     if task.name == "create post":
@@ -32,15 +35,6 @@ def dispatch(task):
        return add_post_edge(task)
     if task.name == "remove post edge":
         return remove_post_edge(task)
-    if task.name == "cycle refresh token":
-        return cycle_refresh_token(task)
-    if task.name == "cycle access token":
-        return cycle_access_token(task)
-
-
-    if task.name == "dismiss notification":
-        return tasks.dismiss_notification(task)
-
 
     logging.warning("No matching job for task: %s", task)
 

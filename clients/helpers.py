@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import urlparse
 import markdown
 import mimetypes
@@ -28,3 +29,12 @@ def two_weeks_ago():
         end = "iso",
         value = joy.time.nowdate() - timedelta(days = 14)
     )
+
+def get_body(response):
+    content_type = response.headers.get("content-type")
+    if content_type is not None:
+        if "application/json" in content_type:
+            body = response.json()
+        else:
+            body = response.text
+    return body

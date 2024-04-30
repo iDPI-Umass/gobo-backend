@@ -76,6 +76,11 @@ def start_bluesky():
         thread = Thread(queues.bluesky[i], jobs.bluesky.dispatch)
         thread.start()
 
+def start_linkedin():
+    for i in range(thread_counts["linkedin"]):
+        thread = Thread(queues.linkedin[i], jobs.linkedin.dispatch)
+        thread.start()
+
 def start_mastodon():
     for i in range(thread_counts["mastodon"]):
         thread = Thread(queues.mastodon[i], jobs.mastodon.dispatch)

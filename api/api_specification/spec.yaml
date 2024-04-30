@@ -28,6 +28,7 @@ shards:
       type: string
       enum:
         - bluesky
+        - linkedin
         - mastodon
         - reddit
         - smalltown

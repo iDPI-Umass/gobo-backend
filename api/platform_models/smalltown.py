@@ -95,6 +95,7 @@ def confirm_identity(registration, data):
         "username": profile.username,
         "name": profile.display_name,
         "oauth_token": oauth_token,
+        "stale": False
     }
 
     # Store and finalize

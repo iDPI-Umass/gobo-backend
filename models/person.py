@@ -90,8 +90,3 @@ def pull_links(Table, data):
             data["page"] = page
 
     return results
-
-def pull_sources(id):
-    data = {
-      resource: "sources"
-    }

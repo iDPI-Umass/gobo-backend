@@ -30,7 +30,7 @@ config.dictConfig({
             "level": "WARN",
             "formatter": "default",
             "maxBytes": 10000000, # 10 MB
-            "backupCount": 1
+            "backupCount": 10
         }
     },
    "root": {

@@ -41,6 +41,7 @@ default = Queue("default")
 # Platform queues are sharded to limit per-account concurrency.
 shard_counts = {}
 bluesky = []
+linkedin = []
 mastodon = []
 reddit = []
 smalltown = []
@@ -49,6 +50,8 @@ def build_sharded_queues(counts):
     shard_counts.update(counts)
     for i in range(counts["bluesky"]):
         bluesky.append(Queue(f"bluesky {i}"))
+    for i in range(counts["linkedin"]):
+        linkedin.append(Queue(f"linkedin {i}"))
     for i in range(counts["mastodon"]):
         mastodon.append(Queue(f"mastodon {i}"))
     for i in range(counts["reddit"]):
@@ -100,6 +103,8 @@ def shard_task(platform, task):
   shard = get_shard(platform, task)
   if platform == "bluesky":
       return bluesky[shard].put_task(task)
+  if platform == "linkedin":
+      return linkedin[shard].put_task(task)
   if platform == "mastodon":
       return mastodon[shard].put_task(task)
   if platform == "reddit":

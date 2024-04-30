@@ -12,7 +12,6 @@ def registrations_get():
     views = ["created", "base_url"]
     parameters = parse_query(views, request.args)
     result = models.registration.query(parameters)
-    logging.info(result)
     return {"content": result}
 
 def registration_get(id):

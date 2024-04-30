@@ -2,7 +2,7 @@ import logging
 import os
 import models
 import joy
-from clients import Bluesky, Reddit, Mastodon, Smalltown
+from clients import Bluesky, Linkedin, Mastodon, Reddit, Smalltown
 import queues
 
 where = models.helpers.where
@@ -11,6 +11,7 @@ QueryIterator = models.helpers.QueryIterator
 supported_platforms = [
   "all",
   "bluesky",
+  "linkedin",
   "mastodon",
   "reddit",
   "smalltown"
@@ -36,6 +37,10 @@ def get_platform(input):
         raise Exception(f"{platform} is an invalid platform")
     return platform
 
+def has_platform(list, input):
+    platform = get_platform(input)
+    return platform in list
+
 
 def enforce(name, task):
     value = task.details.get(name, None)
@@ -49,6 +54,8 @@ def get_client(identity):
 
     if platform == "bluesky":
         client = Bluesky(identity)
+    elif platform == "linkedin":
+        client = Linkedin(identity)
     elif platform == "mastodon":
         client = Mastodon(identity)
     elif platform == "reddit":
@@ -240,6 +247,9 @@ def remove_identity(identity):
 
     models.identity.remove(identity["id"])
 
+def stale_identity(identity):
+    identity["stale"] = True
+    models.identity.upsert(identity)
 
 def rollback_cursor(task):
     cursor = task.details.get("cursor")

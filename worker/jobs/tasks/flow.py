@@ -40,7 +40,11 @@ def flow_update_identity(task):
         {
             "queue": "default", 
             "name": "upsert profile"
-        },        
+        },
+        {
+            "queue": "default",
+            "name": "filter publish only"  
+        },
         {
             "queue": platform, 
             "name": "pull sources",
@@ -286,3 +290,13 @@ def flow_dismiss_notification(task):
             "name": "dismiss notification"
         }
     ])
+
+
+# TODO: Does this belong in its own module category?
+def filter_publish_only(task):
+    identity = h.enforce("identity", task)
+    
+    excluded = ["linkedin"]
+    if h.has_platform(excluded, identity):
+        task.halt()
+        return
