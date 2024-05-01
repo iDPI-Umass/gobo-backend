@@ -100,6 +100,72 @@ class Linkedin():
         identity["username"] = profile["name"]
         return identity
 
+    def make_author(self):
+        return f"urn:li:person:{self.identity['platform_id']}"
 
-    def create_post(self):
-        pass
+    def make_visibility(self, metadata):
+        allowed_visibility = [ "PUBLIC", "CONNECTIONS" ]
+        visibility = metadata.get("visibility", "PUBLIC")
+        if visibility not in allowed_visibility:
+            raise Exception(f"visibility {visibility} is invalid")
+        return {
+            "com.linkedin.ugc.MemberNetworkVisibility": visibility
+        }
+
+    def upload_media(self, draft):
+        urn = f"urn:li:person:{self.identity["platform_id"]}"
+        slot = self.client.create_upload_slot(urn)
+        
+        url = slot["value"]["uploadMechanism"]["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]["uploadUrl"]
+        asset = slot["value"]["asset"]
+        
+        self.client.upload_media(url, draft)
+        return asset
+
+    def make_core(self, post, metadata):
+        result = {
+            "shareCommentary": {
+                "text": post["content"]
+            }
+        }
+
+        if len(post["attachments"]) == 0:
+            link_card = metadata.get("linkCard")
+            if link_card is None:
+                result["shareMediaCategory"] = "NONE"
+            else:
+                # If we don't provide any details other than the URL that we'd
+                # like unfurled, LinkedIn will go fetch syndication data for us.
+                result["shareMediaCategory"] = "ARTICLE"
+                result["media"] = [{
+                    "status": "READY",
+                    "originalUrl": link_card.get("url", ""), 
+                }]
+        else:
+          result["shareMediaCategory"] = "IMAGE"
+          result["media"] = []
+          for draft in post["attachments"]:
+              media_urn = self.upload_media(draft)
+              result["media"].append({
+                  "status": "READY",
+                  "media": media_urn,
+                  "description": {
+                      "text": draft.get("description", "")
+                  }
+              })
+
+        return {
+            "com.linkedin.ugc.ShareContent": result
+        }
+
+    def create_post(self, post, metadata):
+        post_data = {
+            "author": self.make_author(),
+            "lifecycleState": "PUBLISHED",
+            "visibility": self.make_visibility(metadata),
+            "specificContent": self.make_core(post, metadata)
+        }        
+
+        logging.info(post_data)
+        return self.client.create_post(post_data)
+            

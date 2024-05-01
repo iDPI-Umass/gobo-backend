@@ -46,6 +46,8 @@ def create_post(task):
     post = h.enforce("post", task)
     metadata = task.details.get("metadata", {})
 
+    if len(post["attachments"]) > 4:
+        raise Exception("mastodon posts are limited to 4 attachments.")
     for draft in post["attachments"]:
         draft["data"] = h.read_draft_file(draft)
 

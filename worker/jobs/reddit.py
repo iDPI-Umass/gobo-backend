@@ -52,6 +52,8 @@ def create_post(task):
         logging.info("reddit: create reply comment complete")
         return
 
+    if len(post["attachments"]) > 20:
+        raise Exception("reddit submissions are limited to 20 attachments.")
     for draft in post["attachments"]:
         draft["data"] = h.read_draft_file(draft)
 

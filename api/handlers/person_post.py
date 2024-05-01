@@ -70,11 +70,10 @@ def person_posts_post(person_id):
     post["attachments"] = attachments
 
 
-    # Because Bluesky, confirm link unfurl image is uploaded already.
+    # Bluesky and Linkedin need the link card image uplaoded independently.
     for id in identity_ids:
-        platform = identities[id]["platform"]
         link_card = metadata[id].get("linkCard")
-        if platform == "bluesky" and link_card is not None:
+        if link_card is not None:
             image = link_card.get("image")
             if image is not None:
                 metadata[id]["link_card_draft_image"] = \

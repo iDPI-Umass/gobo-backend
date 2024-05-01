@@ -65,8 +65,9 @@ class GoboLinkedin():
         with httpx.Client() as client:
             response = client.get(url, headers=headers)
             if response.status_code != 200:
-                logging.warning(h.get_body(response))
-                raise Exception("non-200 response for userinfo request")
+                body = h.get_body(response)
+                logging.warning(body)
+                raise HTTPError(response.status_code, body, url)
             
             return response.json()
 
@@ -97,7 +98,7 @@ class GoboLinkedin():
         self.monitor(url, response)
 
         if response.status_code < 400:
-            response
+            return response
         else:
             body = h.get_body(response)
             logging.warning(body)
@@ -115,13 +116,20 @@ class GoboLinkedin():
             return self.handle_response(url, response)
   
 
-    def add_token(self, headers):
+    def add_token(self, headers = None):
         if headers is None:
             headers = {"Authorization": f"Bearer {self.access_token}"}
         else:
             headers["Authorization"] = f"Bearer {self.access_token}"
         return headers
     
+    def add_restli(self, headers = None):
+        if headers is None:
+            headers = {"X-Restli-Protocol-Version": "2.0.0"}
+        else:
+            headers["X-Restli-Protocol-Version"] = "2.0.0"
+        return headers
+
     def handle_data(self, data, headers):
         if data is not None:
             data = json.dumps(data)
@@ -131,10 +139,12 @@ class GoboLinkedin():
 
     def linkedin_get(self, url, headers = None, skip_response = False):
         headers = self.add_token(headers)
+        self.add_restli(headers)
         return self.get(url, headers = headers, skip_response=skip_response)     
 
     def linkedin_post(self, url, data = None, headers = None, skip_response = False):
         headers = self.add_token(headers)
+        self.add_restli(headers)
         data = self.handle_data(data, headers)
         return self.post(url, data = data, headers = headers, skip_response=skip_response)
 
@@ -144,7 +154,35 @@ class GoboLinkedin():
     def login(self, token):
         self.access_token = token
 
-    # def get_profile(self):
-    #     url = self.build_url("userinfo")
-    #     response = self.linkedin_get(url)
-    #     return h.get_body(response)
+    def create_upload_slot(self, urn):
+        url = "https://api.linkedin.com/v2/assets?action=registerUpload"
+
+        data = {
+            "registerUploadRequest": {
+                "recipes": [
+                    "urn:li:digitalmediaRecipe:feedshare-image"
+                ],
+                "owner": urn,
+                "serviceRelationships": [
+                    {
+                        "relationshipType": "OWNER",
+                        "identifier": "urn:li:userGeneratedContent"
+                    }
+                ]
+            }
+        }
+
+        response = self.linkedin_post(url, data)
+        return response.json()
+
+    def upload_media(self, url, draft):
+        headers = self.add_token()
+        headers["Content-Type"] = f"image/{draft['mime_type']}"
+        data = draft["data"]
+        return self.post(url, data = data, headers = headers)
+
+    def create_post(self, data):
+        url = self.build_url("ugcPosts")
+        response = self.linkedin_post(url, data)
+        return response.json()
+        

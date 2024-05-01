@@ -20,7 +20,7 @@ def person_draft_images_post(person_id):
         models.helpers.where("published", False)
     ])
 
-    if len(drafts) > 9:
+    if len(drafts) > 50:
         raise http_errors.unprocessable_content(
             f"person {person_id} has reached the maximum number of draft images."
         )
