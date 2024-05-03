@@ -235,6 +235,18 @@ def flow_pull_notifications(task):
           }
         },
         {
+            "queue": platform, 
+            "name": "get profile",
+        },
+                {
+            "queue": "default", 
+            "name": "map profile",
+        },
+        {
+            "queue": "default", 
+            "name": "upsert profile"
+        },
+        {
             "queue": "default",
             "name": "get notification cursor"
         },

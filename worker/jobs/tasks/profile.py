@@ -33,7 +33,7 @@ def get_profile(task):
     
     except mastodon.errors.MastodonUnauthorizedError as e:
         junk, status, status_description, message = e.args
-        if status == 401 and message == "The access token is invalid":
+        if status == 401:
             logging.warning("detected revoked Mastodon token, stale identity")
             queues.default.put_details(
                 priority = 1,
