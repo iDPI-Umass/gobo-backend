@@ -45,6 +45,7 @@ from time import process_time
 import math
 from flask import Flask, request, make_response
 from flask_cors import CORS
+import werkzeug
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 4 * 1000 * 1000  # 4 MB upload limit
 CORS(app)
@@ -77,6 +78,11 @@ def wrap_handler(alias, configuration, handler):
             authorize_request(configuration)
             validate_request(configuration)
             result = handler(*args, **kwargs)
+        except werkzeug.exceptions.RequestEntityTooLarge as e:
+            logging.warning(e, exc_info=True)
+            status = 413
+            result = {}
+            result["content"] = {}
         except (Exception, HTTPError) as e:
             status = getattr(e, "status", 500)
             result = {}
