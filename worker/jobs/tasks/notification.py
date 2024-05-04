@@ -3,6 +3,7 @@ import models
 import joy
 import queues
 from . import helpers as h
+from .stale import handle_stale
 
 where = models.helpers.where
 build_query = models.helpers.build_query
@@ -27,7 +28,7 @@ def get_notification_cursor(task):
         "last_retrieved": last_retrieved
       }
 
-
+@handle_stale
 def pull_notifications(task):
     client = h.enforce("client", task)
     cursor = h.enforce("cursor", task)
@@ -96,7 +97,7 @@ def upsert_notifications(task):
 
     return {"notifications": notifications}
 
-
+@handle_stale
 def dismiss_notification(task):
     id = h.enforce("notification_id", task)
     client = h.enforce("client", task)

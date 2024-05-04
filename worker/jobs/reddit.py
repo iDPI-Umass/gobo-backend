@@ -37,7 +37,7 @@ def dispatch(task):
     logging.warning("No matching job for task: %s", task)
 
 
-
+@tasks.handle_stale
 def create_post(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)
@@ -65,6 +65,7 @@ def create_post(task):
         models.draft_image.publish(draft["id"])
 
 
+@tasks.handle_stale
 def add_post_edge(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)
@@ -87,6 +88,8 @@ def add_post_edge(task):
             f"reddit does not have post edge action defined for {name}"
         )
 
+
+@tasks.handle_stale
 def remove_post_edge(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)

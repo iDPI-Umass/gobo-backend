@@ -288,7 +288,7 @@ class Mastodon():
             raise Exception(f"visibility {visibility} is invalid")
         
         reply = None
-        if metadata.get("reply", None) is not None:
+        if metadata.get("reply") is not None:
             reply = metadata["reply"]["platform_id"]
 
         return self.client.status_post(
@@ -563,17 +563,7 @@ class Mastodon():
 
         return {"accounts": accounts}
     
-    @staticmethod
-    def is_expired_token(error):
-        junk, status, status_description, message = error.args
-        return status == 401 and message == "The access token is invalid"
-
-
-    def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
-        # Special case for expired authorization.
-        if self.invalid == True:
-            return False
-        
+    def get_post_graph(self, source, last_retrieved = None, is_shallow = False):        
         isDone = False
         oldest_limit = joy.time.convert("date", "iso", 
             joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
@@ -584,7 +574,6 @@ class Mastodon():
             default_limit = 100
         max_id = None
         platform_id = source["platform_id"]
-        visibilities = ["public", "unlisted"]
 
         statuses = []
         partials = []
@@ -596,18 +585,11 @@ class Mastodon():
                 break
 
             logging.info(f"Mastdon Fetch {source['username']}: {platform_id} {max_id}")
-            try:
-                items = self.client.account_statuses(
-                    id = platform_id,
-                    max_id = max_id,
-                    limit=40
-                )
-            except mastodon.errors.MastodonUnauthorizedError as e:
-                if Mastodon.is_expired_token(e):
-                    logging.warning(e, exc_info=True)
-                    self.invalid = True
-                    return False
-
+            items = self.client.account_statuses(
+                id = platform_id,
+                max_id = max_id,
+                limit=40
+            )
 
             if len(items) == 0:
                 break

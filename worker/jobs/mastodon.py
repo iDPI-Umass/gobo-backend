@@ -40,7 +40,7 @@ def dispatch(task):
 
 
 
-
+@tasks.handle_stale
 def create_post(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)
@@ -59,6 +59,7 @@ def create_post(task):
         models.draft_image.publish(draft["id"])
 
 
+@tasks.handle_stale
 def add_post_edge(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)
@@ -82,6 +83,7 @@ def add_post_edge(task):
         )
 
 
+@tasks.handle_stale
 def remove_post_edge(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)

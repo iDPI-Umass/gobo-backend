@@ -54,8 +54,7 @@ def confirm_identity(registration, data):
 
     # Convert the code into a durable OAuth token
     try:
-        client = Reddit()
-        oauth_token = client.convert_code(data["code"])
+        oauth_token = Reddit.convert_code(data["code"])
     except Exception as e:
         logging.warning(e)
         raise http_errors.unprocessable_content("unable to process provider credentials")

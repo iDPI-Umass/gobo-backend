@@ -1003,13 +1003,6 @@ class Bluesky():
         }
 
 
-    @staticmethod
-    def is_expired_token(error):
-        return error.status == 400 and \
-            error.body is not None and \
-            error.body.get("error") == "ExpiredToken"
-
-
     def get_post_graph(self, source, last_retrieved = None, is_shallow = False):
         # Special case for expired authorization.
         if self.invalid == True:
@@ -1043,13 +1036,7 @@ class Bluesky():
                 break
 
             logging.info(f"Bluesky Fetch {source['username']} {cursor}")
-            try:
-                result = self.client.get_author_feed(source["username"], cursor)
-            except HTTPError as e:
-              if Bluesky.is_expired_token(e):
-                  logging.warning(e, exc_info=True)
-                  self.invalid = True
-                  return False
+            result = self.client.get_author_feed(source["username"], cursor)
 
             if last_retrieved is None:
                 for item in result["feed"]:

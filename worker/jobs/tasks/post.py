@@ -3,40 +3,14 @@ import models
 import joy
 import queues
 from . import helpers as h
+from .stale import handle_stale
 
 where = models.helpers.where
 build_query = models.helpers.build_query
 QueryIterator = models.helpers.QueryIterator
 
 
-def pull_posts_from_source(task):
-    source = h.enforce("source", task)
-    
-    link = models.link.random([
-        where("origin_type", "identity"),
-        where("target_type", "source"),
-        where("target_id", source["id"]),
-        where("name", "follows")
-    ])
-    if link is None:
-        return task.halt()
-    
-    identity = models.identity.get(link["origin_id"])
-    if identity is None:
-        models.link.remove(link["id"])
-        queues.default.put_task(task)
-        return
-
-    queues.default.put_details(
-        name = "flow - pull posts",
-        priority = task.priority,
-        details = {
-            "identity": identity,
-            "source": source
-        }
-    )
-
-
+@handle_stale
 def pull_posts(task):
     client = h.enforce("client", task)
     source = h.enforce("source", task)

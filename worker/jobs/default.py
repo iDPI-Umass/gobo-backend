@@ -65,8 +65,6 @@ def dispatch(task):
         return tasks.check_source_lockout(task)
     if task.name == "get source cursor":
         return tasks.get_source_cursor(task)
-    if task.name == "pull posts from source":
-        return tasks.pull_posts_from_source(task)
     if task.name == "map posts":
         return tasks.map_posts(task)
     if task.name == "upsert posts":

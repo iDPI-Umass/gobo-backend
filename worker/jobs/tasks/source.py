@@ -3,6 +3,7 @@ import models
 import joy
 import queues
 from . import helpers as h
+from .stale import handle_stale
 
 where = models.helpers.where
 build_query = models.helpers.build_query
@@ -40,6 +41,7 @@ def get_source_cursor(task):
       }
 
 
+@handle_stale
 def pull_sources(task):
     client = h.enforce("client", task)
     graph = client.list_sources()

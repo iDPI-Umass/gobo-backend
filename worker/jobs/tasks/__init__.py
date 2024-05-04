@@ -14,3 +14,4 @@ from .source import *
 from .workbench import *
 
 from . import helpers
+from .stale import handle_stale

@@ -186,7 +186,11 @@ class Reddit():
             client_id = environ.get("REDDIT_CLIENT_ID"),
             client_secret = environ.get("REDDIT_CLIENT_SECRET"),
             user_agent = environ.get("REDDIT_USER_AGENT"),
-            redirect_uri = environ.get("OAUTH_CALLBACK_URL")
+            # TODO: It's bad that we hardcode this. Our Reddit integration
+            # currently only serves the production redirect. We should see
+            # if we can submit multiple values or setup multiple applications.
+            redirect_uri = "https://gobo.social/add-identity-callback"
+            # redirect_uri = environ.get("OAUTH_CALLBACK_URL")
         )
 
         return client.auth.url(

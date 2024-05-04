@@ -67,6 +67,9 @@ def get_client(identity):
     
     return client
 
+def get_identity(id):
+    return models.identity.get(id)
+
 
 def read_draft_file(draft):
     filename = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), draft["id"])

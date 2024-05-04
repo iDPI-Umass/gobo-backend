@@ -25,7 +25,7 @@ def dispatch(task):
 
 
 
-
+@tasks.handle_stale
 def create_post(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)
