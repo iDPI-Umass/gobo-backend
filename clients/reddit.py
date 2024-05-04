@@ -218,9 +218,6 @@ class Reddit():
             redirect_uri = environ.get("OAUTH_CALLBACK_URL")
         )
 
-    def convert_code(self, code):
-        return self.client.auth.authorize(code)
-
     def get_profile(self):
         return self.client.user.me()
 
