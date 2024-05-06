@@ -111,8 +111,8 @@ def dispatch(task):
 
     if task.name == "prune resources":
         return tasks.prune_resources(task)
-    if task.name == "prune draft images":
-        return tasks.prune_draft_images(task)  
+    if task.name == "prune draft files":
+        return tasks.prune_draft_files(task)  
     if task.name == "prune posts":
         return tasks.prune_posts(task)
     if task.name == "prune registrations":

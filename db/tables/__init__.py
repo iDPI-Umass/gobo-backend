@@ -8,7 +8,7 @@ from .registration import *
 from .source import *
 from .store import *
 from .task import *
-from .draft_image import *
+from .draft_file import *
 from .post_edge import *
 from .bluesky_session import *
 from .gobo_key import *

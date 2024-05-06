@@ -19,5 +19,7 @@ def not_found(message):
     return HTTPError(404, message)
 def conflict(message):
     return HTTPError(409, message)
+def content_too_large(message):
+    return HTTPError(413, message)
 def unprocessable_content(message):
     return HTTPError(422, message)

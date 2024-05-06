@@ -56,7 +56,7 @@ def create_post(task):
     client.create_post(post, metadata)
     logging.info("mastodon: create post complete")
     for draft in post["attachments"]:
-        models.draft_image.publish(draft["id"])
+        models.draft_file.publish(draft["id"])
 
 
 @tasks.handle_stale

@@ -13,7 +13,7 @@ QueryIterator = models.helpers.QueryIterator
 
 
 def prune_resources(task):
-    queues.default.put_details("prune draft images")
+    queues.default.put_details("prune draft files")
     queues.default.put_details("prune posts")
     queues.default.put_details("prune registrations")
     queues.default.put_details("prune sources")
@@ -21,13 +21,13 @@ def prune_resources(task):
 
 
 
-def prune_draft_images(task):
+def prune_draft_files(task):
     oldest_limit = joy.time.convert("date", "iso", 
         joy.time.nowdate() - timedelta(hours=12)
     )
 
     drafts = QueryIterator(
-        model = models.draft_image,
+        model = models.draft_file,
         for_removal = True,
         wheres = [
             where("created", oldest_limit , "lt")
@@ -43,7 +43,7 @@ def prune_draft_images(task):
         if os.path.exists(filename):
             os.remove(filename)
         
-        models.draft_image.remove(draft["id"])
+        models.draft_file.remove(draft["id"])
 
 
 

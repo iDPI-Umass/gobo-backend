@@ -59,10 +59,10 @@ def create_post(task):
     client.create_post(post, metadata)
     logging.info("bluesky: create post complete")
     for draft in post["attachments"]:
-        models.draft_image.publish(draft["id"])
+        models.draft_file.publish(draft["id"])
     if metadata.get("link_card_draft_image") is not None:
         draft = metadata.get("link_card_draft_image")
-        models.draft_image.publish(draft["id"])
+        models.draft_file.publish(draft["id"])
 
 
 @tasks.handle_stale

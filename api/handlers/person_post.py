@@ -11,7 +11,7 @@ def get_unfurl_image(person_id, image):
             f"bluesky link unfurl image was not associated with uploaded image"
         )
     else:
-        draft = models.draft_image.find({
+        draft = models.draft_file.find({
             "id": id,
             "person_id": person_id
         })
@@ -55,7 +55,7 @@ def person_posts_post(person_id):
     attachment_ids = post.get("attachments", [])
     attachments = []
     for id in attachment_ids:
-        draft = models.draft_image.find({
+        draft = models.draft_file.find({
             "id": id,
             "person_id": person_id
         })

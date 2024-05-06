@@ -12,8 +12,8 @@ optional = [
     "mime_type"
 ]
 
-class DraftImage(Base):
-    __tablename__ = "draft_image"
+class DraftFile(Base):
+    __tablename__ = "draft_file"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     person_id: Mapped[int]
@@ -26,7 +26,7 @@ class DraftImage(Base):
 
     @staticmethod
     def write(data):
-        return DraftImage(**data)
+        return DraftFile(**data)
 
     def to_dict(self):
         data = {

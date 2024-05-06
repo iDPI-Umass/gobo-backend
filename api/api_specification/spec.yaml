@@ -306,31 +306,31 @@ shards:
       <<: *postCore
       <<: *timestamp
 
-  imageCore: &imageCore    
+  fileCore: &fileCore    
     id:
-      description: Unqiue identifier for the uploaded image to GOBO cross-posting
+      description: Unqiue identifier for the uploaded file to GOBO cross-posting
       type: string
     person_id:
-      description: The ID of the person this draft image is associated with.
+      description: The ID of the person this draft file is associated with.
       type: integer
     mime_type:
-      description: MIME type of this image
+      description: MIME type of this file
       type: string
     name:
-      description: Provided name for this image.
+      description: Provided name for this file.
       type: string
     alt:
-      description: Provided alt text for this image
+      description: Provided alt text for files, for example images and video.
     published:
-      description: flag indicated whether this image has been used in a post publish task
+      description: flag indicated whether this file has been used in a post publish task
       type: boolean
 
-  image: &image
+  file: &file
     type: object
     additionalProperties: false
     required: [ id, person_id ]
     properties:
-      <<: *imageCore
+      <<: *fileCore
       <<: *timestamp
 
   newPost: &newPost
@@ -362,7 +362,7 @@ shards:
           content:
             type: string
           attachments:
-            description: List of draft image IDs to provide as attachments in the final post.
+            description: List of draft file IDs to provide as attachments in the final post.
             type: array
             items: 
               type: string
@@ -1252,12 +1252,12 @@ resources:
                 type: array
                 items: *source
 
-  person_draft_images:
-    template: /people/{person_id}/draft-images
-    route: /people/<int:person_id>/draft-images
+  person_draft_files:
+    template: /people/{person_id}/draft-files
+    route: /people/<int:person_id>/draft-files
     methods:
       post:
-        description: "Accepts mutlipart upload of image. Form fields are 'file', 'name', and 'alt'."
+        description: "Accepts mutlipart upload of file. Form fields are 'file', 'name', and 'alt'."
         request:
           authorization:
             - person
@@ -1265,11 +1265,11 @@ resources:
         response:
           status: 200
           type: application/json
-          schema: *image
+          schema: *file
 
-  person_draft_image:
-    template: /people/{person_id}/draft-images/{id}
-    route: /people/<int:person_id>/draft-images/<id>
+  person_draft_file:
+    template: /people/{person_id}/draft-files/{id}
+    route: /people/<int:person_id>/draft-files/<id>
     methods:
       delete:
         request:

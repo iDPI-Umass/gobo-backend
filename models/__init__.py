@@ -9,7 +9,7 @@ import models.registration as registration
 import models.source as source
 import models.store as store
 import models.task as task
-import models.draft_image as draft_image
+import models.draft_file as draft_file
 import models.post_edge as post_edge
 import models.bluesky_session as bluesky_session
 import models.gobo_key as gobo_key

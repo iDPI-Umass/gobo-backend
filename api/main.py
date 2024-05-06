@@ -47,7 +47,9 @@ from flask import Flask, request, make_response
 from flask_cors import CORS
 import werkzeug
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 4 * 1000 * 1000  # 4 MB upload limit
+# 100 MiB upload limit to accommodate the media we support.
+# TODO: narrow this to solely the draft_media upload resource. 
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  
 CORS(app)
 
 

@@ -177,7 +177,7 @@ class GoboLinkedin():
 
     def upload_media(self, url, draft):
         headers = self.add_token()
-        headers["Content-Type"] = f"image/{draft['mime_type']}"
+        headers["Content-Type"] = draft["mime_type"]
         data = draft["data"]
         return self.post(url, data = data, headers = headers)
 
