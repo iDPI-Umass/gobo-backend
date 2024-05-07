@@ -150,7 +150,7 @@ class Linkedin():
                   "status": "READY",
                   "media": media_urn,
                   "description": {
-                      "text": draft.get("description", "")
+                      "text": draft.get("alt", "")
                   }
               })
 

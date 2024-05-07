@@ -648,8 +648,9 @@ class Bluesky():
             result = self.client.upload_blob(attachment)
             images.append({
                 "image": result["blob"],
-                "alt": attachment["alt"]
+                "alt": attachment.get("alt", "")
             })
+        
         if len(images) > 0:
             embed["images"] = images
 

@@ -306,13 +306,22 @@ class Mastodon():
         )
     
     def upload_media(self, draft):
-        return self.client.media_post(
+        media = self.client.media_post(
             media_file = draft["data"],
             mime_type = draft["mime_type"],
-            description = draft["alt"],
+            description = draft.get("alt", ""),
             focus = (0, 0)
         )
+
+        # Once transcoding and processing is complete, the media dictionary
+        # will contain a URL parameter, and it's safe to build a post
+        # with the is subordinate resource. 
+        while media.get("url") is None:
+            time.sleep(5)
+            media = self.client.media(media["id"])
+        return media
     
+
     def favourite_post(self, post):
         return self.client.status_favourite(post["platform_id"])
     

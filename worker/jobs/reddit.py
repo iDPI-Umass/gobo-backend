@@ -1,4 +1,5 @@
 import logging
+import os
 import models
 import joy
 from clients import Reddit
@@ -54,8 +55,16 @@ def create_post(task):
 
     if len(post["attachments"]) > 20:
         raise Exception("reddit submissions are limited to 20 attachments.")
+    
+    # praw doesn't want the binary. It wants the path to the file.
+    attachments = []
     for draft in post["attachments"]:
-        draft["data"] = h.read_draft_file(draft)
+        filename = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), draft["id"])
+        if os.path.exists(filename):
+            draft["image_path"] = filename
+            attachments.append(draft)
+    post["attachments"] = attachments
+
 
     client = Reddit(identity)
     client.login()

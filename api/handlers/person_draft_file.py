@@ -30,12 +30,15 @@ def person_draft_files_post(person_id):
     alt = request.form.get("alt")
     id = joy.crypto.address()  
     
-    # Includes support for implicit MIME type resolution.
+    # Support for implicit MIME type resolution as last resort.
     if mime_type is None:
       mime_type, encoding = mimetypes.guess_type(name)
     if mime_type is None:
         raise http_errors.bad_request("unable to determine MIME type of file upload")
   
+    # TODO: This is not good, but we need to present praw with a filename that
+    #  indicates the MIME type because they don't allow explicit configurationn there.
+    id = id + mimetypes.guess_extension(mime_type)
     
     # Add file to drive
     filepath = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), id)

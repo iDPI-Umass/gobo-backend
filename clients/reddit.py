@@ -253,36 +253,51 @@ class Reddit():
             raise Exception("reddit post requires a subreddit to be specified in metadata")
         
 
-        images = []
-        for attachment in post.get("attachments", []):
-            images.append({
-                "image_path": attachment["image_path"],
-                "caption": attachment["alt"]
-            })        
+        attachments = post.get("attachments", [])
 
-        if len(images) == 0:
+        if len(attachments) == 0:
             self.client.subreddit(subreddit).submit(
                 title = title,
                 selftext = post.get("content", None),
                 nsfw = metadata.get("nsfw", False),
                 spoiler = metadata.get("spoiler", False)
             )
-        elif len(images) == 1:
-            self.client.subreddit(subreddit).submit_image(
-                title = title,
-                image_path = images[0]["image_path"],
-                nsfw = metadata.get("nsfw", False),
-                spoiler = metadata.get("spoiler", False),
-                without_websockets = True
-            )         
+        
+        elif len(attachments) == 1:
+            type = attachments[0]["mime_type"]
+            if type.startswith("image"):
+                self.client.subreddit(subreddit).submit_image(
+                    title = title,
+                    image_path = attachments[0]["image_path"],
+                    nsfw = metadata.get("nsfw", False),
+                    spoiler = metadata.get("spoiler", False),
+                    without_websockets = True
+                )
+            elif type.startswith("video"):
+                self.client.subreddit(subreddit).submit_video(
+                    title = title,
+                    video_path = attachments[0]["image_path"],
+                    nsfw = metadata.get("nsfw", False),
+                    spoiler = metadata.get("spoiler", False),
+                    without_websockets = True
+                )
+        
         else:
             # TODO: How do we want to handle post content for galleries?
+            files = []
+            for attachment in attachments:
+                files.append({
+                    "image_path": attachment["image_path"],
+                    "caption": attachment.get("alt", "")
+                })  
+
             self.client.subreddit(subreddit).submit_gallery(
                 title = title,
-                images = images,
+                images = files,
                 nsfw = metadata.get("nsfw", False),
                 spoiler = metadata.get("spoiler", False)
             )
+
 
     def create_reply(self, post, metadata):
         reply = metadata["reply"]
