@@ -56,9 +56,8 @@ def json_failure(value):
     logging.info(vars(value))
     return "Unable to stringify this value"
 
-post_rkey_regex = re.compile(r"app\.bsky\.feed\.post/(.+)$")
-like_rkey_regex = re.compile(r"app\.bsky\.feed\.like/(.+)$")
-repost_rkey_regex = re.compile(r"app\.bsky\.feed\.repost/(.+)$")
+parse_uri_regex = re.compile(r"at\:\/\/(.*)\/app\.bsky\.feed\.(?:post|like|repost)\/(.+)$")
+
 
 primitive = (str, int, float, bool, type(None), bytes, bytearray)
 
@@ -237,9 +236,24 @@ class Post():
     # but referencing a post requires uri (author's did + rkey) and the cid (content hash)
     # and the URL uses the author's handle + rkey
     @staticmethod
+    def parse_uri(uri):
+        match = parse_uri_regex.search(uri)
+        did = match.group(1)
+        rkey = match.group(2)
+        return { 
+            "did": did, 
+            "rkey": rkey
+        }
+
+    @staticmethod
     def get_rkey(uri):
-        match = post_rkey_regex.search(uri)
-        return match.group(1)
+        values = Post.parse_uri(uri)
+        return values.get("rkey")
+    
+    @staticmethod
+    def get_did(uri):
+        values = Post.parse_uri(uri)
+        return values.get("did")
 
     @staticmethod
     def get_url(post):
@@ -376,18 +390,6 @@ class Post():
         self.content = text
 
 
-
-class Like():
-    @staticmethod
-    def get_rkey(uri):
-        match = like_rkey_regex.search(uri)
-        return match.group(1)
-    
-class Repost():
-    @staticmethod
-    def get_rkey(uri):
-        match = repost_rkey_regex.search(uri)
-        return match.group(1)
     
 # Simplified post class to handle reply references for thread construction.
 class Reply():
@@ -696,9 +698,9 @@ class Bluesky():
        
 
         reply = None
-        if metadata.get("reply", None) is not None:
+        if metadata.get("reply") is not None:
             uri = json.loads(metadata["reply"]["platform_id"])["uri"]
-            parent = self.client.get_post(Post.get_rkey(uri))
+            parent = self.client.get_post(Post.parse_uri(uri))
             grandparent = parent.get("reply", None)
             reply = {
                 "parent": {
@@ -737,7 +739,7 @@ class Bluesky():
         })
     
     def undo_like_post(self, edge):
-        rkey = Like.get_rkey(edge["stash"]["uri"])
+        rkey = Post.get_rkey(edge["stash"]["uri"])
         return self.client.undo_like_post(rkey)
     
     def repost_post(self, post):
@@ -748,7 +750,7 @@ class Bluesky():
         })
     
     def undo_repost_post(self, edge):
-        rkey = Repost.get_rkey(edge["stash"]["uri"])
+        rkey = Post.get_rkey(edge["stash"]["uri"])
         return self.client.undo_repost_post(rkey)
     
     def get_notification_posts(self, notifications):

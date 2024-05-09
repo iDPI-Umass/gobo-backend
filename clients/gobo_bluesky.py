@@ -247,11 +247,11 @@ class GOBOBluesky():
 
         return self.bluesky_post(url, data)
     
-    def get_post(self, rkey):
+    def get_post(self, reference):
         url = self.build_url("com.atproto.repo.getRecord", {
-            "repo": self.did,
+            "repo": reference.get("did"),
             "collection": "app.bsky.feed.post",
-            "rkey": rkey
+            "rkey": reference.get("rkey")
         })
 
         return self.bluesky_get(url)
