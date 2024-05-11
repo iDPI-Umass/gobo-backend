@@ -369,7 +369,39 @@ shards:
           poll:
             description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
             type: object   
-     
+
+  deliveryCore: &deliveryCore
+    person_id:
+      description: The ID of the person this draft file is associated with.
+      type: integer
+    targets:
+      type: array
+      minItems: 1
+      items:
+        type: object
+        additionalProperties: false
+        required: [ identity ]
+        properties:
+          identity:
+            description: The ID of the target identity Gobo is trying to submit to.
+            type: integer
+          state:
+            description: The current state of the submission process
+            type: string
+          metadata:
+            description: Platform specific status information. Its shape is kept flexible to support different platforms, but it's primarily concerend with dealing with errors.
+            type: object
+
+  delivery: &delivery
+    type: object
+    additionalProperties: false
+    required: [ id, person_id, targets ]
+    properties:
+      <<: *id
+      <<: *deliveryCore
+      <<: *timestamp
+      
+
   goboKeyCore: &goboKeyCore
     person_id:
       description: The ID of the person to whom this key is assigned.
@@ -1289,11 +1321,22 @@ resources:
           type: application/json
           schema: *newPost
         response:
+          status: 201
+          type: application/json
+          schema: *delivery
+
+  person_delivery:
+    template: /people/{person_id}/deliveries/{id}
+    route: /people/<int:person_id>/deliveries/<int:id>
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+        response:
           status: 200
           type: application/json
-          schema: 
-            type: array
-            items: *task
+          schema: *delivery
 
   person_post_edge:
     template: /people/{person_id}/post-edges/{identity_id}/{post_id}/{name}

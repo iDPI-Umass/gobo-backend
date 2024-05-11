@@ -258,3 +258,28 @@ def rollback_cursor(task):
     cursor = task.details.get("cursor")
     if cursor is not None:
         cursor.rollback()
+
+def remove_delivery(delivery):
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("origin_type", "delivery"),
+            where("origin_id", delivery["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("target_type", "delivery"),
+            where("target_id", delivery["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    models.delivery.remove(delivery["id"])

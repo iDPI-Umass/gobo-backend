@@ -62,3 +62,8 @@ CREATE INDEX CONCURRENTLY
 ON linkedin_session 
 USING btree 
 (person_id, identity_id, platform_id);
+
+CREATE INDEX CONCURRENTLY 
+ON delivery 
+USING btree 
+(person_id);

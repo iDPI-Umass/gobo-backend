@@ -14,7 +14,7 @@ def person_draft_files_post(person_id):
         models.helpers.where("published", False)
     ])
 
-    if len(drafts) > 100:
+    if len(drafts) > 1000:
         raise http_errors.unprocessable_content(
             f"person {person_id} has reached the maximum number of draft files."
         )

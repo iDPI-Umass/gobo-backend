@@ -24,8 +24,8 @@ def dispatch(task):
     logging.warning("No matching job for task: %s", task)
 
 
-
 @tasks.handle_stale
+@tasks.handle_delivery
 def create_post(task):
     identity = h.enforce("identity", task)
     post = h.enforce("post", task)

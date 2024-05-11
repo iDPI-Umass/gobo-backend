@@ -80,18 +80,28 @@ def person_posts_post(person_id):
                   get_unfurl_image(person_id, image)
 
 
-    tasks = []
+    delivery = models.delivery.add({
+        "person_id": person_id
+    })
+    
     for key, identity in identities.items():
-        tasks.append(models.task.add({
+        models.delivery.update(delivery["id"], key, {
+            "state": "pending"
+        })
+       
+        models.task.add({
             "queue": identity["platform"],
             "name": "create post",
             "priority": 1,
             "details": {
+              "delivery": delivery,
               "identity": identity,
               "post": post,
               "metadata": metadata[identity["id"]],
             }
-        }))
+        })
 
 
-    return {"content": tasks}
+    return {
+        "content": models.delivery.fetch(delivery["id"])
+    }

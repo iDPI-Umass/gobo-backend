@@ -22,3 +22,4 @@ from .person_draft_file import *
 from .person_post_edge import *
 from .person_notification import *
 from .person_notification_count import *
+from .person_delivery import *
