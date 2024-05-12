@@ -170,7 +170,7 @@ class Subreddit():
         self.url = f"{Reddit.BASE_URL}/r/{_.display_name}",
         self.username = _.id
         self.name = _.display_name
-        self.icon_url = _.icon_img
+        self.icon_url = _.community_icon
 
 
 
