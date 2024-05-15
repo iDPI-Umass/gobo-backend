@@ -24,6 +24,17 @@ def get_unfurl_image(person_id, image):
 
 
 def person_posts_post(person_id):
+    delivery_id = request.json["delivery"]
+    delivery = models.delivery.fetch(delivery_id)
+    if delivery is None:
+        raise http_errors.not_found(
+            f"person {person_id} does not have delivery {id}"
+        )
+    if delivery["person_id"] != person_id:
+        raise http_errors.not_found(
+            f"person {person_id} does not have delivery {id}"
+        )
+    
     metadata = {}
     identity_ids = []
     for target in request.json["targets"]:
@@ -79,10 +90,6 @@ def person_posts_post(person_id):
                 metadata[id]["link_card_draft_image"] = \
                   get_unfurl_image(person_id, image)
 
-
-    delivery = models.delivery.add({
-        "person_id": person_id
-    })
     
     for key, identity in identities.items():
         models.delivery.update(delivery["id"], key, {
