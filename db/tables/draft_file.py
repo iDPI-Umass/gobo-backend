@@ -9,7 +9,8 @@ from .helpers import read_optional, write_optional
 optional = [
     "name",
     "alt",
-    "mime_type"
+    "mime_type",
+    "state"
 ]
 
 class DraftFile(Base):
@@ -19,6 +20,7 @@ class DraftFile(Base):
     person_id: Mapped[int]
     name: Mapped[Optional[str]]
     alt: Mapped[Optional[str]]
+    state: Mapped[Optional[str]]
     published: Mapped[bool] = mapped_column(insert_default=False)
     mime_type: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)

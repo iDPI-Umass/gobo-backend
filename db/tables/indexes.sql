@@ -67,3 +67,13 @@ CREATE INDEX CONCURRENTLY
 ON delivery 
 USING btree 
 (person_id);
+
+CREATE INDEX CONCURRENTLY 
+ON draft 
+USING btree 
+(person_id);
+
+CREATE INDEX CONCURRENTLY 
+ON draft_file 
+USING btree 
+(person_id);

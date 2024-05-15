@@ -6,17 +6,39 @@ import http_errors
 import models
 import joy
 
-
 def person_draft_files_post(person_id):
     # Check to make sure we're not being flooded with draft files.
-    drafts = models.draft_file.pull([
+    files = models.draft_file.pull([
         models.helpers.where("person_id", person_id),
         models.helpers.where("published", False)
     ])
 
-    if len(drafts) > 1000:
+    if len(files) > 1000:
         raise http_errors.unprocessable_content(
             f"person {person_id} has reached the maximum number of draft files."
+        )
+    
+    # create file metadata slot in database and come up with its ID.
+    file = models.draft_file.add({
+        "id": id,
+        "person_id": person_id,
+        "published": False,
+        "state": "empty"
+    })
+    
+    return {"content": file}
+
+
+def person_draft_file_post(person_id, id):
+    # Locate the draft file slot
+    draft = models.draft_file.find({
+        "person_id": person_id,
+        "id": id
+    })
+
+    if draft is None:
+        raise http_errors.not_found(
+            f"draft file {person_id} / {id} is not found"
         )
     
 
@@ -45,13 +67,14 @@ def person_draft_files_post(person_id):
     file.save(filepath)
 
     # Add file metadata to db
-    draft = models.draft_file.add({
+    draft = models.draft_file.update(id, {
         "id": id,
         "person_id": person_id,
         "name": name,
         "alt": alt,
         "published": False,
-        "mime_type": mime_type
+        "mime_type": mime_type,
+        "state": "uploaded"
     })
     
     return {"content": draft}

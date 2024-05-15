@@ -403,7 +403,39 @@ shards:
       <<: *id
       <<: *deliveryCore
       <<: *timestamp
-      
+  
+
+  draftCore: &draftCore
+    person_id:
+      description: The ID of the person associated with this draft.
+      type: integer
+    title:
+      description: The title of the to-be-published post.
+      type: string
+    content:
+      description: The main content of the to-be-published post.
+      type: string
+    attachments:
+      description: List of draft file IDs to provide as attachments in the final post.
+      type: array
+      items: 
+        type: string
+    poll:
+      description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
+      type: object
+    state:
+      description: The current lifecycle state of the draft.
+      type: string
+
+  draft: &draft
+    type: object
+    additionalProperties: false
+    required: [ id, person_id, content, attachments ]
+    properties:
+      <<: *id
+      <<: *draftCore
+      <<: *timestamp
+
 
   goboKeyCore: &goboKeyCore
     person_id:
@@ -1292,11 +1324,9 @@ resources:
     route: /people/<int:person_id>/draft-files
     methods:
       post:
-        description: "Accepts mutlipart upload of file. Form fields are 'file', 'name', and 'alt'."
         request:
           authorization:
             - person
-          type: multipart/form-data
         response:
           status: 200
           type: application/json
@@ -1306,6 +1336,16 @@ resources:
     template: /people/{person_id}/draft-files/{id}
     route: /people/<int:person_id>/draft-files/<id>
     methods:
+      post:
+        description: "Accepts mutlipart upload of file. Form fields are 'file', 'name', and 'alt'."
+        request:
+          authorization:
+            - person
+          type: multipart/form-data
+        response:
+          status: 200
+          type: application/json
+          schema: *file
       delete:
         request:
           authorization:
@@ -1327,6 +1367,47 @@ resources:
           status: 201
           type: application/json
           schema: *delivery
+
+  person_drafts:
+    template: /people/{person_id}/drafts
+    route: /people/<int:person_id>/drafts
+    methods:
+      post:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema: 
+            type: object
+            additionalProperties: false
+            required: [ person_id, content, attachments ]
+            properties: *draftCore
+        response:
+          status: 201
+          type: application/json
+          schema: *draft
+
+  person_draft:
+    template: /people/{person_id}/drafts/{id}
+    route: /people/<int:person_id>/drafts/<int:id>
+    methods:
+      put:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema: *draft
+        response:
+          status: 200
+          type: application/json
+          schema: *draft
+    delete:
+      request:
+        authorization:
+          - person
+      response:
+        status: 204
+
 
   person_deliveries:
     template: /people/{person_id}/deliveries{?per_page,start}
