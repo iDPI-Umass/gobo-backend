@@ -48,22 +48,17 @@ def create_post(task):
 
     if len(post["attachments"]) > 4:
         raise Exception("bluesky posts are limited to 4 attachments.")
-    for draft in post["attachments"]:
-        draft["data"] = h.read_draft_file(draft)
+    for file in post["attachments"]:
+        file["data"] = h.read_draft_file(file)
 
     if metadata.get("link_card_draft_image") is not None:
-        draft = metadata["link_card_draft_image"]
-        draft["data"] = h.read_draft_file(draft)
+        file = metadata["link_card_draft_image"]
+        file["data"] = h.read_draft_file(file)
 
     client = Bluesky(identity)
     client.login()
     client.create_post(post, metadata)
     logging.info("bluesky: create post complete")
-    for draft in post["attachments"]:
-        models.draft_file.publish(draft["id"])
-    if metadata.get("link_card_draft_image") is not None:
-        draft = metadata.get("link_card_draft_image")
-        models.draft_file.publish(draft["id"])
 
 
 @tasks.handle_stale

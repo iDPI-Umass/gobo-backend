@@ -24,4 +24,5 @@ from .person_post_edge import *
 from .person_notification import *
 from .person_notification_count import *
 from .person_delivery import *
+from .person_delivery_target import *
 from .person_delivery_post import *

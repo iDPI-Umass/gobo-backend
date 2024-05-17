@@ -25,7 +25,10 @@ def get_unfurl_image(person_id, image):
 
 def person_posts_post(person_id):
     delivery_id = request.json["delivery_id"]
-    delivery = models.delivery.fetch(delivery_id)
+    delivery = models.delivery.find({
+        "person_id": person_id,
+        "id": delivery_id
+    })
     if delivery is None:
         raise http_errors.bad_request(
             f"person {person_id} does not have delivery {id}"
@@ -55,7 +58,7 @@ def person_posts_post(person_id):
     metadata = {}
     identity_ids = []
     for target in request.json["targets"]:
-        metadata[target["identity"]] = target.get("metadata", {})
+        metadata[target["identity"]] = target.get("stash", {})
         identity_ids.append(target["identity"])
 
     identities = {}
@@ -87,20 +90,20 @@ def person_posts_post(person_id):
 
 
     # Confirm attachments have been uploaded already.
-    attachment_ids = draft.get("attachments", [])
+    file_ids = draft.get("files", [])
     attachments = []
-    for id in attachment_ids:
-        draft = models.draft_file.find({
+    for id in file_ids:
+        file = models.draft_file.find({
             "id": id,
             "person_id": person_id
         })
 
-        if draft is None:
+        if file is None:
             raise http_errors.bad_request(
                 f"draft image {person_id}/{id} is not found"
             )
        
-        attachments.append(draft)
+        attachments.append(file)
 
     post["attachments"] = attachments
 
@@ -138,7 +141,7 @@ def person_posts_post(person_id):
             }
         })
 
-    models.delivery.update(delivery["id"], delivery)
+    delivery = models.delivery.update(delivery["id"], delivery)
     models.draft.submit(delivery, draft)
 
     return {

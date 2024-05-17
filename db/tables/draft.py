@@ -17,7 +17,7 @@ optional = [
 class Draft(Base):
     __tablename__ = "draft"
 
-    id: Mapped[str] = mapped_column(String, primary_key=True)
+    id: Mapped[str] = mapped_column(Integer, primary_key=True)
     person_id: Mapped[int]
     state: Mapped[Optional[str]]
     title: Mapped[Optional[str]]

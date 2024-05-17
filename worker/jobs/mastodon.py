@@ -49,15 +49,13 @@ def create_post(task):
 
     if len(post["attachments"]) > 4:
         raise Exception("mastodon posts are limited to 4 attachments.")
-    for draft in post["attachments"]:
-        draft["data"] = h.read_draft_file(draft)
+    for file in post["attachments"]:
+        file["data"] = h.read_draft_file(file)
 
     client = Mastodon(identity)
     client.login()
     client.create_post(post, metadata)
     logging.info("mastodon: create post complete")
-    for draft in post["attachments"]:
-        models.draft_file.publish(draft["id"])
 
 
 @tasks.handle_stale

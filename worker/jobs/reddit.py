@@ -59,11 +59,11 @@ def create_post(task):
     
     # praw doesn't want the binary. It wants the path to the file.
     attachments = []
-    for draft in post["attachments"]:
-        filename = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), draft["id"])
+    for file in post["attachments"]:
+        filename = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), file["filename"])
         if os.path.exists(filename):
-            draft["image_path"] = filename
-            attachments.append(draft)
+            file["image_path"] = filename
+            attachments.append(file)
     post["attachments"] = attachments
 
 
@@ -71,8 +71,6 @@ def create_post(task):
     client.login()
     client.create_post(post, metadata)
     logging.info("reddit: create post complete")
-    for draft in post["attachments"]:
-        models.draft_file.publish(draft["id"])
 
 
 @tasks.handle_stale

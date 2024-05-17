@@ -8,6 +8,7 @@ from .helpers import read_optional, write_optional
 
 optional = [
     "name",
+    "filename",
     "alt",
     "mime_type",
     "state"
@@ -19,6 +20,7 @@ class DraftFile(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True)
     person_id: Mapped[int]
     name: Mapped[Optional[str]]
+    filename: Mapped[Optional[str]]
     alt: Mapped[Optional[str]]
     state: Mapped[Optional[str]]
     published: Mapped[bool] = mapped_column(insert_default=False)

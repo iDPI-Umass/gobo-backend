@@ -20,7 +20,7 @@ def person_draft_files_post(person_id):
     
     # create file metadata slot in database and come up with its ID.
     file = models.draft_file.add({
-        "id": id,
+        "id": joy.crypto.address(),
         "person_id": person_id,
         "published": False,
         "state": "pending"
@@ -31,12 +31,12 @@ def person_draft_files_post(person_id):
 
 def person_draft_file_post(person_id, id):
     # Locate the draft file slot
-    draft = models.draft_file.find({
+    file = models.draft_file.find({
         "person_id": person_id,
         "id": id
     })
 
-    if draft is None:
+    if file is None:
         raise http_errors.not_found(
             f"draft file {person_id} / {id} is not found"
         )
@@ -46,11 +46,12 @@ def person_draft_file_post(person_id, id):
     if "file" not in request.files:
         raise http_errors.bad_request("must include file in upload")
     
-    file = request.files["file"]
+    
+    _file = request.files["file"]
     name = request.form.get("name", "")
     mime_type = request.form.get("mime_type")
     alt = request.form.get("alt")
-    id = joy.crypto.address()  
+    id = file["id"]
     
     # Support for implicit MIME type resolution as last resort.
     if mime_type is None:
@@ -59,25 +60,22 @@ def person_draft_file_post(person_id, id):
         raise http_errors.bad_request("unable to determine MIME type of file upload")
   
     # TODO: This is not good, but we need to present praw with a filename that
-    #  indicates the MIME type because they don't allow explicit configurationn there.
-    id = id + mimetypes.guess_extension(mime_type)
+    #  indicates the MIME type because they don't allow explicit configuration there.
+    filename = id + mimetypes.guess_extension(mime_type)
     
     # Add file to drive
-    filepath = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), id)
-    file.save(filepath)
+    filepath = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), filename)
+    _file.save(filepath)
 
     # Add file metadata to db
-    draft = models.draft_file.update(id, {
-        "id": id,
-        "person_id": person_id,
-        "name": name,
-        "alt": alt,
-        "published": False,
-        "mime_type": mime_type,
-        "state": "uploaded"
-    })
+    file["name"] = name
+    file["filename"] = filename
+    file["alt"] = alt
+    file["mime_type"] = mime_type
+    file["state"] = "uploaded"
+    file = models.draft_file.update(file["id"], file)
     
-    return {"content": draft}
+    return {"content": file}
 
 def person_draft_file_put(person_id, id):
     # Locate the draft file
@@ -103,19 +101,19 @@ def person_draft_file_put(person_id, id):
 
 def person_draft_file_delete(person_id, id):
     # Locate the draft file
-    draft = models.draft_file.find({
+    file = models.draft_file.find({
         "person_id": person_id,
         "id": id
     })
 
-    if draft is None:
+    if file is None:
         raise http_errors.not_found(
             f"draft file {person_id} / {id} is not found"
         )
     
 
     # Delete file from drive
-    name = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), id)
+    name = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), file["filename"])
     if os.path.exists(name):
         os.remove(name)
     else:

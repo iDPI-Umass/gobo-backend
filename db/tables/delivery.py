@@ -1,3 +1,4 @@
+import logging
 import json
 from typing import Optional
 from sqlalchemy import Integer
@@ -13,13 +14,21 @@ class Delivery(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     person_id: Mapped[int]
-    draft_id: Mapped[int]
+    draft_id: Mapped[Optional[int]]
+    targets: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
     @staticmethod
     def write(data):
-        return Delivery(**data)
+        _data = data.copy()
+
+        targets = _data.get("targets", [])
+        if targets is None:
+            targets = []
+        _data["targets"] = json.dumps(targets)      
+        
+        return Delivery(**_data)
 
     def to_dict(self):
         data = {
@@ -30,6 +39,11 @@ class Delivery(Base):
             "updated": self.updated
         }
 
+        targets = getattr(self, "targets", "[]")
+        if targets is None:
+            targets = "[]"
+        data["targets"] = json.loads(targets)
+
         read_optional(self, data, optional)
 
         return data
@@ -37,5 +51,11 @@ class Delivery(Base):
     def update(self, data):
         self.person_id = data["person_id"]
         self.draft_id = data["draft_id"]
+
+        targets = data.get("targets", [])
+        if targets is None:
+            targets = []
+        self.targets = json.dumps(targets)
+        
         write_optional(self, data, optional)
         self.updated = joy.time.now()

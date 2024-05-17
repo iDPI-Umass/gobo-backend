@@ -9,11 +9,11 @@ import joy
 def check_draft_data(person_id, data):
     if data["person_id"] != person_id:
         raise http_errors.bad_request("draft person_id does not match resource")
-    for attachment in data["attachments"]:
-        file = models.draft_file.get(attachment)
+    for file_id in data["files"]:
+        file = models.draft_file.get(file_id)
         if file is None or file["person_id"] != person_id:
             raise http_errors.not_found(
-                f"draft file {person_id} / {attachment} is not found"
+                f"draft file {person_id} / {file_id} is not found"
             )
     if data.get("state") is None:
         data["state"] = "draft"
@@ -52,16 +52,16 @@ def person_draft_delete(person_id, id):
             f"draft file {person_id} / {id} is not found"
         )
     
-    for attachment in draft["attachments"]:
+    for file_id in draft["files"]:
         # Delete file from drive
-        name = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), attachment)
+        name = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), file_id)
         if os.path.exists(name):
             os.remove(name)
         else:
             logging.warning(f"The draft file {id} is not present in the upload directory")
 
         # Delete file metadata from db
-        models.draft_file.remove(attachment)
+        models.draft_file.remove(file_id)
 
     # Ready to remove draft resource
     models.draft.remove(id)

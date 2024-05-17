@@ -18,7 +18,7 @@ class DeliveryTarget(Base):
     identity_id: Mapped[int]
     delivery_id: Mapped[int]
     state: Mapped[Optional[str]]
-    metadata: Mapped[Optional[str]]
+    stash: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
@@ -26,9 +26,9 @@ class DeliveryTarget(Base):
     def write(data):
         _data = data.copy()
 
-        metadata = _data.get("metadata")
-        if metadata is not None:
-            _data["metadata"] = json.dumps(metadata)
+        stash = _data.get("stash")
+        if stash is not None:
+            _data["stash"] = json.dumps(stash)
 
         return DeliveryTarget(**_data)
 
@@ -42,9 +42,9 @@ class DeliveryTarget(Base):
             "updated": self.updated
         }
 
-        metadata = getattr(self, "metadata", None)
-        if metadata is not None:
-            data["metadata"] = json.loads(metadata)
+        stash = getattr(self, "stash", None)
+        if stash is not None:
+            data["stash"] = json.loads(stash)
 
         read_optional(self, data, optional)
 
@@ -56,8 +56,8 @@ class DeliveryTarget(Base):
         self.delivery_id = data["delivery_id"]
         write_optional(self, data, optional)
 
-        metadata = data.get("metadata")
-        if metadata is not None:
-            self.metadata = json.dumps(metadata)
+        stash = data.get("stash")
+        if stash is not None:
+            self.stash = json.dumps(stash)
 
         self.updated = joy.time.now()

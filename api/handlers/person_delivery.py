@@ -26,8 +26,19 @@ def parse_feed_query():
 
 
 def person_deliveries_post(person_id):
+    draft_id = request.json["draft_id"]
+    draft = models.draft.find({
+        "person_id": person_id,
+        "id": draft_id
+    })
+    if draft is None:
+        raise http_errors.not_found(
+            f"person {person_id} does not have draft {draft_id}"
+        ) 
+
     delivery = models.delivery.add({
-        "person_id": person_id
+        "person_id": person_id,
+        "draft_id": draft_id
     })
 
     return {
@@ -45,17 +56,17 @@ def person_deliveries_get(person_id):
 
 
 def person_delivery_get(person_id, id):
-    delivery = models.delivery.fetch(id)
+    graph = models.delivery.fetch(id)
     
-    if delivery is None:
+    if len(graph["deliveries"]) == 0:
         raise http_errors.not_found(
             f"person {person_id} does not have delivery {id}"
         )
-    if delivery["person_id"] != person_id:
+    if graph["deliveries"][0]["person_id"] != person_id:
         raise http_errors.not_found(
             f"person {person_id} does not have delivery {id}"
         )
 
     return {
-        "content": delivery
+        "content": graph
     }

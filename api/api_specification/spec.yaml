@@ -377,7 +377,7 @@ shards:
     state:
       description: The current state of the submission process.
       type: string
-    metadata:
+    stash:
       description: Platform specific status information. Its shape is kept flexible to support different platforms, but it's primarily concerend with dealing with errors.
       type: object
 
@@ -397,11 +397,6 @@ shards:
     draft_id:
       description: The ID of the draft associated with this delivery, if available.
       type: integer
-    files:
-      description: List of IDs referencing files to be uploaded and included in association with this delivery.
-      type: array
-      items:
-        type: integer
     targets:
       description: List of IDs referencing delivery targets associated with this delivery.
       type: array
@@ -452,7 +447,7 @@ shards:
   newPost: &newPost
     type: object
     additionalProperties: false
-    required: [ delivery, draft, targets ]
+    required: [ delivery_id, draft_id, targets ]
     properties:
       delivery_id:
         description: The ID of the associated delivery resource used to orchestrate platform integrations.
@@ -471,7 +466,7 @@ shards:
             identity:
               description: The ID of the target identity. GOBO will create a post on your behalf with this provider.
               type: integer
-            metadata:
+            stash:
               description: Platform specific configuration needed to create this post. For example, a target subreddit.
               type: object
 
@@ -1415,7 +1410,7 @@ resources:
           schema: 
             type: object
             additionalProperties: false
-            required: [ person_id, content, attachments ]
+            required: [ person_id, content, files ]
             properties: *draftCore
         response:
           status: 201
@@ -1465,7 +1460,14 @@ resources:
           authorization:
             - person
           type: application/json
-          schema: *draft
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ draft_id ]
+            properties:
+              draft_id:
+                description: The ID of the draft to associate with this delivery. It must be a draft belonging to you.
+                type: integer
         response:
           status: 201
           type: application/json
@@ -1492,7 +1494,7 @@ resources:
         response:
           status: 200
           type: application/json
-          schema: *delivery
+          schema: *deliveryGraph
 
   person_delivery_post:
     template: /people/{person_id}/deliveries/{delivery_id}/{identity_id}
