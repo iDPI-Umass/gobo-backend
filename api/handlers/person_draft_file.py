@@ -23,7 +23,7 @@ def person_draft_files_post(person_id):
         "id": id,
         "person_id": person_id,
         "published": False,
-        "state": "empty"
+        "state": "pending"
     })
     
     return {"content": file}
@@ -78,6 +78,28 @@ def person_draft_file_post(person_id, id):
     })
     
     return {"content": draft}
+
+def person_draft_file_put(person_id, id):
+    # Locate the draft file
+    file = models.draft_file.find({
+        "person_id": person_id,
+        "id": id
+    })
+    if file is None:
+        raise http_errors.not_found(
+            f"draft file {person_id} / {id} is not found"
+        )
+    
+    file = dict(request.json)
+    if file["person_id"] != person_id:
+         raise http_errors.bad_request(
+            "person_id of body does not match resource path"
+        )       
+
+    # Update file metadata in db
+    file = models.draft_file.update(id, file)
+    return {"content": file}
+
 
 def person_draft_file_delete(person_id, id):
     # Locate the draft file

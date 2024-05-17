@@ -333,13 +333,132 @@ shards:
       <<: *fileCore
       <<: *timestamp
 
+  draftCore: &draftCore
+    person_id:
+      description: The ID of the person associated with this draft.
+      type: integer
+    title:
+      description: The title of the to-be-published post.
+      type: string
+    content:
+      description: The main content of the to-be-published post.
+      type: string
+    files:
+      description: List of draft file IDs to provide as files in the final post.
+      type: array
+      items: 
+        type: string
+    poll:
+      description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
+      type: object
+    state:
+      description: The current lifecycle state of the draft.
+      type: string
+
+  draft: &draft
+    type: object
+    additionalProperties: false
+    required: [ id, person_id, content, files ]
+    properties:
+      <<: *id
+      <<: *draftCore
+      <<: *timestamp
+
+  deliveryTargetCore: &deliveryTargetCore         
+    person_id:
+      description: The ID of the person associated with this delivery target.
+      type: integer
+    identity_id:
+      description: The ID of the target identity Gobo is trying to submit to.
+      type: integer
+    delivery_id:
+      description: The ID of delivery this target is associated with.
+      type: integer
+    state:
+      description: The current state of the submission process.
+      type: string
+    metadata:
+      description: Platform specific status information. Its shape is kept flexible to support different platforms, but it's primarily concerend with dealing with errors.
+      type: object
+
+  deliveryTarget: &deliveryTarget
+    type: object
+    additionalProperties: false
+    required: [ id, person_id, identity, state ]
+    properties:
+      <<: *id
+      <<: *deliveryTargetCore
+      <<: *timestamp
+
+  deliveryCore: &deliveryCore
+    person_id:
+      description: The ID of the person this draft file is associated with.
+      type: integer
+    draft_id:
+      description: The ID of the draft associated with this delivery, if available.
+      type: integer
+    files:
+      description: List of IDs referencing files to be uploaded and included in association with this delivery.
+      type: array
+      items:
+        type: integer
+    targets:
+      description: List of IDs referencing delivery targets associated with this delivery.
+      type: array
+      items:
+        type: integer
+
+  delivery: &delivery
+    type: object
+    additionalProperties: false
+    required: [ id, person_id, draft_id, files, targets ]
+    properties:
+      <<: *id
+      <<: *deliveryCore
+      <<: *timestamp
+  
+
+  deliveryGraph: &deliveryGraph
+    type: object
+    additionalProperties: false
+    required: [ feed, deliveries, drafts, files, targets ]
+    properties:
+      feed:
+        description: List of delivery IDs, sorted in reverse chronological order.
+        type: array
+        items:
+          type: integer
+      deliveries:
+        description: List of delivery resources associated with this graph.
+        type: array
+        items: *delivery
+      drafts:
+        description: List of draft resources associated with this graph.
+        type: array
+        items: *draft
+      files:
+        description: List of draft file resources associated with this graph.
+        type: array
+        items: *file
+      targets:
+        description: List of delivery target resources associated with this graph.
+        type: array
+        items: *deliveryTarget
+      next:
+        description: token that allows the client to fetch the next page fo the feed.
+        type: string
+
+
   newPost: &newPost
     type: object
     additionalProperties: false
-    required: [ delivery, targets, post ]
+    required: [ delivery, draft, targets ]
     properties:
-      delivery:
+      delivery_id:
         description: The ID of the associated delivery resource used to orchestrate platform integrations.
+        type: integer
+      draft_id:
+        description: The ID of the associated draft to publish to the target platforms.
         type: integer
       targets:
         type: array
@@ -355,86 +474,7 @@ shards:
             metadata:
               description: Platform specific configuration needed to create this post. For example, a target subreddit.
               type: object
-      post:
-        type: object
-        additionalProperties: false
-        required: [ content ]
-        properties:
-          title:
-            type: string
-          content:
-            type: string
-          attachments:
-            description: List of draft file IDs to provide as attachments in the final post.
-            type: array
-            items: 
-              type: string
-          poll:
-            description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
-            type: object   
 
-  deliveryCore: &deliveryCore
-    person_id:
-      description: The ID of the person this draft file is associated with.
-      type: integer
-    targets:
-      type: array
-      minItems: 1
-      items:
-        type: object
-        additionalProperties: false
-        required: [ identity ]
-        properties:
-          identity:
-            description: The ID of the target identity Gobo is trying to submit to.
-            type: integer
-          state:
-            description: The current state of the submission process
-            type: string
-          metadata:
-            description: Platform specific status information. Its shape is kept flexible to support different platforms, but it's primarily concerend with dealing with errors.
-            type: object
-
-  delivery: &delivery
-    type: object
-    additionalProperties: false
-    required: [ id, person_id, targets ]
-    properties:
-      <<: *id
-      <<: *deliveryCore
-      <<: *timestamp
-  
-
-  draftCore: &draftCore
-    person_id:
-      description: The ID of the person associated with this draft.
-      type: integer
-    title:
-      description: The title of the to-be-published post.
-      type: string
-    content:
-      description: The main content of the to-be-published post.
-      type: string
-    attachments:
-      description: List of draft file IDs to provide as attachments in the final post.
-      type: array
-      items: 
-        type: string
-    poll:
-      description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
-      type: object
-    state:
-      description: The current lifecycle state of the draft.
-      type: string
-
-  draft: &draft
-    type: object
-    additionalProperties: false
-    required: [ id, person_id, content, attachments ]
-    properties:
-      <<: *id
-      <<: *draftCore
-      <<: *timestamp
 
 
   goboKeyCore: &goboKeyCore
@@ -1346,27 +1386,22 @@ resources:
           status: 200
           type: application/json
           schema: *file
+      put:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema: *file
+        response:
+          status: 200
+          type: application/json
+          schema: *file
       delete:
         request:
           authorization:
             - person
         response:
           status: 204
-
-  person_posts:
-    template: /people/{person_id}/posts
-    route: /people/<int:person_id>/posts
-    methods:
-      post:
-        request:
-          authorization:
-            - person
-          type: application/json
-          schema: *newPost
-        response:
-          status: 201
-          type: application/json
-          schema: *delivery
 
   person_drafts:
     template: /people/{person_id}/drafts
@@ -1408,6 +1443,18 @@ resources:
       response:
         status: 204
 
+  person_delivery_target:
+    template: /people/{person_id}/delivery-targets/{id}
+    route: /people/<int:person_id>/delivery-targets/<int:id>
+    methods:
+      get:
+        request:
+          authorization:
+            - person
+        response:
+          status: 200
+          type: application/json
+          schema: *deliveryTarget
 
   person_deliveries:
     template: /people/{person_id}/deliveries{?per_page,start}
@@ -1417,10 +1464,12 @@ resources:
         request:
           authorization:
             - person
+          type: application/json
+          schema: *draft
         response:
           status: 201
           type: application/json
-          schema: *delivery
+          schema: *deliveryGraph
 
       get:
         request:
@@ -1429,20 +1478,8 @@ resources:
         response:
           status: 200
           type: application/json
-          schema:
-            type: object
-            additionalProperties: false
-            required: [ feed, deliveries ]
-            properties:
-              feed:
-                description: List of delivery IDs, sorted in reverse chronological order.
-                type: array
-                items:
-                  type: integer
-              deliveries:
-                description: List of delivery resources associated with this graph.
-                type: array
-                items: *delivery
+          schema: *deliveryGraph
+
 
   person_delivery:
     template: /people/{person_id}/deliveries/{id}
@@ -1467,6 +1504,21 @@ resources:
             - person
         response:
           status: 204
+
+  person_posts:
+    template: /people/{person_id}/posts
+    route: /people/<int:person_id>/posts
+    methods:
+      post:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema: *newPost
+        response:
+          status: 201
+          type: application/json
+          schema: *deliveryGraph
 
   person_post_edge:
     template: /people/{person_id}/post-edges/{identity_id}/{post_id}/{name}

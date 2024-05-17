@@ -24,17 +24,34 @@ def get_unfurl_image(person_id, image):
 
 
 def person_posts_post(person_id):
-    delivery_id = request.json["delivery"]
+    delivery_id = request.json["delivery_id"]
     delivery = models.delivery.fetch(delivery_id)
     if delivery is None:
-        raise http_errors.not_found(
+        raise http_errors.bad_request(
             f"person {person_id} does not have delivery {id}"
         )
     if delivery["person_id"] != person_id:
-        raise http_errors.not_found(
+        raise http_errors.bad_request(
             f"person {person_id} does not have delivery {id}"
         )
+    if delivery["draft_id"] != request.json["draft_id"]:
+        raise http_errors.bad_request(
+            f"draft id does not match the id listed in the delivery"
+        )
     
+
+    draft_id = request.json["draft_id"]
+    draft = models.draft.find({
+        "person_id": person_id,
+        "id": draft_id
+    })
+    if draft is None:
+        raise http_errors.bad_request(
+            f"person {person_id} does not have draft {id}"
+        )
+    
+    
+
     metadata = {}
     identity_ids = []
     for target in request.json["targets"]:
@@ -56,14 +73,21 @@ def person_posts_post(person_id):
                 f"cannot publish to identity {id}"
             )
         if identity["person_id"] != person_id:
-            raise http_errors.not_found(
+            raise http_errors.bad_request(
                 f"cannot publish to identity {id}"
             )
-        
+    
+
+    # Establish post data core.
+    post = {
+        "title": draft.get("title"),
+        "content": draft.get("content"),
+        "poll": draft.get("poll")
+    }
+
 
     # Confirm attachments have been uploaded already.
-    post = request.json["post"]
-    attachment_ids = post.get("attachments", [])
+    attachment_ids = draft.get("attachments", [])
     attachments = []
     for id in attachment_ids:
         draft = models.draft_file.find({
@@ -91,23 +115,31 @@ def person_posts_post(person_id):
                   get_unfurl_image(person_id, image)
 
     
+    target_ids = []
     for key, identity in identities.items():
-        models.delivery.update(delivery["id"], key, {
+        delivery_target = models.delivery_target.upsert({
+            "person_id": person_id,
+            "delivery_id": delivery["id"],
+            "identity_id": key,
             "state": "pending"
         })
+
+        delivery["targets"].append(delivery_target["id"])
        
         models.task.add({
             "queue": identity["platform"],
             "name": "create post",
             "priority": 1,
             "details": {
-              "delivery": delivery,
+              "delivery_target": delivery_target,
               "identity": identity,
               "post": post,
               "metadata": metadata[identity["id"]],
             }
         })
 
+    models.delivery.update(delivery["id"], delivery)
+    models.draft.submit(delivery, draft)
 
     return {
         "content": models.delivery.fetch(delivery["id"])

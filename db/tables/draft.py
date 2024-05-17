@@ -22,7 +22,7 @@ class Draft(Base):
     state: Mapped[Optional[str]]
     title: Mapped[Optional[str]]
     content: Mapped[Optional[str]]
-    attachments: Mapped[Optional[str]]
+    files: Mapped[Optional[str]]
     poll: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
@@ -31,9 +31,9 @@ class Draft(Base):
     def write(data):
         _data = data.copy()
         
-        attachments = _data.get("attachments", None)
-        if attachments is not None:
-            _data["attachments"] = json.dumps(attachments)
+        files = _data.get("files", None)
+        if files is not None:
+            _data["files"] = json.dumps(files)
 
         poll = _data.get("poll", None)
         if poll is not None:
@@ -49,9 +49,9 @@ class Draft(Base):
             "updated": self.updated
         }
 
-        attachments = getattr(self, "attachments", None)
-        if attachments is not None:
-            data["attachments"] = json.loads(attachments)
+        files = getattr(self, "files", None)
+        if files is not None:
+            data["files"] = json.loads(files)
 
         poll = getattr(self, "poll", None)
         if poll is not None:
@@ -62,9 +62,9 @@ class Draft(Base):
 
     def update(self, data):
         write_optional(self, data, optional)
-        attachments = data.get("attachments")
-        if attachments != None:
-            self.attachments = json.dumps(attachments)
+        files = data.get("files")
+        if files != None:
+            self.files = json.dumps(files)
 
         poll = data.get("poll")
         if poll != None:
