@@ -24,7 +24,7 @@ def prune_resources(task):
 
 def prune_draft_files(task):
     oldest_limit = joy.time.convert("date", "iso", 
-        joy.time.nowdate() - timedelta(hours=12)
+        joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
     )
 
     drafts = QueryIterator(

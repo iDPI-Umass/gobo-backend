@@ -8,8 +8,6 @@ from ..base import Base
 from .helpers import read_optional, write_optional
 
 optional = [
-    "title",
-    "content",
     "state"
 ]
 
@@ -20,10 +18,7 @@ class Draft(Base):
     id: Mapped[str] = mapped_column(Integer, primary_key=True)
     person_id: Mapped[int]
     state: Mapped[Optional[str]]
-    title: Mapped[Optional[str]]
-    content: Mapped[Optional[str]]
-    files: Mapped[Optional[str]]
-    poll: Mapped[Optional[str]]
+    store: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
 
@@ -31,13 +26,9 @@ class Draft(Base):
     def write(data):
         _data = data.copy()
         
-        files = _data.get("files", None)
-        if files is not None:
-            _data["files"] = json.dumps(files)
-
-        poll = _data.get("poll", None)
-        if poll is not None:
-            _data["poll"] = json.dumps(poll)
+        store = _data.get("store", None)
+        if store is not None:
+            _data["store"] = json.dumps(store)
         
         return Draft(**_data)
 
@@ -49,25 +40,18 @@ class Draft(Base):
             "updated": self.updated
         }
 
-        files = getattr(self, "files", None)
-        if files is not None:
-            data["files"] = json.loads(files)
-
-        poll = getattr(self, "poll", None)
-        if poll is not None:
-            data["poll"] = json.loads(poll)
+        store = getattr(self, "store", None)
+        if store is not None:
+            data["store"] = json.loads(store)
 
         read_optional(self, data, optional)
         return data
 
     def update(self, data):
         write_optional(self, data, optional)
-        files = data.get("files")
-        if files != None:
-            self.files = json.dumps(files)
-
-        poll = data.get("poll")
-        if poll != None:
-            self.poll = json.dumps(poll)
+      
+        store = data.get("store")
+        if store != None:
+            self.store = json.dumps(store)
 
         self.updated = joy.time.now()

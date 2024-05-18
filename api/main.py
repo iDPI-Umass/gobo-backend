@@ -43,7 +43,7 @@ config.dictConfig({
 # Instntiate Flask app
 from time import process_time
 import math
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, send_file
 from flask_cors import CORS
 import werkzeug
 app = Flask(__name__)
@@ -97,6 +97,9 @@ def wrap_handler(alias, configuration, handler):
                 logging.warning(e, exc_info=True)
                 result["content"] = {"message": e.message}
         
+        if result.get("file") is not None:
+            return send_file(result["file"])
+
         content = result.get("content", "")
         response = make_response(content, status)
         headers = result.get("headers", {})

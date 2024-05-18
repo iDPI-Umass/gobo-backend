@@ -8,7 +8,6 @@ from .helpers import define_crud
 
 
 DeliveryTarget = tables.DeliveryTarget
-Link = tables.Link
 
 add, get, remove, query, find,  = itemgetter(
     "add", "get", "remove", "query", "find"

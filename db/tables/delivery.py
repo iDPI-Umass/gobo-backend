@@ -15,6 +15,7 @@ class Delivery(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     person_id: Mapped[int]
     draft_id: Mapped[Optional[int]]
+    proof_id: Mapped[Optional[int]]
     targets: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
     updated: Mapped[str] = mapped_column(insert_default=joy.time.now)
@@ -35,6 +36,7 @@ class Delivery(Base):
             "id": self.id,
             "person_id": self.person_id,
             "draft_id": self.draft_id,
+            "proof_id": self.proof_id,
             "created": self.created,
             "updated": self.updated
         }
@@ -51,6 +53,7 @@ class Delivery(Base):
     def update(self, data):
         self.person_id = data["person_id"]
         self.draft_id = data["draft_id"]
+        self.proof_id = data["proof_id"]
 
         targets = data.get("targets", [])
         if targets is None:

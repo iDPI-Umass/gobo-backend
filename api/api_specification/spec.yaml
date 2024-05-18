@@ -321,8 +321,14 @@ shards:
       type: string
     alt:
       description: Provided alt text for files, for example images and video.
+    state:
+      description: Describes the current condition of the file with regard to upload or association.
+      type: string
+    size:
+      description: The size of the file, in bytes.
+      type: integer
     published:
-      description: flag indicated whether this file has been used in a post publish task
+      description: DEPRECATED flag indicated whether this file has been used in a post publish task
       type: boolean
 
   file: &file
@@ -335,7 +341,28 @@ shards:
 
   draftCore: &draftCore
     person_id:
-      description: The ID of the person associated with this draft.
+      description: The ID of the person this draft is associated with.
+      type: integer
+    state:
+      description: The current state of the draft to model its internal process flow.
+      type: string
+    store:
+      description: The client's representation of the draft state. Gobo's HTTP takes a hands-off approach to the concerns of this particular resource.
+      type: object
+
+
+  draft: &draft
+    type: object
+    additionalProperties: false
+    required: [ id, person_id, store ]
+    properties:
+      <<: *id
+      <<: *draftCore
+      <<: *timestamp
+
+  proofCore: &proofCore
+    person_id:
+      description: The ID of the person associated with this proof.
       type: integer
     title:
       description: The title of the to-be-published post.
@@ -352,10 +379,10 @@ shards:
       description: Data related to a poll attached to this post. Contains the timestamp for the poll ending and data on the vote tally when last fetch.
       type: object
     state:
-      description: The current lifecycle state of the draft.
+      description: The current lifecycle state of the proof.
       type: string
 
-  draft: &draft
+  proof: &proof
     type: object
     additionalProperties: false
     required: [ id, person_id, content, files ]
@@ -392,10 +419,13 @@ shards:
 
   deliveryCore: &deliveryCore
     person_id:
-      description: The ID of the person this draft file is associated with.
+      description: The ID of the person this delivery is associated with.
       type: integer
     draft_id:
-      description: The ID of the draft associated with this delivery, if available.
+      description: The ID of the draft associated with this delivery.
+      type: integer
+    proof_id:
+      description: The ID of the proof associated with this delivery.
       type: integer
     targets:
       description: List of IDs referencing delivery targets associated with this delivery.
@@ -1397,6 +1427,10 @@ resources:
             - person
         response:
           status: 204
+      get:
+        request: {}
+        response:
+          status: 200
 
   person_drafts:
     template: /people/{person_id}/drafts
@@ -1410,7 +1444,7 @@ resources:
           schema: 
             type: object
             additionalProperties: false
-            required: [ person_id, content, files ]
+            required: [ person_id, store ]
             properties: *draftCore
         response:
           status: 201
@@ -1431,6 +1465,46 @@ resources:
           status: 200
           type: application/json
           schema: *draft
+    delete:
+      request:
+        authorization:
+          - person
+      response:
+        status: 204
+
+  person_proofs:
+    template: /people/{person_id}/proofs
+    route: /people/<int:person_id>/proofs
+    methods:
+      post:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema: 
+            type: object
+            additionalProperties: false
+            required: [ person_id, content, files ]
+            properties: *draftCore
+        response:
+          status: 201
+          type: application/json
+          schema: *proof
+
+  person_draft:
+    template: /people/{person_id}/proofs/{id}
+    route: /people/<int:person_id>/proofs/<int:id>
+    methods:
+      put:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema: *proof
+        response:
+          status: 200
+          type: application/json
+          schema: *proof
     delete:
       request:
         authorization:

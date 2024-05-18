@@ -51,17 +51,21 @@ def person_draft_delete(person_id, id):
         raise http_errors.not_found(
             f"draft file {person_id} / {id} is not found"
         )
-    
-    for file_id in draft["files"]:
-        # Delete file from drive
-        name = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), file_id)
-        if os.path.exists(name):
-            os.remove(name)
-        else:
-            logging.warning(f"The draft file {id} is not present in the upload directory")
 
-        # Delete file metadata from db
-        models.draft_file.remove(file_id)
+    # TODO: We need to handle the deletion of media in a way that's more sophisticated
+    # than waiting two weeks after its involvement with a proof. As drafts become
+    # generalized, we'll need to do the same to media management. 
+     
+    # for file_id in draft["files"]:
+    #     # Delete file from drive
+    #     name = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), file_id)
+    #     if os.path.exists(name):
+    #         os.remove(name)
+    #     else:
+    #         logging.warning(f"The draft file {id} is not present in the upload directory")
+
+    #     # Delete file metadata from db
+    #     models.draft_file.remove(file_id)
 
     # Ready to remove draft resource
     models.draft.remove(id)

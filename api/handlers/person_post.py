@@ -33,13 +33,13 @@ def person_posts_post(person_id):
         raise http_errors.bad_request(
             f"person {person_id} does not have delivery {id}"
         )
-    if delivery["person_id"] != person_id:
-        raise http_errors.bad_request(
-            f"person {person_id} does not have delivery {id}"
-        )
     if delivery["draft_id"] != request.json["draft_id"]:
         raise http_errors.bad_request(
             f"draft id does not match the id listed in the delivery"
+        )
+    if delivery["proof_id"] != request.json["proof_id"]:
+        raise http_errors.bad_request(
+            f"proof id does not match the id listed in the delivery"
         )
     
 
@@ -53,6 +53,16 @@ def person_posts_post(person_id):
             f"person {person_id} does not have draft {id}"
         )
     
+
+    proof_id = request.json["proof_id"]
+    proof = models.proof.find({
+        "person_id": person_id,
+        "id": proof_id
+    })
+    if proof is None:
+        raise http_errors.bad_request(
+            f"person {person_id} does not have draft {id}"
+        )
     
 
     metadata = {}
@@ -118,7 +128,6 @@ def person_posts_post(person_id):
                   get_unfurl_image(person_id, image)
 
     
-    target_ids = []
     for key, identity in identities.items():
         delivery_target = models.delivery_target.upsert({
             "person_id": person_id,
@@ -141,9 +150,12 @@ def person_posts_post(person_id):
             }
         })
 
-    delivery = models.delivery.update(delivery["id"], delivery)
-    models.draft.submit(delivery, draft)
+    models.delivery.update(delivery["id"], delivery)
 
+
+    proof["state"] = "submitted"
+    models.proof.update(proof["id"], proof)
+   
     return {
         "content": models.delivery.fetch(delivery["id"])
     }

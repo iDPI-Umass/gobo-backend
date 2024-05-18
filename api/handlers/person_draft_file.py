@@ -1,7 +1,7 @@
 import logging
 import os
 import mimetypes
-from flask import request
+from flask import request, send_file
 import http_errors
 import models
 import joy
@@ -66,10 +66,12 @@ def person_draft_file_post(person_id, id):
     # Add file to drive
     filepath = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), filename)
     _file.save(filepath)
+    size = os.path.getsize(filepath)
 
     # Add file metadata to db
     file["name"] = name
     file["filename"] = filename
+    file["size"] = size
     file["alt"] = alt
     file["mime_type"] = mime_type
     file["state"] = "uploaded"
@@ -124,3 +126,26 @@ def person_draft_file_delete(person_id, id):
 
     # 204 Response
     return {"content": ""}
+
+
+def person_draft_file_get(person_id, id):
+    # Locate the draft file
+    file = models.draft_file.find({
+        "person_id": person_id,
+        "id": id
+    })
+
+    if file is None:
+        raise http_errors.not_found(
+            f"draft file {person_id} / {id} is not found"
+        )
+    
+
+    # Delete file from drive
+    name = os.path.join(os.environ.get("UPLOAD_DIRECTORY"), file["filename"])
+    if os.path.exists(name):
+        return {"file": name}
+    else:
+        raise http_errors.not_found(
+            f"draft file {person_id} / {id} is not found"
+        )
