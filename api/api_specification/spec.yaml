@@ -457,6 +457,10 @@ shards:
         description: List of delivery resources associated with this graph.
         type: array
         items: *delivery
+      proofs:
+        description: List of proof resources associated with this graph.
+        type: array
+        items: *proof
       drafts:
         description: List of draft resources associated with this graph.
         type: array
@@ -477,13 +481,10 @@ shards:
   newPost: &newPost
     type: object
     additionalProperties: false
-    required: [ delivery_id, draft_id, targets ]
+    required: [ delivery_id, targets ]
     properties:
       delivery_id:
         description: The ID of the associated delivery resource used to orchestrate platform integrations.
-        type: integer
-      draft_id:
-        description: The ID of the associated draft to publish to the target platforms.
         type: integer
       targets:
         type: array
@@ -1485,7 +1486,7 @@ resources:
             type: object
             additionalProperties: false
             required: [ person_id, content, files ]
-            properties: *draftCore
+            properties: *proofCore
         response:
           status: 201
           type: application/json
@@ -1537,10 +1538,13 @@ resources:
           schema:
             type: object
             additionalProperties: false
-            required: [ draft_id ]
+            required: [ draft_id, proof_id ]
             properties:
               draft_id:
-                description: The ID of the draft to associate with this delivery. It must be a draft belonging to you.
+                description: The ID of the draft to associate with this delivery.
+                type: integer
+              proof_id:
+                description: The ID of the proof to associate with this delivery.
                 type: integer
         response:
           status: 201

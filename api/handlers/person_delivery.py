@@ -35,10 +35,21 @@ def person_deliveries_post(person_id):
         raise http_errors.not_found(
             f"person {person_id} does not have draft {draft_id}"
         ) 
+    
+    proof_id = request.json["proof_id"]
+    proof = models.proof.find({
+        "person_id": person_id,
+        "id": proof_id
+    })
+    if proof is None:
+        raise http_errors.not_found(
+            f"person {person_id} does not have proof {proof_id}"
+        ) 
 
     delivery = models.delivery.add({
         "person_id": person_id,
-        "draft_id": draft_id
+        "draft_id": draft_id,
+        "proof_id": proof_id
     })
 
     return {

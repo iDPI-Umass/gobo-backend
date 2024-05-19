@@ -8,6 +8,7 @@ from .helpers import define_crud
 
 
 Delivery = tables.Delivery
+Proof = tables.Proof
 Draft = tables.Draft
 DraftFile = tables.DraftFile
 DeliveryTarget = tables.DeliveryTarget
@@ -34,6 +35,7 @@ class FeedBuilder():
         self.feed = []
         self.next_token = None
         self.deliveries = []
+        self.proofs = []
         self.drafts = []
         self.files = []
         self.targets = []
@@ -45,6 +47,18 @@ class FeedBuilder():
         rows = self.session.scalars(statement).all()
         for row in rows:
             self.deliveries.append(row.to_dict())
+
+    def pull_proofs(self):
+        seen_proofs = set()
+        for delivery in self.deliveries:
+            seen_proofs.add(delivery["proof_id"])
+        
+        statement = select(Proof) \
+            .where(Proof.id.in_(list(seen_proofs)))
+        
+        rows = self.session.scalars(statement).all()
+        for row in rows:
+            self.proofs.append(row.to_dict())
 
     def pull_drafts(self):
         seen_drafts = set()
@@ -60,8 +74,8 @@ class FeedBuilder():
 
     def pull_files(self):
         seen_files = set()
-        for draft in self.drafts:
-            for id in draft["files"]:
+        for proof in self.proofs:
+            for id in proof["files"]:
                 seen_files.add(id)
         
         statement = select(DraftFile) \
@@ -96,6 +110,7 @@ def fetch(id):
 
         builder.get_primary()
         builder.pull_deliveries()
+        builder.pull_proofs()
         builder.pull_drafts()
         builder.pull_files()
         builder.pull_targets()
@@ -104,6 +119,7 @@ def fetch(id):
         return {
             "feed": builder.feed,
             "deliveries": builder.deliveries,
+            "proofs": builder.proofs,
             "drafts": builder.drafts,
             "files": builder.files,
             "targets": builder.targets
@@ -142,6 +158,7 @@ def view_person(query):
 
         builder.get_primary()
         builder.pull_deliveries()
+        builder.pull_proofs()
         builder.pull_drafts()
         builder.pull_files()
         builder.pull_targets()
@@ -150,6 +167,7 @@ def view_person(query):
         graph = {
             "feed": builder.feed,
             "deliveries": builder.deliveries,
+            "proofs": builder.proofs,
             "drafts": builder.drafts,
             "files": builder.files,
             "targets": builder.targets

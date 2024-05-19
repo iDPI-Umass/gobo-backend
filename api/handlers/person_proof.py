@@ -9,6 +9,18 @@ import joy
 def check_proof_data(person_id, data):
     if data["person_id"] != person_id:
         raise http_errors.bad_request("proof person_id does not match resource")
+    for file_id in data["files"]:
+        file = models.draft_file.find({
+            "person_id": person_id,
+            "id": file_id
+        })
+        if file is None:
+            raise http_errors.not_found(
+                f"draft file {person_id} / {file_id} is not found"
+            )
+    if data.get("state") is None:
+        data["state"] = "pending"
+
 
 
 

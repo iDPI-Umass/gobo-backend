@@ -26,7 +26,7 @@ class Draft(Base):
     def write(data):
         _data = data.copy()
         
-        store = _data.get("store", None)
+        store = _data.get("store")
         if store is not None:
             _data["store"] = json.dumps(store)
         

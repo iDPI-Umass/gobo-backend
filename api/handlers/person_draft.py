@@ -9,14 +9,8 @@ import joy
 def check_draft_data(person_id, data):
     if data["person_id"] != person_id:
         raise http_errors.bad_request("draft person_id does not match resource")
-    for file_id in data["files"]:
-        file = models.draft_file.get(file_id)
-        if file is None or file["person_id"] != person_id:
-            raise http_errors.not_found(
-                f"draft file {person_id} / {file_id} is not found"
-            )
     if data.get("state") is None:
-        data["state"] = "draft"
+        data["state"] = "editing"
 
 
 

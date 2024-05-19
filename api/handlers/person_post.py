@@ -11,16 +11,16 @@ def get_unfurl_image(person_id, image):
             f"bluesky link unfurl image was not associated with uploaded image"
         )
     else:
-        draft = models.draft_file.find({
+        file = models.draft_file.find({
             "id": id,
             "person_id": person_id
         })
-        if draft is None:
+        if file is None:
             raise http_errors.bad_request(
                 f"bluesky link unfurl image upload {person_id}/{id} is not found"
             )
         else:
-            return draft
+            return file
 
 
 def person_posts_post(person_id):
@@ -33,17 +33,18 @@ def person_posts_post(person_id):
         raise http_errors.bad_request(
             f"person {person_id} does not have delivery {id}"
         )
-    if delivery["draft_id"] != request.json["draft_id"]:
+    draft_id = delivery.get("draft_id")
+    if draft_id is None:
         raise http_errors.bad_request(
-            f"draft id does not match the id listed in the delivery"
+            f"delivery is incomplete and lacks a draft id"
         )
-    if delivery["proof_id"] != request.json["proof_id"]:
+    proof_id = delivery.get("proof_id")
+    if proof_id is None:
         raise http_errors.bad_request(
-            f"proof id does not match the id listed in the delivery"
+            f"delivery is incomplete and lacks a proof id"
         )
     
 
-    draft_id = request.json["draft_id"]
     draft = models.draft.find({
         "person_id": person_id,
         "id": draft_id
@@ -54,14 +55,13 @@ def person_posts_post(person_id):
         )
     
 
-    proof_id = request.json["proof_id"]
     proof = models.proof.find({
         "person_id": person_id,
         "id": proof_id
     })
     if proof is None:
         raise http_errors.bad_request(
-            f"person {person_id} does not have draft {id}"
+            f"person {person_id} does not have proof {id}"
         )
     
 
@@ -93,14 +93,14 @@ def person_posts_post(person_id):
 
     # Establish post data core.
     post = {
-        "title": draft.get("title"),
-        "content": draft.get("content"),
-        "poll": draft.get("poll")
+        "title": proof.get("title"),
+        "content": proof.get("content"),
+        "poll": proof.get("poll")
     }
 
 
     # Confirm attachments have been uploaded already.
-    file_ids = draft.get("files", [])
+    file_ids = proof.get("files", [])
     attachments = []
     for id in file_ids:
         file = models.draft_file.find({
@@ -150,11 +150,11 @@ def person_posts_post(person_id):
             }
         })
 
-    models.delivery.update(delivery["id"], delivery)
-
-
+    draft["state"] = "submitted"
+    models.draft.update(draft["id"], draft)
     proof["state"] = "submitted"
     models.proof.update(proof["id"], proof)
+    models.delivery.update(delivery["id"], delivery)
    
     return {
         "content": models.delivery.fetch(delivery["id"])
