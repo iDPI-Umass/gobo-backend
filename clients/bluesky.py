@@ -753,6 +753,10 @@ class Bluesky():
         rkey = Post.get_rkey(edge["stash"]["uri"])
         return self.client.undo_repost_post(rkey)
     
+    def remove_post(self, reference):
+        rkey = Post.get_rkey(reference["uri"])
+        return self.client.remove_post(rkey)
+    
     def get_notification_posts(self, notifications):
         lookup = {}
         uris = set()

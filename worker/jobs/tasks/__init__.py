@@ -15,4 +15,4 @@ from .workbench import *
 
 from . import helpers
 from .stale import handle_stale
-from .delivery import handle_delivery
+from .delivery import handle_delivery, handle_unpublish

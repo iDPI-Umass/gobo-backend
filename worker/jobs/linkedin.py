@@ -20,6 +20,8 @@ def dispatch(task):
     
     if task.name == "create post":
         return create_post(task)
+    if task.name == "unpublish post":
+        return unpublish_post(task)
 
     logging.warning("No matching job for task: %s", task)
 
@@ -42,5 +44,19 @@ def create_post(task):
 
     client = Linkedin(identity)
     client.login()
-    client.create_post(post, metadata)
+    response = client.create_post(post, metadata)
     logging.info("linkedin: create post complete")
+    return {"reference": response["id"]}
+
+
+@tasks.handle_stale
+@tasks.handle_unpublish
+def unpublish_post(task):
+    identity = h.enforce("identity", task)
+    target = h.enforce("target", task)
+    reference = target["stash"]["reference"]
+
+    client = Linkedin(identity)
+    client.login()
+    client.remove_post(reference)    
+    logging.info("linkedin: unpublish post complete")

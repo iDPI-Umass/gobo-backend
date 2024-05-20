@@ -30,6 +30,8 @@ def dispatch(task):
     
     if task.name == "create post":
         return create_post(task)
+    if task.name == "unpublish post":
+        return unpublish_post(task)
     if task.name == "add post edge":
        return add_post_edge(task)
     if task.name == "remove post edge":
@@ -69,8 +71,21 @@ def create_post(task):
 
     client = Reddit(identity)
     client.login()
-    client.create_post(post, metadata)
+    response = client.create_post(post, metadata)
     logging.info("reddit: create post complete")
+    return {"reference": response}
+
+@tasks.handle_stale
+@tasks.handle_unpublish
+def unpublish_post(task):
+    identity = h.enforce("identity", task)
+    target = h.enforce("target", task)
+    reference = target["stash"]["reference"]
+
+    client = Reddit(identity)
+    client.login()
+    client.remove_post(reference)    
+    logging.info("reddit: unpublish post complete")
 
 
 @tasks.handle_stale

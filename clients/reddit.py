@@ -194,7 +194,7 @@ class Reddit():
         )
 
         return client.auth.url(
-            scopes = ["identity", "mysubreddits", "read", "submit", "vote"],
+            scopes = ["identity", "mysubreddits", "read", "submit", "vote", "edit"],
             state=state,
             duration = "permanent"
         )
@@ -256,7 +256,7 @@ class Reddit():
         attachments = post.get("attachments", [])
 
         if len(attachments) == 0:
-            self.client.subreddit(subreddit).submit(
+            result = self.client.subreddit(subreddit).submit(
                 title = title,
                 selftext = post.get("content", None),
                 nsfw = metadata.get("nsfw", False),
@@ -266,7 +266,7 @@ class Reddit():
         elif len(attachments) == 1:
             type = attachments[0]["mime_type"]
             if type.startswith("image"):
-                self.client.subreddit(subreddit).submit_image(
+                result = self.client.subreddit(subreddit).submit_image(
                     title = title,
                     image_path = attachments[0]["image_path"],
                     nsfw = metadata.get("nsfw", False),
@@ -274,7 +274,7 @@ class Reddit():
                     without_websockets = True
                 )
             elif type.startswith("video"):
-                self.client.subreddit(subreddit).submit_video(
+                result = self.client.subreddit(subreddit).submit_video(
                     title = title,
                     video_path = attachments[0]["image_path"],
                     nsfw = metadata.get("nsfw", False),
@@ -291,12 +291,18 @@ class Reddit():
                     "caption": attachment.get("alt", "")
                 })  
 
-            self.client.subreddit(subreddit).submit_gallery(
+            result = self.client.subreddit(subreddit).submit_gallery(
                 title = title,
                 images = files,
                 nsfw = metadata.get("nsfw", False),
                 spoiler = metadata.get("spoiler", False)
             )
+
+        return f"t3_{result}"
+
+    
+    def remove_post(self, reference):
+        return self.client.submission(reference).delete()
 
 
     def create_reply(self, post, metadata):

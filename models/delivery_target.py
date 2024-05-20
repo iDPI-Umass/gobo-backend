@@ -9,8 +9,8 @@ from .helpers import define_crud
 
 DeliveryTarget = tables.DeliveryTarget
 
-add, get, remove, query, find,  = itemgetter(
-    "add", "get", "remove", "query", "find"
+add, get, update, remove, query, find,  = itemgetter(
+    "add", "get", "update", "remove", "query", "find"
 )(define_crud(DeliveryTarget))
 
 

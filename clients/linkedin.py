@@ -168,4 +168,6 @@ class Linkedin():
 
         logging.info(post_data)
         return self.client.create_post(post_data)
-            
+    
+    def remove_post(self, reference):
+        return self.client.remove_post(reference)

@@ -305,6 +305,9 @@ class Mastodon():
             # poll=None
         )
     
+    def remove_post(self, id):
+        return self.client.status_delete(id)
+    
     def upload_media(self, draft):
         media = self.client.media_post(
             media_file = draft["data"],

@@ -85,6 +85,10 @@ def person_posts_post(person_id):
             raise http_errors.forbidden(
                 f"cannot publish to identity {id}"
             )
+        if identity["stale"] == True:
+            raise http_errors.bad_request(
+                f"identity {id} is stale"
+            )
         if identity["person_id"] != person_id:
             raise http_errors.bad_request(
                 f"cannot publish to identity {id}"
@@ -129,21 +133,21 @@ def person_posts_post(person_id):
 
     
     for key, identity in identities.items():
-        delivery_target = models.delivery_target.upsert({
+        target = models.delivery_target.upsert({
             "person_id": person_id,
             "delivery_id": delivery["id"],
             "identity_id": key,
             "state": "pending"
         })
 
-        delivery["targets"].append(delivery_target["id"])
+        delivery["targets"].append(target["id"])
        
         models.task.add({
             "queue": identity["platform"],
             "name": "create post",
             "priority": 1,
             "details": {
-              "delivery_target": delivery_target,
+              "target": target,
               "identity": identity,
               "post": post,
               "metadata": metadata[identity["id"]],

@@ -114,6 +114,11 @@ class GoboLinkedin():
         with httpx.Client() as client:
             response = client.post(url, data=data, headers=headers)
             return self.handle_response(url, response)
+        
+    def delete(self, url, headers = None, skip_response = False):
+          with httpx.Client() as client:
+              response = client.delete(url, headers=headers)
+              return self.handle_response(url, response)        
   
 
     def add_token(self, headers = None):
@@ -147,6 +152,11 @@ class GoboLinkedin():
         self.add_restli(headers)
         data = self.handle_data(data, headers)
         return self.post(url, data = data, headers = headers, skip_response=skip_response)
+    
+    def linkedin_delete(self, url, headers = None, skip_response = False):
+        headers = self.add_token(headers)
+        self.add_restli(headers)
+        return self.delete(url, headers = headers, skip_response=skip_response)
 
 
 
@@ -185,4 +195,8 @@ class GoboLinkedin():
         url = self.build_url("ugcPosts")
         response = self.linkedin_post(url, data)
         return response.json()
-        
+    
+    def remove_post(self, urn):
+        path = f"ugcPosts/{urllib.parse.quote_plus(urn)}"
+        url = self.build_url(path)
+        self.linkedin_delete(url)        

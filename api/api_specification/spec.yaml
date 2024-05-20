@@ -1573,15 +1573,19 @@ resources:
           status: 200
           type: application/json
           schema: *deliveryGraph
-
-  person_delivery_post:
-    template: /people/{person_id}/deliveries/{delivery_id}/{identity_id}
-    route: /people/<int:person_id>/deliveries/<int:delivery_id>/<int:identity_id>
-    methods:
-      delete:
+      post:
         request:
           authorization:
             - person
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ action ]
+            properties:
+              action:
+                description: action to apply to this delivery
+                type: string
         response:
           status: 204
 

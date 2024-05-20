@@ -247,6 +247,17 @@ class GOBOBluesky():
 
         return self.bluesky_post(url, data)
     
+    def remove_post(self, rkey):
+        url = self.build_url("com.atproto.repo.deleteRecord", {})
+
+        data = {
+            "repo": self.did,
+            "collection": "app.bsky.feed.post",
+            "rkey": rkey
+        }
+
+        return self.bluesky_post(url, data)
+    
     def get_post(self, reference):
         url = self.build_url("com.atproto.repo.getRecord", {
             "repo": reference.get("did"),
