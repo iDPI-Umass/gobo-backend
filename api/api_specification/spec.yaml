@@ -319,6 +319,9 @@ shards:
     name:
       description: Provided name for this file.
       type: string
+    filename:
+      description: Provided name for this file, with extension.
+      type: string
     alt:
       description: Provided alt text for files, for example images and video.
     state:
@@ -1429,7 +1432,9 @@ resources:
         response:
           status: 204
       get:
-        request: {}
+        request:
+          authorization:
+            - public
         response:
           status: 200
 
