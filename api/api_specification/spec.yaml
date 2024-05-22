@@ -1397,7 +1397,7 @@ resources:
           authorization:
             - person
         response:
-          status: 200
+          status: 201
           type: application/json
           schema: *file
 
@@ -1530,6 +1530,21 @@ resources:
           status: 200
           type: application/json
           schema: *deliveryTarget
+      post:
+        request:
+          authorization:
+            - person
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            required: [ action ]
+            properties:
+              action:
+                description: action to apply to this delivery target
+                type: string
+        response:
+          status: 204
 
   person_deliveries:
     template: /people/{person_id}/deliveries{?per_page,start}
