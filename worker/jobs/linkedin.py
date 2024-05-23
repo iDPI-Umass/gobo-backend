@@ -44,9 +44,12 @@ def create_post(task):
 
     client = Linkedin(identity)
     client.login()
-    response = client.create_post(post, metadata)
+    result = client.create_post(post, metadata)
     logging.info("linkedin: create post complete")
-    return {"reference": response["id"]}
+    return {
+        "reference": result["id"],
+        "url": ""
+    }
 
 
 @tasks.handle_stale

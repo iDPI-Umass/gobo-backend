@@ -3,6 +3,7 @@ import models
 import queues
 import joy
 from clients import Bluesky, HTTPError
+from clients.bluesky import Post as BlueskyPost
 from . import tasks
 
 h = tasks.helpers
@@ -59,9 +60,12 @@ def create_post(task):
 
     client = Bluesky(identity)
     client.login()
-    response = client.create_post(post, metadata)
-    logging.info("bluesky: create post complete")
-    return {"reference": response}
+    result = client.create_post(post, metadata)
+    logging.info("bluesky: create post complete")    
+    return {
+        "reference": result["id"],
+        "url": result["url"]
+    }
 
 @tasks.handle_stale
 @tasks.handle_unpublish

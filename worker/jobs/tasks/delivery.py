@@ -15,6 +15,7 @@ def handle_delivery(f):
         try:
             result = f(task)
             stash["reference"] = result["reference"]
+            stash["url"] = result["url"]
             target["state"] = "delivered"
             target["stash"] = stash
             models.delivery_target.update(target["id"], target)

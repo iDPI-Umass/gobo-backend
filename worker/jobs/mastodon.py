@@ -58,7 +58,10 @@ def create_post(task):
     client.login()
     response = client.create_post(post, metadata)
     logging.info("mastodon: create post complete")
-    return {"reference": response["id"]}
+    return {
+        "reference": response["id"],
+        "url": response["url"]
+    }
 
 @tasks.handle_stale
 @tasks.handle_unpublish

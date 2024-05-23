@@ -298,7 +298,21 @@ class Reddit():
                 spoiler = metadata.get("spoiler", False)
             )
 
-        return f"t3_{result}"
+        # The result is a submission instance, but unless I'm inspecting it
+        # incorrectly, it doesn't seem to have very many attributes.
+        raw_id = str(result)
+
+        output = {}
+        output["id"] = f"t3_{raw_id}"
+        
+        url = Reddit.BASE_URL
+        url += "/r/"
+        url += subreddit
+        url += "/comments/"
+        url += raw_id
+        output["url"] = url
+
+        return output
 
     
     def remove_post(self, reference):

@@ -727,8 +727,18 @@ class Bluesky():
             post_data["reply"] = reply
 
         logging.info(post_data)
-        return self.client.create_post(post_data)
+        
+        result = {}
+        result["id"] = self.client.create_post(post_data)
+        
+        url = self.identity["base_url"]
+        url += "/profile/"
+        url += self.identity["platform_id"]
+        url += "/post/"
+        url += Post.get_rkey(result["id"]["uri"])
+        result["url"] = url
 
+        return result
 
 
     def like_post(self, post):

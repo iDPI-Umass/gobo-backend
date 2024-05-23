@@ -71,9 +71,12 @@ def create_post(task):
 
     client = Reddit(identity)
     client.login()
-    response = client.create_post(post, metadata)
+    result = client.create_post(post, metadata)
     logging.info("reddit: create post complete")
-    return {"reference": response}
+    return {
+        "reference": result["id"],
+        "url": result["url"]
+    }
 
 @tasks.handle_stale
 @tasks.handle_unpublish
