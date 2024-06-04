@@ -373,6 +373,9 @@ shards:
     content:
       description: The main content of the to-be-published post.
       type: string
+    thread:
+      description: Associative array of thread projected into posts for each platform.
+      type: array
     files:
       description: List of draft file IDs to provide as files in the final post.
       type: array
@@ -391,7 +394,7 @@ shards:
     required: [ id, person_id, content, files ]
     properties:
       <<: *id
-      <<: *draftCore
+      <<: *proofCore
       <<: *timestamp
 
   deliveryTargetCore: &deliveryTargetCore         
@@ -502,7 +505,10 @@ shards:
               type: integer
             stash:
               description: Platform specific configuration needed to create this post. For example, a target subreddit.
-              type: object
+              type: array
+              items:
+                type: object
+
 
 
 

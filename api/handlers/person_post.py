@@ -19,6 +19,10 @@ def get_unfurl_image(person_id, image):
             raise http_errors.bad_request(
                 f"bluesky link unfurl image upload {person_id}/{id} is not found"
             )
+        if file["state"] != "uploaded":
+            raise http_errors.bad_request(
+                f"bluesky link unfurl image {person_id}/{id} is not yet uploaded"
+            )
         else:
             return file
 
@@ -65,10 +69,10 @@ def person_posts_post(person_id):
         )
     
 
-    metadata = {}
+    threads = {}
     identity_ids = []
     for target in request.json["targets"]:
-        metadata[target["identity"]] = target.get("stash", {})
+        threads[target["identity"]] = target.get("stash", [])
         identity_ids.append(target["identity"])
 
     identities = {}
@@ -95,14 +99,6 @@ def person_posts_post(person_id):
             )
     
 
-    # Establish post data core.
-    post = {
-        "title": proof.get("title"),
-        "content": proof.get("content"),
-        "poll": proof.get("poll")
-    }
-
-
     # Confirm attachments have been uploaded already.
     file_ids = proof.get("files", [])
     attachments = []
@@ -111,28 +107,35 @@ def person_posts_post(person_id):
             "id": id,
             "person_id": person_id
         })
-
         if file is None:
             raise http_errors.bad_request(
-                f"draft image {person_id}/{id} is not found"
+                f"draft file {person_id}/{id} is not found"
+            )
+        if file["state"] != "uploaded":
+            raise http_errors.bad_request(
+                f"draft file {person_id}/{id} is not yet uploaded"
             )
        
         attachments.append(file)
 
-    post["attachments"] = attachments
 
-
-    # Bluesky and Linkedin need the link card image uplaoded independently.
+    # Bluesky and Linkedin need the link card image uploaded independently.
     for id in identity_ids:
-        link_card = metadata[id].get("linkCard")
-        if link_card is not None:
-            image = link_card.get("image")
-            if image is not None:
-                metadata[id]["link_card_draft_image"] = \
-                  get_unfurl_image(person_id, image)
+        thread = threads[id]
+        for item in thread:
+            metadata = item.get("metadata", {})
+            link_card = metadata.get("linkCard")
+            if link_card is not None:
+                image = link_card.get("image")
+                if image is not None:
+                    metadata["link_card_draft_image"] = \
+                      get_unfurl_image(person_id, image)
 
     
     for key, identity in identities.items():
+        thread = threads[key]
+        thread[0]["attachments"] = attachments
+
         target = models.delivery_target.upsert({
             "person_id": person_id,
             "delivery_id": delivery["id"],
@@ -149,8 +152,7 @@ def person_posts_post(person_id):
             "details": {
               "target": target,
               "identity": identity,
-              "post": post,
-              "metadata": metadata[identity["id"]],
+              "thread": thread,
             }
         })
 

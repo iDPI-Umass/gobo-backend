@@ -22,6 +22,7 @@ class Proof(Base):
     state: Mapped[Optional[str]]
     title: Mapped[Optional[str]]
     content: Mapped[Optional[str]]
+    thread: Mapped[Optional[str]]
     files: Mapped[Optional[str]]
     poll: Mapped[Optional[str]]
     created: Mapped[str] = mapped_column(insert_default=joy.time.now)
@@ -31,6 +32,10 @@ class Proof(Base):
     def write(data):
         _data = data.copy()
         
+        thread = _data.get("thread", None)
+        if thread is not None:
+            _data["thread"] = json.dumps(thread)
+
         files = _data.get("files", None)
         if files is not None:
             _data["files"] = json.dumps(files)
@@ -49,6 +54,10 @@ class Proof(Base):
             "updated": self.updated
         }
 
+        thread = getattr(self, "thread", None)
+        if thread is not None:
+            data["thread"] = json.loads(thread)
+
         files = getattr(self, "files", None)
         if files is not None:
             data["files"] = json.loads(files)
@@ -62,6 +71,10 @@ class Proof(Base):
 
     def update(self, data):
         write_optional(self, data, optional)
+        thread = data.get("thread")
+        if thread != None:
+            self.thread = json.dumps(thread)
+
         files = data.get("files")
         if files != None:
             self.files = json.dumps(files)
