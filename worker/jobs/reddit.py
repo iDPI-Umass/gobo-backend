@@ -44,14 +44,20 @@ def dispatch(task):
 @tasks.handle_delivery
 def create_post(task):
     identity = h.enforce("identity", task)
-    post = h.enforce("post", task)
-    metadata = task.details.get("metadata", {})
+    thread = h.enforce("thread", task)
+
+    client = Reddit(identity)
+    client.login()
+
+    # While this always uses the generic thread structure, we don't currently
+    # support going beyond a single post.
+    references = []
+    post = thread[0]
+    metadata = post["metadata"]
 
     # TODO: Reddit is a little funky because the replies aren't modeled as posts
     #       currently. That might change? For now, special method and return.
     if metadata.get("reply", None) is not None:
-        client = Reddit(identity)
-        client.login()
         client.create_reply(post, metadata)
         logging.info("reddit: create reply comment complete")
         return
@@ -68,26 +74,28 @@ def create_post(task):
             attachments.append(file)
     post["attachments"] = attachments
 
-
-    client = Reddit(identity)
-    client.login()
     result = client.create_post(post, metadata)
-    logging.info("reddit: create post complete")
-    return {
+    logging.info("reddit: create post complete")    
+
+    references.append({
         "reference": result["id"],
         "url": result["url"]
-    }
+    })
+
+    return references
+
 
 @tasks.handle_stale
 @tasks.handle_unpublish
 def unpublish_post(task):
     identity = h.enforce("identity", task)
     target = h.enforce("target", task)
-    reference = target["stash"]["reference"]
+    references = target["stash"]["references"]
 
     client = Reddit(identity)
     client.login()
-    client.remove_post(reference)    
+    for item in references:
+        client.remove_post(item["reference"])
     logging.info("reddit: unpublish post complete")
 
 

@@ -245,7 +245,7 @@ class Reddit():
         return submissions
     
     def create_post(self, post, metadata):
-        title = post.get("title", None)
+        title = metadata.get("title", None)
         if title is None:
             raise Exception("reddit posts must include a title")
         subreddit = metadata.get("subreddit", None)

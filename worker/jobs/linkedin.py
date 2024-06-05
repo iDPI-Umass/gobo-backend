@@ -30,8 +30,16 @@ def dispatch(task):
 @tasks.handle_delivery
 def create_post(task):
     identity = h.enforce("identity", task)
-    post = h.enforce("post", task)
-    metadata = task.details.get("metadata", {})
+    thread = h.enforce("thread", task)
+
+    client = Linkedin(identity)
+    client.login()
+
+    # While this always uses the generic thread structure, we don't currently
+    # support going beyond a single post.
+    references = []
+    post = thread[0]
+    metadata = post["metadata"]
 
     if len(post["attachments"]) > 20:
         raise Exception("linkedin posts are limited to 20 attachments.")
@@ -42,14 +50,16 @@ def create_post(task):
         file = metadata["link_card_draft_image"]
         file["data"] = h.read_draft_file(file)
 
-    client = Linkedin(identity)
-    client.login()
     result = client.create_post(post, metadata)
-    logging.info("linkedin: create post complete")
-    return {
+    logging.info("linkedin: create post complete")    
+
+    references.append({
         "reference": result["id"],
         "url": ""
-    }
+    })
+
+    return references
+
 
 
 @tasks.handle_stale
@@ -57,9 +67,10 @@ def create_post(task):
 def unpublish_post(task):
     identity = h.enforce("identity", task)
     target = h.enforce("target", task)
-    reference = target["stash"]["reference"]
+    references = target["stash"]["references"]
 
     client = Linkedin(identity)
     client.login()
-    client.remove_post(reference)    
+    for item in references:
+        client.remove_post(item["reference"])
     logging.info("linkedin: unpublish post complete")

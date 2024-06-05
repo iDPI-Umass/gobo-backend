@@ -44,33 +44,50 @@ def dispatch(task):
 @tasks.handle_delivery
 def create_post(task):
     identity = h.enforce("identity", task)
-    post = h.enforce("post", task)
-    metadata = task.details.get("metadata", {})
-
-    if len(post["attachments"]) > 4:
-        raise Exception("mastodon posts are limited to 4 attachments.")
-    for file in post["attachments"]:
-        file["data"] = h.read_draft_file(file)
+    thread = h.enforce("thread", task)
 
     client = Smalltown(identity)
     client.login()
-    response = client.create_post(post, metadata)
-    logging.info("smalltown: create post complete")
-    return {
-        "reference": response["id"],
-        "url": response["url"]
-    }
+
+    references = []
+    reply_parent = None
+    for post in thread:
+        metadata = post["metadata"]
+
+        if reply_parent is not None:
+            metadata["reply"] = reply_parent
+
+        if len(post["attachments"]) > 4:
+            raise Exception("smalltown posts are limited to 4 attachments.")
+        for file in post["attachments"]:
+            file["data"] = h.read_draft_file(file)
+
+        result = client.create_post(post, metadata)
+        logging.info("smalltown: create post complete")    
+
+        reply_parent = {
+            "platform_id": result["id"]
+        }
+
+        references.append({
+            "reference": result["id"],
+            "url": result["url"]
+        })
+
+    return references
+
 
 @tasks.handle_stale
 @tasks.handle_unpublish
 def unpublish_post(task):
     identity = h.enforce("identity", task)
     target = h.enforce("target", task)
-    reference = target["stash"]["reference"]
+    references = target["stash"]["references"]
 
     client = Smalltown(identity)
     client.login()
-    client.remove_post(reference)    
+    for item in references:
+        client.remove_post(item["reference"])
     logging.info("smalltown: unpublish post complete")
 
 
