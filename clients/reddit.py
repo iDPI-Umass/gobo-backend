@@ -271,7 +271,7 @@ class Reddit():
                     image_path = attachments[0]["image_path"],
                     nsfw = metadata.get("nsfw", False),
                     spoiler = metadata.get("spoiler", False),
-                    without_websockets = True
+      
                 )
             elif type.startswith("video"):
                 result = self.client.subreddit(subreddit).submit_video(
@@ -279,7 +279,6 @@ class Reddit():
                     video_path = attachments[0]["image_path"],
                     nsfw = metadata.get("nsfw", False),
                     spoiler = metadata.get("spoiler", False),
-                    without_websockets = True
                 )
         
         else:
