@@ -284,6 +284,31 @@ def remove_proof(proof):
 
     models.proof.remove(proof["id"])
 
+def remove_delivery_target(target):
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("origin_type", "delivery_target"),
+            where("origin_id", target["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("target_type", "delivery_target"),
+            where("target_id", target["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    models.delivery_target.remove(target["id"])
+
 def remove_delivery(delivery):
     links = QueryIterator(
         model = models.link,

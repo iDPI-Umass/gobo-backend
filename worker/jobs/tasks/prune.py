@@ -19,6 +19,7 @@ def prune_resources(task):
     queues.default.put_details("prune sources")
     queues.default.put_details("prune notifications")
     queues.default.put_details("prune proofs")
+    queues.default.put_details("prune delivery targets")
     queues.default.put_details("prune deliveries")
 
 
@@ -135,6 +136,22 @@ def prune_proofs(task):
 
     for proof in proofs:
         h.remove_proof(proof)
+
+def prune_delivery_targets(task):
+    oldest_limit = joy.time.convert("date", "iso", 
+        joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
+    )
+
+    targets = QueryIterator(
+        model = models.delivery_target,
+        for_removal = True,
+        wheres = [
+            where("updated", oldest_limit, "lt")
+        ]
+    )
+
+    for target in targets:
+        h.remove_delivery_target(target)
 
 def prune_deliveries(task):
     oldest_limit = joy.time.convert("date", "iso", 
