@@ -259,6 +259,31 @@ def rollback_cursor(task):
     if cursor is not None:
         cursor.rollback()
 
+def remove_proof(proof):
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("origin_type", "proof"),
+            where("origin_id", proof["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("target_type", "proof"),
+            where("target_id", proof["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    models.proof.remove(proof["id"])
+
 def remove_delivery(delivery):
     links = QueryIterator(
         model = models.link,

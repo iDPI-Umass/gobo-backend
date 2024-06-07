@@ -18,6 +18,7 @@ def prune_resources(task):
     queues.default.put_details("prune registrations")
     queues.default.put_details("prune sources")
     queues.default.put_details("prune notifications")
+    queues.default.put_details("prune proofs")
     queues.default.put_details("prune deliveries")
 
 
@@ -31,7 +32,7 @@ def prune_draft_files(task):
         model = models.draft_file,
         for_removal = True,
         wheres = [
-            where("created", oldest_limit , "lt")
+            where("updated", oldest_limit , "lt")
         ]
     )
 
@@ -74,7 +75,7 @@ def prune_registrations(task):
         model = models.registration,
         for_removal = True,
         wheres = [
-            where("created", oldest_limit, "lt")
+            where("updated", oldest_limit, "lt")
         ]
     )
     for registration in registrations:
@@ -118,6 +119,22 @@ def prune_notifications(task):
     for notification in notifications:
         h.remove_notification(notification)
 
+
+def prune_proofs(task):
+    oldest_limit = joy.time.convert("date", "iso", 
+        joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
+    )
+
+    proofs = QueryIterator(
+        model = models.proof,
+        for_removal = True,
+        wheres = [
+            where("updated", oldest_limit, "lt")
+        ]
+    )
+
+    for proof in proofs:
+        h.remove_proof(proof)
 
 def prune_deliveries(task):
     oldest_limit = joy.time.convert("date", "iso", 

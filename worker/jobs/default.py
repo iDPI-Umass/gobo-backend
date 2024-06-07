@@ -121,6 +121,10 @@ def dispatch(task):
         return tasks.prune_sources(task)
     if task.name == "prune notifications":
         return tasks.prune_notifications(task)
+    if task.name == "prune proofs":
+        return tasks.prune_proofs(task)
+    if task.name == "prune deliveries":
+        return tasks.prune_deliveries(task)
 
 
     if task.name == "workbench":
