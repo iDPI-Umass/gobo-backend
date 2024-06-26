@@ -11,6 +11,16 @@ class HTTPError(Exception):
       self.status = status
       self.response = response
 
+# TODO: Do something more sophisticated here. It appears that Reddit's rate limit
+#   header protocol sends numbers with floating point precision and python
+#   is precise about such things. 
+def to_number(string):
+    try:
+        result = float(string)
+        return result
+    except ValueError:
+        return int(string)
+
 
 class GOBOReddit():
     def __init__(self):
@@ -28,7 +38,7 @@ class GOBOReddit():
             logging.warning("Reddit: x-ratelimit-reset header is not available")
             reset = 500
             
-        return int(reset) + 2
+        return to_number(reset) + 2
 
     def handle_ratelimit(self, url, response):
         remaining = response.headers.get("x-ratelimit-remaining")
@@ -36,7 +46,7 @@ class GOBOReddit():
 
         if remaining is None:
             return
-        if int(remaining) > 2:
+        if to_number(remaining) > 2:
             logging.info({
                 "message": "Reddit: monitoring ratelimit headers",
                 "url": url,
@@ -54,7 +64,7 @@ class GOBOReddit():
 
     def handle_too_many(self, url, response):
         timeout = response.headers.get("x-ratelimit-reset", 500)
-        timeout = int(timeout) + 1
+        timeout = to_number(timeout) + 1
         logging.warning({
             "message": f"Reddit: Got 429 response. Backing off for {timeout} seconds",
             "url": url,
