@@ -26,6 +26,14 @@ def get_unfurl_image(person_id, image):
         else:
             return file
 
+def add_files(attachments, ids):
+    files = []
+    for id in ids:
+        for item in attachments:
+            if item["id"] == id:
+                files.append(item)
+    return files
+
 
 def person_posts_post(person_id):
     delivery_id = request.json["delivery_id"]
@@ -134,7 +142,8 @@ def person_posts_post(person_id):
     
     for key, identity in identities.items():
         thread = threads[key]
-        thread[0]["attachments"] = attachments
+        for post in thread:
+            post["attachments"] = add_files(attachments, post["attachments"])
 
         target = models.delivery_target.upsert({
             "person_id": person_id,

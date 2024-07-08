@@ -7,6 +7,16 @@ import models
 import joy
 
 def person_draft_files_post(person_id):
+    kernel = dict(request.json)
+    id = kernel.get("id", joy.crypto.address())
+    
+    # Check that it's safe to use this this ID.
+    file = models.draft_file.get(id)
+    if file is not None:
+        raise http_errors.conflict(
+            f"cannot create draft file with id {id}"
+        )
+
     # Check to make sure we're not being flooded with draft files.
     files = models.draft_file.pull([
         models.helpers.where("person_id", person_id),
@@ -20,7 +30,7 @@ def person_draft_files_post(person_id):
     
     # create file metadata slot in database and come up with its ID.
     file = models.draft_file.add({
-        "id": joy.crypto.address(),
+        "id": id,
         "person_id": person_id,
         "published": False,
         "state": "pending"

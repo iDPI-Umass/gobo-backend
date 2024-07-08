@@ -1402,6 +1402,14 @@ resources:
         request:
           authorization:
             - person
+          type: application/json
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                description: identifier for this draft file.
+                type: string
         response:
           status: 201
           type: application/json
