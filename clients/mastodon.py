@@ -309,11 +309,6 @@ class Mastodon():
         return self.client.status_delete(id)
     
     def upload_media(self, draft):
-        logging.info({
-            "tag": "upload_media was able to find file data to send",
-            "result": (draft["data"] is not None)
-        })
-
         media = self.client.media_post(
             media_file = draft["data"],
             mime_type = draft["mime_type"],
