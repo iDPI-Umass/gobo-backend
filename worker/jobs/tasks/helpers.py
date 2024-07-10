@@ -76,6 +76,8 @@ def read_draft_file(file):
     if os.path.exists(filename):
         with open(filename, "rb") as f:
             return f.read()
+    else:
+        logging.warning(f"Did not find file {filename}")
 
 
 def reconcile_sources(task, identity, sources):
