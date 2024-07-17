@@ -45,6 +45,13 @@ class SessionFrame():
         expires = datetime.fromisoformat(timestamp)
         delta = expires - joy.time.nowdate()
         return delta < timedelta(minutes = 10)
+    
+    def mark_stale(self):
+        # In this case, the identity was not unilaterally revoked by the author,
+        # but our access has reached its end of life and expired. So we need
+        # to mark it as such so the author can decide if they want to re-up.
+        self.identity['stale'] = True
+        models.identity.upsert(self.identity)
 
 
 class Linkedin():
@@ -80,8 +87,7 @@ class Linkedin():
         if frame.is_stale():
             raise Exception("this session is stale and cannot be used.")
         if frame.access_expired():
-            session["stale"] = True
-            models.linkedin_session.upsert(session)
+            frame.mark_stale()
             raise Exception("this session is stale and cannot be used.")
         
         self.me = session["access_token"]
