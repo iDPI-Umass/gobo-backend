@@ -545,12 +545,14 @@ class SessionFrame():
     def cycle_refresh_token(self):
         bundle = self.full_login()
         _session = SessionFrame.map(self.identity, bundle)
-        return models.bluesky_session.upsert(_session)
+        self.session = models.bluesky_session.upsert(_session)
+        return self.session
 
     def cycle_access_token(self):
         bundle = self.refresh()
         _session = SessionFrame.map(self.identity, bundle)
-        return models.bluesky_session.upsert(_session)
+        self.session = models.bluesky_session.upsert(_session)
+        return self.session
         
     
 
@@ -564,17 +566,14 @@ class Bluesky():
         self.invalid = False
     
     def login(self):
-        session = None
         frame = SessionFrame(self.identity)
         
         if frame.refresh_expired():
-            session = frame.cycle_refresh_token()
+            frame.cycle_refresh_token()
         elif frame.access_expired():
-            session = frame.cycle_access_token()
-        else:
-            session = frame.session
+            frame.cycle_access_token()
         
-        self.client.load_session(session)
+        self.client.load_session(frame.session)
 
     def freshen(self):
         if self.client.is_stale_session():
