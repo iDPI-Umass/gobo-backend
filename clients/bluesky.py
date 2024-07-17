@@ -566,21 +566,15 @@ class Bluesky():
         self.invalid = False
     
     def login(self):
-        frame = SessionFrame(self.identity)
-        
-        if frame.refresh_expired():
-            frame.cycle_refresh_token()
-        elif frame.access_expired():
-            frame.cycle_access_token()
-        
-        self.client.load_session(frame.session)
+        self.frame = SessionFrame(self.identity)
+        self.freshen()
 
     def freshen(self):
-        if self.client.is_stale_session():
-            frame = SessionFrame(self.identity)
-            frame.cycle_access_token()
-            self.client.load_session(frame.session)
-
+        if self.frame.refresh_expired():
+            self.frame.cycle_refresh_token()
+        elif self.frame.access_expired():
+            self.frame.cycle_access_token()
+        self.client.load_session(self.frame.session)
 
     def get_profile(self):
         return self.client.get_profile(self.me)
