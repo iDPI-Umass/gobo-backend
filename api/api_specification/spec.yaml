@@ -1227,6 +1227,15 @@ resources:
           type: application/json
           schema: *identity
 
+      get:
+        request:
+          authorization:
+            - person
+        response:
+          status: 200
+          type: application/json
+          schema: *identity
+
       delete:
         request:
           authorization:

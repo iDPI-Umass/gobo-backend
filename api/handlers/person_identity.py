@@ -43,6 +43,21 @@ def person_identity_post(person_id, id):
     censor_identity(identity)
     return {"content": identity}
 
+# While we censor identities as a list, part of the overall state fetching, if
+# a client asks for the individual identity, we don't censor sensitive values
+# because they're needed for some reason.
+# TODO: consider if we want to spin out this full representation into some
+# other resource space apart from this one.
+def person_identity_get(person_id, id):
+    identity = models.identity.find({
+        "person_id": person_id,
+        "id": id,
+    })
+    if identity is None:
+        raise http_errors.forbidden(f"person_identity {person_id}/{id} is not found")
+    
+    return {"content": identity}
+
 def person_identity_delete(person_id, id):
     identity = models.identity.find({
         "person_id": person_id,
