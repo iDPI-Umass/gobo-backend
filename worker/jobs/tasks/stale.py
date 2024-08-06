@@ -3,7 +3,7 @@ from functools import wraps
 import mastodon
 import prawcore
 import queues
-from clients import HTTPError
+from clients import HTTPError, Bluesky
 from . import helpers as h
 
 # Gobo relies on the consent of our members to bridge functionality across
@@ -87,14 +87,25 @@ def handle_stale(f):
             if platform == "bluesky" and e.status == 400:
                 error = e.body.get("error")
                 if error == "ExpiredToken":
-                    logging.warning("detected revoked Bluesky token, stale identity")
-                    queues.default.put_details(
-                        priority = 1,
-                        name = "stale identity",
-                        details = {"identity": identity}
-                    )
-                    task.halt()
-                    return
+                    try:
+                        # For some reason, Bluesky expiry has been especially
+                        # challenging to detect. This should doublecheck that
+                        # we cannot restore our credentials if we get here.
+                        
+                        # TODO: We need a more graceful way to handle this.
+
+                        client = Bluesky(identity)
+                        client.login()
+                        client.get_profile()
+                    except:
+                        logging.warning("detected revoked Bluesky token, stale identity")
+                        queues.default.put_details(
+                            priority = 1,
+                            name = "stale identity",
+                            details = {"identity": identity}
+                        )
+                        task.halt()
+                        return
             raise e
         
     return decorated
