@@ -14,6 +14,7 @@ QueryIterator = models.helpers.QueryIterator
 
 def prune_resources(task):
     queues.default.put_details("prune draft files")
+    queues.default.put_details("prune drafts")
     queues.default.put_details("prune posts")
     queues.default.put_details("prune registrations")
     queues.default.put_details("prune sources")
@@ -48,6 +49,21 @@ def prune_draft_files(task):
         
         models.draft_file.remove(draft["id"])
 
+
+def prune_drafts(task):
+    oldest_limit = joy.time.convert("date", "iso", 
+        joy.time.nowdate() - timedelta(days=int(environ.get("MAXIMUM_RETENTION_DAYS")))
+    )
+
+    drafts = QueryIterator(
+        model = models.draft,
+        for_removal = True,
+        wheres = [
+            where("updated", oldest_limit, "lt")
+        ]
+    )
+    for draft in drafts:
+        h.remove_draft(draft)
 
 
 def prune_posts(task):

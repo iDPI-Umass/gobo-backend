@@ -111,6 +111,8 @@ def dispatch(task):
 
     if task.name == "prune resources":
         return tasks.prune_resources(task)
+    if task.name == "prune drafts":
+        return tasks.prune_drafts(task)  
     if task.name == "prune draft files":
         return tasks.prune_draft_files(task)  
     if task.name == "prune posts":
@@ -127,6 +129,9 @@ def dispatch(task):
         return tasks.prune_delivery_targets(task)
     if task.name == "prune deliveries":
         return tasks.prune_deliveries(task)
+
+    if task.name == "remove person":
+        return tasks.remove_person(task)
 
 
     if task.name == "workbench":

@@ -6,6 +6,7 @@ from .follow import *
 from .identity import *
 from .notification import *
 from .platform import *
+from .person import *
 from .post import *
 from .profile import *
 from .prune import *

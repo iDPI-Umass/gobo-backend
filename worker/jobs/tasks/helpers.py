@@ -132,6 +132,32 @@ def attach_post(post):
     })
 
 
+def remove_draft(draft):
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("origin_type", "draft"),
+            where("origin_id", draft["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("target_type", "draft"),
+            where("target_id", draft["id"])
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    models.draft.remove(draft["id"])
+
+
 def remove_post(post):
     links = QueryIterator(
         model = models.link,
@@ -244,13 +270,87 @@ def remove_identity(identity):
     for link in links:
         models.link.remove(link["id"])
 
-    session = models.bluesky_session.find({
+    bluesky = models.bluesky_session.find({
         "identity_id": identity["id"]
     })
-    if session is not None:
-        models.bluesky_session.remove(session["id"])
+    if bluesky is not None:
+        models.bluesky_session.remove(bluesky["id"])
+
+    linkedin = models.linkedin_session.find({
+        "identity_id": identity["id"]
+    })
+    if linkedin is not None:
+        models.linkedin_session.remove(linkedin["id"])
 
     models.identity.remove(identity["id"])
+
+
+
+def remove_from_person(person_id, model):
+    rows = QueryIterator(
+        model = model,
+        for_removal = True,
+        wheres = [
+            where("person_id", person_id),
+        ]
+    )
+    for row in rows:
+        model.remove(row["id"])
+
+
+def remove_person(person_id):
+    identities = QueryIterator(
+        model = models.identity,
+        for_removal = True,
+        wheres = [
+            where("person_id", person_id),
+        ]
+    )
+
+    for identity in identities:
+        remove_identity(identity)
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("origin_type", "person"),
+            where("origin_id", person_id)
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    links = QueryIterator(
+        model = models.link,
+        for_removal = True,
+        wheres = [
+            where("target_type", "person"),
+            where("target_id", person_id)
+        ]
+    )
+    for link in links:
+        models.link.remove(link["id"])
+
+    row = models.counter.find({
+        "origin_type": "person",
+        "origin_id": person_id,
+    })
+    if row is not None:
+        models.counter.remove(row["id"])
+    
+    remove_from_person(person_id, models.delivery)
+    remove_from_person(person_id, models.delivery_target)
+    remove_from_person(person_id, models.draft)
+    remove_from_person(person_id, models.draft_file)
+    remove_from_person(person_id, models.filter)
+    remove_from_person(person_id, models.gobo_key)
+    remove_from_person(person_id, models.proof)
+    remove_from_person(person_id, models.registration)
+    remove_from_person(person_id, models.store)
+    
+    models.person.remove(person_id)
+    
 
 def stale_identity(identity):
     identity["stale"] = True
